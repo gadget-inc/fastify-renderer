@@ -1,0 +1,118 @@
+{
+  "name": "fastify-renderer",
+  "version": "0.5.0",
+  "description": "Simple, high performance client side app renderer for Fastify.",
+  "exports": {
+    ".": {
+      "default": "./node/index.js",
+      "import": "./node/index.js"
+    },
+    "./client/react": {
+      "default": "./client/react/index.js",
+      "import": "./client/react/index.js"
+    },
+    "./client/react/DefaultLayout": {
+      "default": "./client/react/DefaultLayout.js",
+      "import": "./client/react/DefaultLayout.js"
+    },
+    "./package": "./package.json",
+    "./package.json": "./package.json"
+  },
+  "main": "node/index.js",
+  "types": "node/index.d.ts",
+  "scripts": {
+    "typecheck": "run-p typecheck:*",
+    "typecheck:client": "tsc --noEmit --incremental --project src/client",
+    "typecheck:node": "tsc --noEmit --incremental --project src/node",
+    "watch": "run-p watch:*",
+    "watch:client-es": "tsc --watch --incremental --project src/client",
+    "watch:node-cjs": "tsc --watch --incremental --project src/node",
+    "build": "run-p build:*",
+    "build:client-es": "tsc --incremental --project src/client && cp src/client/react/package.json client/react/",
+    "build:node-cjs": "tsc --incremental --project src/node",
+    "clean": "rimraf client node",
+    "lint": "eslint \"{src,test}/**/*.{js,ts,tsx}\"",
+    "lint:fix": "prettier --loglevel warn --write \"{src,test}/**/*.{ts,tsx}\" && eslint \"{src,test}/**/*.{ts,tsx}\" --quiet --fix",
+    "prepublishOnly": "npm run build",
+    "test": "run-s build test:unit lint",
+    "test:unit": "vitest --run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fastify/fastify-renderer.git"
+  },
+  "keywords": [
+    "fastify",
+    "auth",
+    "authentication"
+  ],
+  "contributors": [
+    "Harry Brundage <harry@harry.me>"
+  ],
+  "license": "MIT",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/MIT"
+    }
+  ],
+  "bugs": {
+    "url": "https://github.com/fastify/fastify-renderer/issues"
+  },
+  "engines": {
+    "node": ">= 18.0.0"
+  },
+  "dependencies": {
+    "@fastify/accepts": "^4.2.0",
+    "@fastify/middie": "^8.3.0",
+    "@fastify/static": "^6.11.2",
+    "@opentelemetry/api": "^1.6.0",
+    "@vitejs/plugin-react-refresh": "^1.3.6",
+    "fastify-plugin": "^4.5.1",
+    "http-errors": "^1.8.1",
+    "path-to-regexp": "^6.2.1",
+    "sanitize-filename": "^1.6.3",
+    "stream-template": "^0.0.10",
+    "vite": "^5.3.1",
+    "wouter": "^2.11.0"
+  },
+  "peerDependencies": {
+    "fastify": "^4.24.2",
+    "react": "experimental",
+    "react-dom": "experimental"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.3.95",
+    "@types/connect": "^3.4.35",
+    "@types/node": "^18.11.9",
+    "@types/react": "^17.0.43",
+    "@types/react-dom": "^17.0.11",
+    "@types/sanitize-filename": "^1.6.3",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "cheerio": "^1.0.0-rc.12",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-prettier": "^3.4.1",
+    "eslint-plugin-react": "^7.31.7",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "fastify": "^4.24.2",
+    "gitpkg": "^1.0.0-beta.2",
+    "vitest": "^0.34.6",
+    "npm-run-all": "^4.1.5",
+    "pino-pretty": "^8.1.0",
+    "prettier": "^2.7.1",
+    "prettier-plugin-organize-imports": "^2.3.4",
+    "react": "0.0.0-experimental-4ead6b530",
+    "react-dom": "0.0.0-experimental-4ead6b530",
+    "rimraf": "^3.0.2",
+    "typescript": "^5.2.2"
+  },
+  "files": [
+    "client",
+    "node",
+    "README.md",
+    "LICENSE"
+  ]
+}
