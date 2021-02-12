@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/require-await */
-import reactRefresh from '@vitejs/plugin-react-refresh'
-import * as errors from 'http-errors'
-import * as path from 'path'
+
+import errors from 'http-errors'
+import path from 'path'
 import fastifyAccepts from 'fastify-accepts'
 import 'middie'
 import { createServer, InlineConfig, ViteDevServer } from 'vite'
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify'
+import { FastifyInstance, FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
 import fp from 'fastify-plugin'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactRenderer } from './renderers/react/ReactRenderer'
 import './type-extensions' // necessary to make sure that the fastify types are augmented
-import { Renderer } from './renderers/Renderer'
+import { Render } from './renderers/Renderer'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -31,8 +31,8 @@ export const FastifyVite = fp<FastifyRendererOptions>(
     // todo: register middie if it hasn't been registered already, same way as fastify-helmet does with trying to use `.use` first, and if it doesn't work, registering middie then trying again and remove dependency
 
     let vite: ViteDevServer
-    let renderer: Renderer
-    const entrypoints: string[] = []
+    const renderer = new ReactRenderer(options)
+    const routes: RouteOptions[] = []
     const base = options.vite?.base || '/'
 
     fastify.decorate('vite', {
@@ -51,7 +51,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
       if (routeOptions.render) {
         const oldHandler = routeOptions.handler as ServerRenderer<any>
         const renderable = routeOptions.render
-        entrypoints.push(renderable)
+        routes.push(routeOptions)
 
         routeOptions.handler = async function (request, reply) {
           const props = await oldHandler.call(this, request, reply)
@@ -63,7 +63,8 @@ export const FastifyVite = fp<FastifyRendererOptions>(
               break
             case 'html':
               void reply.type('text/html')
-              await renderer.render(request, reply, renderable, props)
+              const render: Render<typeof props> = { request, reply, props, renderable }
+              await renderer.render(render)
               break
             default:
               await reply.type('text/plain').send('Content type not supported')
@@ -74,10 +75,16 @@ export const FastifyVite = fp<FastifyRendererOptions>(
 
       fastify.addHook('onReady', async () => {
         // register vite once all the routes have been defined
+        const entrypoints: Record<string, string> = {}
+        for (const route of routes) {
+          entrypoints[renderer.layout] = renderer.layout
+          entrypoints[route.render!] = route.render!
+        }
+
         const viteOptions: InlineConfig = {
           clearScreen: false,
           ...options.vite,
-          plugins: [...(options.vite?.plugins || []), reactRefresh()],
+          plugins: [...(options.vite?.plugins || []), ...renderer.vitePlugins()],
           server: {
             middlewareMode: true,
             ...options.vite?.server,
@@ -86,7 +93,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
             manifest: true,
             ...options.vite?.build,
             rollupOptions: {
-              input: Object.fromEntries(entrypoints.map((entrypoint) => [entrypoint, entrypoint])),
+              input: entrypoints,
               ...options.vite?.build?.rollupOptions,
             },
           },
@@ -97,7 +104,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
 
         fastify.use(vite.middlewares)
 
-        renderer = new ReactRenderer(options, vite)
+        await renderer.prepare(routes, vite)
       })
     })
   },

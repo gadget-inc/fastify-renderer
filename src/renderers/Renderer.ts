@@ -1,6 +1,17 @@
 import { FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
+import { Plugin, ViteDevServer } from 'vite'
 
+/** A unit of renderable work */
+export interface Render<Props> {
+  request: FastifyRequest
+  reply: FastifyReply
+  props: Props
+  renderable: string
+}
+
+/** An object that knows how to render */
 export interface Renderer {
-  render<Props>(request: FastifyRequest, reply: FastifyReply, renderable: any, props: Props): Promise<void>
-  registerRoute(routeOptions: RouteOptions): void
+  prepare(routes: RouteOptions[], vite: ViteDevServer): Promise<void>
+  render<Props>(render: Render<Props>): Promise<void>
+  vitePlugins(): Plugin[]
 }

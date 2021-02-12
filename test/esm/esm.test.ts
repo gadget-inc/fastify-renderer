@@ -1,5 +1,5 @@
 import { spawnSync } from 'child_process'
-import * as semver from 'semver'
+import semver from 'semver'
 import { join } from 'path'
 
 describe('Native ESM import', () => {

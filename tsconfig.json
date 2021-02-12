@@ -12,7 +12,7 @@
     "removeComments": true,
     "noUnusedLocals": true,
     "skipLibCheck": true,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "lib": ["esnext"],
     "rootDir": "./src"
   },
