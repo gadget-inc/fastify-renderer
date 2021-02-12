@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "declaration": true,
+    "target": "es2017",
+    "module": "commonjs",
+    "pretty": true,
+    "noEmitOnError": true,
+    "strict": true,
+    "jsx": "react",
+    "noImplicitAny": false,
+    "removeComments": true,
+    "noUnusedLocals": true,
+    "skipLibCheck": true,
+    "esModuleInterop": false,
+    "lib": ["esnext"],
+    "rootDir": "./src"
+  },
+  "include": ["src"]
+}
