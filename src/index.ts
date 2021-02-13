@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/require-await */
-
 import errors from 'http-errors'
 import path from 'path'
 import fastifyAccepts from 'fastify-accepts'
@@ -11,6 +10,9 @@ import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactRenderer } from './renderers/react/ReactRenderer'
 import './type-extensions' // necessary to make sure that the fastify types are augmented
 import { Render } from './renderers/Renderer'
+import { DefaultDocumentTemplate, Template } from './DocumentTemplate'
+import { unthunk } from './utils'
+import { ReactElement } from 'react'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -18,17 +20,40 @@ export type ServerRenderer<Props> = (
   reply: FastifyReply
 ) => Promise<Props>
 
+export interface FastifyRendererHook {
+  name?: string
+  scripts?: () => string
+  transform?: (app: ReactElement) => ReactElement
+}
+
 export interface FastifyRendererOptions {
+  renderer?: string
   vite?: InlineConfig
-  renderer: 'react'
   layout?: string
-  document?: string
+  document?: Template
+  hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
+}
+
+export interface ResolvedOptions {
+  renderer: 'react'
+  vite?: InlineConfig
+  layout: string
+  document: Template
+  hooks: FastifyRendererHook[]
 }
 
 export const FastifyVite = fp<FastifyRendererOptions>(
-  async (fastify, options) => {
+  async (fastify, incomingPptions) => {
     await fastify.register(fastifyAccepts)
     // todo: register middie if it hasn't been registered already, same way as fastify-helmet does with trying to use `.use` first, and if it doesn't work, registering middie then trying again and remove dependency
+
+    const options: ResolvedOptions = {
+      renderer: 'react',
+      vite: incomingPptions.vite,
+      layout: incomingPptions.layout || require.resolve('./renderers/react/DefaultLayout'),
+      document: incomingPptions.document || DefaultDocumentTemplate,
+      hooks: (incomingPptions.hooks || []).map(unthunk),
+    }
 
     let vite: ViteDevServer
     const renderer = new ReactRenderer(options)
@@ -77,7 +102,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
         // register vite once all the routes have been defined
         const entrypoints: Record<string, string> = {}
         for (const route of routes) {
-          entrypoints[renderer.layout] = renderer.layout
+          entrypoints[options.layout] = options.layout
           entrypoints[route.render!] = route.render!
         }
 
@@ -91,6 +116,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
           },
           build: {
             manifest: true,
+            ssrManifest: true,
             ...options.vite?.build,
             rollupOptions: {
               input: entrypoints,

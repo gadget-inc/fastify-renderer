@@ -1,34 +1,20 @@
+import { Readable } from 'stream'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { RouteOptions } from 'fastify'
-import { Readable } from 'stream'
 import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import { ViteDevServer } from 'vite'
-import { FastifyRendererOptions } from '../..'
+import { ResolvedOptions } from '../..'
 import { Render, Renderer } from '../Renderer'
-import { RenderBus } from './RenderBus'
-
-const TEMPLATE_SIGIL = `<!-- fastify-app-html -->`
-
-export enum ReactRenderMode {
-  Streaming = 'streaming',
-  FullPass = 'full-pass',
-}
+import { DefaultDocumentTemplate } from '../../DocumentTemplate'
 
 export class ReactRenderer implements Renderer {
-  layout: string
-  document: string
-  mode: ReactRenderMode
   vite!: ViteDevServer
   routes!: RouteOptions[]
   tmpdir!: string
   entrypoints: Record<string, string> = {}
 
-  constructor(readonly options: FastifyRendererOptions) {
-    this.layout = options.layout || require.resolve('./DefaultLayout')
-    this.document = options.document || require.resolve('./DefaultDocument')
-    this.mode = ReactRenderMode.Streaming
-  }
+  constructor(readonly options: ResolvedOptions) {}
 
   vitePlugins() {
     return [reactRefresh(), this.entrypointVitePlugin()]
@@ -40,47 +26,29 @@ export class ReactRenderer implements Renderer {
   }
 
   async render<Props>(render: Render<Props>) {
-    const template = await this.vite.transformIndexHtml(
-      render.request.url,
-      `
-    <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="fstrapp">${TEMPLATE_SIGIL}</div>
-    <script type="module" src="/@fstr/${render.renderable}"></script>
-    <script>window.__FSVT_PROPS=${JSON.stringify(render.props)};</script>
-  </body>
-</html>`
-    )
-
     try {
-      const [pageModule, layoutModule] = await Promise.all([
+      const [entrypointModule, layoutModule] = await Promise.all([
         this.vite.ssrLoadModule(render.renderable),
-        this.vite.ssrLoadModule(this.layout),
+        this.vite.ssrLoadModule(this.options.layout),
       ])
 
+      console.warn(layoutModule)
       const Layout = layoutModule.default as React.FunctionComponent
-      const Page = pageModule.default as React.FunctionComponent<Props>
-      const bus = new RenderBus()
+      const Entrypoint = entrypointModule.default as React.FunctionComponent<Props>
 
-      const app = (
-        <RenderBus.context.Provider value={bus}>
-          <Layout>
-            <Page {...render.props} />
-          </Layout>
-        </RenderBus.context.Provider>
+      let app = (
+        <Layout>
+          <Entrypoint {...render.props} />
+        </Layout>
       )
 
-      if (this.mode == ReactRenderMode.Streaming) {
-        await this.streamingRender(template, app, render)
-      } else {
-        await this.fullPassRender(template, app, render)
+      for (const hook of this.options.hooks) {
+        if (hook.transform) {
+          app = hook.transform(app)
+        }
       }
+
+      await render.reply.send(this.renderTemplate(app, render))
     } catch (error) {
       this.vite.ssrFixStacktrace(error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
@@ -88,33 +56,39 @@ export class ReactRenderer implements Renderer {
     }
   }
 
-  private async fullPassRender<Props>(template: string, app: JSX.Element, render: Render<Props>) {
-    const result = ReactDOMServer.renderToString(app)
+  private renderTemplate<Props>(app: JSX.Element, render: Render<Props>) {
+    const scripts = new Readable()
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    scripts._read = () => {}
 
-    await render.reply.send(template.replace(TEMPLATE_SIGIL, result))
+    // push the script for the react-refresh runtime that vite's plugin normally would
+    // push the props for the entrypoint to use when hydrating client side
+    scripts.push(`
+      <script type="module">
+        import RefreshRuntime from "/@react-refresh"
+        RefreshRuntime.injectIntoGlobalHook(window)
+        window.$RefreshReg$ = () => {}
+        window.$RefreshSig$ = () => (type) => type
+        window.__vite_plugin_react_preamble_installed__ = true
+      </script>
+      <script type="module">window.__FSVT_PROPS=${JSON.stringify(render.props)};</script>
+      <script type="module" src="/@fstr/${render.renderable}"></script>
+    `)
+
+    const content = ReactDOMServer.renderToNodeStream(app)
+
+    content.on('end', () => {
+      // when we're done rendering the content, run any hooks that might want to push more content after the content
+      for (const hook of this.options.hooks) {
+        if (hook.scripts) {
+          scripts.push(hook.scripts())
+        }
+      }
+      scripts.push(null)
+    })
+
+    return DefaultDocumentTemplate({ content, scripts, props: render.props })
   }
-
-  private async streamingRender<Props>(template: string, app: JSX.Element, render: Render<Props>) {
-    await render.reply.send(Readable.from(this.generateRenderStream(template, app, render)))
-  }
-
-  private generateRenderStream = async function* <Props>(template: string, app: JSX.Element, render: Render<Props>) {
-    const [preamble, postamble] = template.split(TEMPLATE_SIGIL)
-    yield preamble
-    for await (const chunk of ReactDOMServer.renderToNodeStream(app)) {
-      yield chunk
-    }
-    yield postamble
-  }
-
-  // private unusedPropsFillerThing<Props>(str: string, render: Render<Props>) {
-  //   return str.replace(
-  //     `<!-- fastify-scripts -->`,
-  //     `
-  //       <script>window.__FSVT_PROPS=${JSON.stringify(render.props)};</script>
-  //     `
-  //   )
-  // }
 
   /**
    * Produces a bit of code we pass through Vite to import the specific entrypoint for a route
@@ -131,9 +105,10 @@ export class ReactRenderer implements Renderer {
       load: (id) => {
         if (id.startsWith('/@fstr/')) {
           return `
+          import 'vite/dynamic-import-polyfill'
           import React from 'react'
           import ReactDOM from 'react-dom'
-          import Layout from ${JSON.stringify(this.layout)}
+          import Layout from ${JSON.stringify(this.options.layout)}
           import Entrypoint from ${JSON.stringify(id.replace('/@fstr/', '/@fs/'))}
 
           ReactDOM.hydrate(
