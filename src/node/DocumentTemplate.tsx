@@ -19,7 +19,7 @@ export const DefaultDocumentTemplate: Template = (data: TemplateData<any>) => te
     <title>${data.props.title || 'Fastify Renderer App'}</title>
   </head>
   <body>
-    <div id="fstrapp" style="display: 'contents'">${data.content}</div>
+    <div id="fstrapp" style="width: 100%; height: 100%;">${data.content}</div>
     ${data.scripts}
   </body>
 </html>

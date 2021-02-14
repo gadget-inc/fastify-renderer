@@ -39,3 +39,5 @@ jspm_packages/
 dist
 
 BUILD_SHA
+
+tsconfig.tsbuildinfo

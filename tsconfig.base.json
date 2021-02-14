@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2018",
+    "moduleResolution": "node",
+    "strict": true,
+    "declaration": true,
+    "noUnusedLocals": true,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "noImplicitAny": false,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "sourceMap": true
+  }
+}

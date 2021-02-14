@@ -4,43 +4,14 @@ import path from 'path'
 import fastifyAccepts from 'fastify-accepts'
 import 'middie'
 import { createServer, InlineConfig, ViteDevServer } from 'vite'
-import { FastifyInstance, FastifyReply, FastifyRequest, RouteOptions } from 'fastify'
+import { RouteOptions } from 'fastify'
 import fp from 'fastify-plugin'
-import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactRenderer } from './renderers/react/ReactRenderer'
-import './type-extensions' // necessary to make sure that the fastify types are augmented
+import './types' // necessary to make sure that the fastify types are augmented
 import { Render } from './renderers/Renderer'
-import { DefaultDocumentTemplate, Template } from './DocumentTemplate'
+import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { unthunk } from './utils'
-import { ReactElement } from 'react'
-
-export type ServerRenderer<Props> = (
-  this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
-  request: FastifyRequest,
-  reply: FastifyReply
-) => Promise<Props>
-
-export interface FastifyRendererHook {
-  name?: string
-  scripts?: () => string
-  transform?: (app: ReactElement) => ReactElement
-}
-
-export interface FastifyRendererOptions {
-  renderer?: string
-  vite?: InlineConfig
-  layout?: string
-  document?: Template
-  hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
-}
-
-export interface ResolvedOptions {
-  renderer: 'react'
-  vite?: InlineConfig
-  layout: string
-  document: Template
-  hooks: FastifyRendererHook[]
-}
+import { FastifyRendererOptions, ResolvedOptions, ServerRenderer } from './types'
 
 export const FastifyVite = fp<FastifyRendererOptions>(
   async (fastify, incomingPptions) => {
@@ -67,7 +38,8 @@ export const FastifyVite = fp<FastifyRendererOptions>(
     })
 
     // we need to register a wildcard route for all the files that vite might serve so fastify will run the middleware chain and vite will do the serving. 404 in this request handler because we expect vite to handle any real requests
-    fastify.get(`${path.join(base, '*')}`, async () => {
+    fastify.get(`${path.join(base, '*')}`, async (request) => {
+      request.log.warn({ url: request.url }, 'fastify-renderer file serving miss')
       throw new errors.NotFound()
     })
 

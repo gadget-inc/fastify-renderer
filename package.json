@@ -2,15 +2,17 @@
   "name": "fastify-renderer",
   "version": "0.1.0",
   "description": "Simple, high performance client side app renderer for Fastify.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/node/index.js",
+  "types": "dist/node/index.d.ts",
   "scripts": {
-    "build": "rimraf ./dist && mkdir dist && tsc --outDir dist",
-    "watch": "rimraf ./dist && mkdir dist && tsc --watch --outDir dist",
+    "watch": "run-p watch:*",
+    "watch:client": "tsc --watch --incremental --project src/client",
+    "watch:node": "tsc --watch --incremental --project src/node",
+    "build": "rimraf ./dist && mkdir dist && tsc --incremental --project src/client && tsc --incremental --project src/node",
     "lint": "eslint \"*/**/*.{js,ts,tsx}\"",
     "lint:fix": "prettier --loglevel warn --write \"src/**/*.{ts,tsx}\" && eslint \"*/**/*.{js,ts,tsx}\" --quiet --fix",
     "prepublishOnly": "npm run build",
-    "test": "npm run build && npm run test:unit && npm run lint",
+    "test": "run-s build test:unit lint",
     "test:unit": "jest"
   },
   "repository": {
@@ -43,11 +45,13 @@
     "fastify-accepts": "^2.0.1",
     "fastify-express": "^0.3.2",
     "fastify-plugin": "^3.0.0",
+    "find-my-way": "^4.0.0",
     "http-errors": "^1.8.0",
     "middie": "^5.2.0",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
-    "vite": "^2.0.0-beta.69"
+    "vite": "^2.0.0-beta.69",
+    "wouter": "^2.7.3"
   },
   "peerDependencies": {
     "fastify": "^3.0.3",
@@ -68,6 +72,7 @@
     "eslint-plugin-prettier": "^3.3.0",
     "fastify": "^3.9.2",
     "jest": "^26.1.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^2.0.5",
     "react": "0.0.0-experimental-4ead6b530",
     "react-dom": "0.0.0-experimental-4ead6b530",
