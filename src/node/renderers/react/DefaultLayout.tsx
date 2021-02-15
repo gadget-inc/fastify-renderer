@@ -1,5 +1,5 @@
-import React from 'react'
+import React, { Suspense } from 'react'
 
 export const DefaultLayout = (props: { children: React.ReactNode }) => {
-  return props.children
+  return <Suspense fallback={'Loading...'}>{props.children}</Suspense>
 }
