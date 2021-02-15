@@ -94,6 +94,9 @@ export const FastifyVite = fp<FastifyRendererOptions>(
               input: entrypoints,
               ...options.vite?.build?.rollupOptions,
             },
+            ssr: {
+              external: ['wouter/use-location'],
+            } as any,
           },
         }
 

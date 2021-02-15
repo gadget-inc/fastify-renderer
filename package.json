@@ -55,8 +55,8 @@
   },
   "peerDependencies": {
     "fastify": "^3.0.3",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1"
+    "react": "experimental",
+    "react-dom": "experimental"
   },
   "devDependencies": {
     "@types/connect": "^3.4.34",
