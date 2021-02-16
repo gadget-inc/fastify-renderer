@@ -51,7 +51,7 @@
     "middie": "^5.2.0",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
-    "vite": "^2.0.0-beta.69",
+    "vite": "^2.0.0",
     "wouter": "^2.7.3"
   },
   "peerDependencies": {
