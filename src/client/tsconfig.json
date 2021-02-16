@@ -5,6 +5,7 @@
     "outDir": "../../dist/client",
     "module": "esnext",
     "types": ["react/experimental", "react-dom/experimental"],
-    "lib": ["ESNext", "DOM"]
+    "lib": ["ESNext", "DOM"],
+    "inlineSourceMap": true
   }
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Switch, Route, useLocation, Router } from 'wouter'
 import { usePromise } from './fetcher'
-import { useTransitionLocation } from './locationHook'
 
 export const Root = <BootProps,>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
@@ -20,9 +19,9 @@ export const Root = <BootProps,>(props: {
         {(params) => {
           const [location] = useLocation()
 
-          const payload = usePromise(location, async () =>
+          const payload = usePromise(props.basePath + location, async () =>
             (
-              await fetch(location, {
+              await fetch(props.basePath + location, {
                 method: 'GET',
                 headers: {
                   Accept: 'application/json',
@@ -47,7 +46,7 @@ export const Root = <BootProps,>(props: {
   }
 
   return (
-    <Router hook={useTransitionLocation} base={props.basePath}>
+    <Router base={props.basePath}>
       <props.Layout>
         <Switch>{routes}</Switch>
       </props.Layout>

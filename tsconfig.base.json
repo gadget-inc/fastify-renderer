@@ -9,7 +9,6 @@
     "jsx": "react",
     "noImplicitAny": false,
     "skipLibCheck": true,
-    "isolatedModules": true,
-    "sourceMap": true
+    "isolatedModules": true
   }
 }

@@ -32,15 +32,39 @@ export interface FastifyRendererOptions {
   vite?: InlineConfig
   layout?: string
   document?: Template
+  devMode?: boolean
+  outDir?: string
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
 }
 
 export interface ResolvedOptions {
   renderer: 'react'
+  devMode: boolean
   vite?: InlineConfig
+  base: string
+  outDir: string
   layout: string
   document: Template
   hooks: FastifyRendererHook[]
+  clientManifest?: ViteClientManifest
+  serverManifest?: ViteServerManifest
+}
+
+export interface ViteClientManifest {
+  [file: string]: {
+    src?: string
+    file: string
+    css?: string[]
+    assets?: string[]
+    isEntry?: boolean
+    isDynamicEntry?: boolean
+    imports?: string[]
+    dynamicImports?: string[]
+  }
+}
+
+export interface ViteServerManifest {
+  [file: string]: string[]
 }
 
 declare module 'fastify' {

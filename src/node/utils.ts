@@ -5,3 +5,26 @@ export const unthunk = <T extends any, Args extends any[]>(value: T | ((...args:
     return value
   }
 }
+
+const longestCommonPrefix = (...input: string[]) => {
+  const strings = input.concat().sort()
+  const shortest = strings[0]
+  const longest = strings[strings.length - 1]
+  const shortestLength = shortest.length
+  let i = 0
+
+  while (i < shortestLength && shortest.charAt(i) === longest.charAt(i)) i++
+  return shortest.substring(0, i)
+}
+
+const cwd = process.cwd()
+
+export const mapFilepathToEntrypointName = (filepath: string) => {
+  const prefix = longestCommonPrefix(cwd, filepath)
+  filepath = filepath.slice(prefix.length)
+  return filepath.replace(/\//g, '~')
+}
+
+export const escapeRegex = (string: string) => {
+  return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+}

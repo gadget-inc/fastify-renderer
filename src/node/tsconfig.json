@@ -5,6 +5,7 @@
     "target": "ES2019",
     "outDir": "../../dist/node",
     "module": "commonjs",
-    "lib": ["ESNext"]
+    "lib": ["ESNext"],
+    "sourceMap": true
   }
 }

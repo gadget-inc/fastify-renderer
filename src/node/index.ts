@@ -1,35 +1,63 @@
 /* eslint-disable @typescript-eslint/require-await */
-import errors from 'http-errors'
+import { promises as fs } from 'fs'
+import fastifyStatic from 'fastify-static'
 import path from 'path'
 import fastifyAccepts from 'fastify-accepts'
 import 'middie'
-import { createServer, InlineConfig, ViteDevServer } from 'vite'
-import { RouteOptions } from 'fastify'
+import { createServer, resolveConfig, ViteDevServer, build as viteBuild, ResolvedConfig, InlineConfig } from 'vite'
+import { FastifyInstance, RouteOptions } from 'fastify'
 import fp from 'fastify-plugin'
 import { ReactRenderer } from './renderers/react/ReactRenderer'
 import './types' // necessary to make sure that the fastify types are augmented
-import { Render } from './renderers/Renderer'
+import { Render, Renderer } from './renderers/Renderer'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
-import { unthunk } from './utils'
-import { FastifyRendererOptions, ResolvedOptions, ServerRenderer } from './types'
+import { mapFilepathToEntrypointName, unthunk } from './utils'
+import {
+  FastifyRendererOptions,
+  ResolvedOptions,
+  ServerRenderer,
+  ViteClientManifest,
+  ViteServerManifest,
+} from './types'
 
-export const FastifyVite = fp<FastifyRendererOptions>(
-  async (fastify, incomingPptions) => {
+export const instances: {
+  fastify: FastifyInstance
+  routes: RouteOptions[]
+  options: ResolvedOptions
+  renderer: Renderer
+  vite: InlineConfig
+}[] = []
+
+const FastifyVite = fp<FastifyRendererOptions>(
+  async (fastify, incomingOptions) => {
     await fastify.register(fastifyAccepts)
     // todo: register middie if it hasn't been registered already, same way as fastify-helmet does with trying to use `.use` first, and if it doesn't work, registering middie then trying again and remove dependency
 
+    const devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
+    const outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
+
+    let clientManifest: ViteClientManifest | undefined, serverManifest: ViteServerManifest | undefined
+    if (!devMode) {
+      clientManifest = JSON.parse(await fs.readFile(path.join(outDir, 'client', 'manifest.json'), 'utf-8'))
+      serverManifest = JSON.parse(await fs.readFile(path.join(outDir, 'client', 'ssr-manifest.json'), 'utf-8'))
+    }
+
     const options: ResolvedOptions = {
       renderer: 'react',
-      vite: incomingPptions.vite,
-      layout: incomingPptions.layout || require.resolve('./renderers/react/DefaultLayout'),
-      document: incomingPptions.document || DefaultDocumentTemplate,
-      hooks: (incomingPptions.hooks || []).map(unthunk),
+      devMode,
+      outDir,
+      vite: incomingOptions.vite,
+      layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
+      document: incomingOptions.document || DefaultDocumentTemplate,
+      hooks: (incomingOptions.hooks || []).map(unthunk),
+      base: incomingOptions.vite?.base || '/',
+      clientManifest,
+      serverManifest,
     }
 
     let vite: ViteDevServer
     const renderer = new ReactRenderer(options)
     const routes: RouteOptions[] = []
-    const base = options.vite?.base || '/'
 
     fastify.decorate('vite', {
       getter() {
@@ -38,10 +66,7 @@ export const FastifyVite = fp<FastifyRendererOptions>(
     })
 
     // we need to register a wildcard route for all the files that vite might serve so fastify will run the middleware chain and vite will do the serving. 404 in this request handler because we expect vite to handle any real requests
-    fastify.get(`${path.join(base, '*')}`, async (request) => {
-      request.log.warn({ url: request.url }, 'fastify-renderer file serving miss')
-      throw new errors.NotFound()
-    })
+    void fastify.register(fastifyStatic, { root: path.join(outDir, 'client'), prefix: options.base })
 
     // Wrap routes that have the `vite` option set to invoke the rendererer with the result of the route handler as the props
     fastify.addHook('onRoute', (routeOptions) => {
@@ -69,44 +94,38 @@ export const FastifyVite = fp<FastifyRendererOptions>(
           }
         }
       }
+    })
 
-      fastify.addHook('onReady', async () => {
-        // register vite once all the routes have been defined
-        const entrypoints: Record<string, string> = {}
-        for (const route of routes) {
-          entrypoints[options.layout] = options.layout
-          entrypoints[route.render!] = route.render!
-        }
+    // register vite once all the routes have been defined
+    fastify.addHook('onReady', async () => {
+      const viteOptions: InlineConfig = {
+        clearScreen: false,
+        ...options.vite,
+        plugins: [...(options.vite?.plugins || []), ...renderer.vitePlugins()],
+        server: {
+          middlewareMode: true,
+          ...options.vite?.server,
+        },
+        build: {
+          ...options.vite?.build,
+        },
+      }
 
-        const viteOptions: InlineConfig = {
-          clearScreen: false,
-          ...options.vite,
-          plugins: [...(options.vite?.plugins || []), ...renderer.vitePlugins()],
-          server: {
-            middlewareMode: true,
-            ...options.vite?.server,
-          },
-          build: {
-            manifest: true,
-            ssrManifest: true,
-            ...options.vite?.build,
-            rollupOptions: {
-              input: entrypoints,
-              ...options.vite?.build?.rollupOptions,
-            },
-            ssr: {
-              external: ['wouter/use-location'],
-            } as any,
-          },
-        }
+      let config: ResolvedConfig
+      let devServer: ViteDevServer | undefined = undefined
 
-        fastify.log.debug('booting vite server')
-        vite = await createServer(viteOptions)
+      if (options.devMode) {
+        fastify.log.debug('booting vite dev server')
+        devServer = await createServer(viteOptions)
+        fastify.use(devServer.middlewares)
+        config = devServer.config
+      } else {
+        config = await resolveConfig(viteOptions, 'serve')
+      }
 
-        fastify.use(vite.middlewares)
+      instances.push({ fastify, routes, options, renderer, vite: viteOptions })
 
-        await renderer.prepare(routes, vite)
-      })
+      await renderer.prepare(routes, config, devServer)
     })
   },
   {
@@ -116,6 +135,52 @@ export const FastifyVite = fp<FastifyRendererOptions>(
   }
 )
 
-// Workaround for importing fastify-renderer in native ESM context
-module.exports = exports = FastifyVite
 export default FastifyVite
+
+export const build = async () => {
+  if (instances.length == 0) {
+    throw new Error('No instances of fastify-renderer registered to build, have all the plugins been loaded?')
+  }
+
+  const total = instances.length
+  for (const [index, { fastify, routes, options, renderer, vite }] of Object.entries(instances)) {
+    fastify.log.info(`Building client side assets for fastify-renderer (${index}/${total})`)
+    const clientEntrypoints: Record<string, string> = {}
+    const serverEntrypoints: Record<string, string> = {}
+    for (const route of routes) {
+      const entrypointName = mapFilepathToEntrypointName(route.render!)
+      clientEntrypoints[entrypointName] = renderer.buildEntrypointModuleURL(route.render!)
+      serverEntrypoints[entrypointName] = route.render!
+
+      serverEntrypoints[mapFilepathToEntrypointName(options.layout)] = options.layout
+    }
+
+    await viteBuild({
+      ...vite,
+      build: {
+        ...vite.build,
+        outDir: path.join(options.outDir, 'client'),
+        ssrManifest: true,
+        manifest: true,
+        rollupOptions: {
+          input: clientEntrypoints,
+          ...vite?.build?.rollupOptions,
+        },
+      },
+    })
+
+    fastify.log.info(`Building server side side assets for fastify-renderer (${index}/${total})`)
+    await viteBuild({
+      ...vite,
+      build: {
+        ...vite.build,
+        rollupOptions: {
+          input: serverEntrypoints,
+          ...vite?.build?.rollupOptions,
+        },
+        outDir: path.join(options.outDir, 'server'),
+        ssr: true,
+      },
+    })
+  }
+}
