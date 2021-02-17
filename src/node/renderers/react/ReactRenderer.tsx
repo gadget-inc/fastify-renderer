@@ -1,7 +1,6 @@
 import path from 'path'
 import { Router } from 'wouter'
 import staticLocationHook from 'wouter/static-location'
-import { Readable } from 'stream'
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { RouteOptions } from 'fastify'
 import React from 'react'
@@ -10,10 +9,15 @@ import { Plugin, ViteDevServer, ResolvedConfig } from 'vite'
 import { ResolvedOptions } from '../../types'
 import { Render, Renderer } from '../Renderer'
 import { DefaultDocumentTemplate } from '../../DocumentTemplate'
-import { escapeRegex, mapFilepathToEntrypointName } from '../../utils'
+import { escapeRegex, mapFilepathToEntrypointName, newStringStream } from '../../utils'
 import { normalizePath } from 'vite/dist/node'
 
 const ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
+
+export interface ReactRendererOptions {
+  type: 'react'
+  mode: 'sync' | 'streaming'
+}
 
 export class ReactRenderer implements Renderer {
   static ROUTE_TABLE_ID = '/@fstr!route-table.js'
@@ -64,7 +68,11 @@ export class ReactRenderer implements Renderer {
         }
       }
 
-      await render.reply.send(this.renderTemplate(app, render))
+      if (this.options.renderer.mode == 'streaming') {
+        await render.reply.send(this.renderStreamingTemplate(app, render))
+      } else {
+        await render.reply.send(this.renderSynchronousTemplate(app, render))
+      }
     } catch (error) {
       this.devServer?.ssrFixStacktrace(error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
@@ -94,32 +102,17 @@ export class ReactRenderer implements Renderer {
     return path.join(ENTRYPOINT_PREFIX, id, 'hydrate.jsx')
   }
 
-  private renderTemplate<Props>(app: JSX.Element, render: Render<Props>) {
-    const scriptsStream = new Readable()
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    scriptsStream._read = () => {}
+  private renderStreamingTemplate<Props>(app: JSX.Element, render: Render<Props>) {
+    const scriptsStream = newStringStream()
+    const headsStream = newStringStream()
 
     // push the script for the react-refresh runtime that vite's plugin normally would
     if (this.options.devMode) {
-      scriptsStream.push(`
-      <script type="module">
-        import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
-        RefreshRuntime.injectIntoGlobalHook(window)
-        window.$RefreshReg$ = () => {}
-        window.$RefreshSig$ = () => (type) => type
-        window.__vite_plugin_react_preamble_installed__ = true
-      </script>`)
+      scriptsStream.push(this.reactRefreshScriptTag())
     }
 
     // push the props for the entrypoint to use when hydrating client side
-    scriptsStream.push(`
-      <script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>
-      <script type="module" src="${path.join(
-        this.options.base,
-        this.clientEntrypointModuleURL(render.renderable)
-      )}"></script>
-    `)
-
+    scriptsStream.push(this.entrypointScriptTags(render))
     const contentStream = ReactDOMServer.renderToNodeStream(app)
 
     contentStream.on('end', () => {
@@ -128,11 +121,49 @@ export class ReactRenderer implements Renderer {
         if (hook.scripts) {
           scriptsStream.push(hook.scripts())
         }
+        if (hook.heads) {
+          headsStream.push(hook.heads())
+        }
       }
       scriptsStream.push(null)
+      headsStream.push(null)
     })
 
-    return DefaultDocumentTemplate({ content: contentStream, scripts: scriptsStream, props: render.props })
+    return DefaultDocumentTemplate({
+      head: headsStream,
+      content: contentStream,
+      scripts: scriptsStream,
+      props: render.props,
+    })
+  }
+
+  private renderSynchronousTemplate<Props>(app: JSX.Element, render: Render<Props>) {
+    const scripts: string[] = []
+    const heads: string[] = []
+    // push the script for the react-refresh runtime that vite's plugin normally would
+    if (this.options.devMode) {
+      scripts.push(this.reactRefreshScriptTag())
+    }
+    scripts.push(this.entrypointScriptTags(render))
+
+    const content = ReactDOMServer.renderToString(app)
+
+    // when we're done rendering the content, run any hooks that might want to push more content after the content
+    for (const hook of this.options.hooks) {
+      if (hook.scripts) {
+        scripts.push(hook.scripts())
+      }
+      if (hook.heads) {
+        heads.push(hook.heads())
+      }
+    }
+
+    return DefaultDocumentTemplate({
+      head: heads.join('\n'),
+      content,
+      scripts: scripts.join('\n'),
+      props: render.props,
+    })
   }
 
   /** Given a module ID, load it for use within this node process on the server */
@@ -229,5 +260,24 @@ export const routes = {
 
   private stripBasePath(path: string) {
     return path.replace(this.basePathRegexp, '/')
+  }
+
+  private reactRefreshScriptTag() {
+    return `<script type="module">
+      import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+      window.__vite_plugin_react_preamble_installed__ = true
+    </script>`
+  }
+
+  private entrypointScriptTags(render: Render<any>) {
+    return `
+    <script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>
+    <script type="module" src="${path.join(
+      this.options.base,
+      this.clientEntrypointModuleURL(render.renderable)
+    )}"></script>`
   }
 }

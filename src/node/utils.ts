@@ -1,3 +1,5 @@
+import { Readable } from 'stream'
+
 export const unthunk = <T extends any, Args extends any[]>(value: T | ((...args: Args) => T), ...args: Args): T => {
   if (value instanceof Function) {
     return (value as any)(...args)
@@ -27,4 +29,11 @@ export const mapFilepathToEntrypointName = (filepath: string) => {
 
 export const escapeRegex = (string: string) => {
   return string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+}
+
+export const newStringStream = () => {
+  const stream = new Readable()
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  stream._read = () => {}
+  return stream
 }

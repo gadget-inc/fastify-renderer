@@ -14,6 +14,7 @@ import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
 import { InlineConfig, ViteDevServer } from 'vite'
 import { Template } from './DocumentTemplate'
+import { ReactRendererOptions } from './renderers/react/ReactRenderer'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -24,11 +25,12 @@ export type ServerRenderer<Props> = (
 export interface FastifyRendererHook {
   name?: string
   scripts?: () => string
+  heads?: () => string
   transform?: (app: ReactElement) => ReactElement
 }
 
 export interface FastifyRendererOptions {
-  renderer?: string
+  renderer?: ReactRendererOptions
   vite?: InlineConfig
   layout?: string
   document?: Template
@@ -38,7 +40,7 @@ export interface FastifyRendererOptions {
 }
 
 export interface ResolvedOptions {
-  renderer: 'react'
+  renderer: ReactRendererOptions
   devMode: boolean
   vite?: InlineConfig
   base: string

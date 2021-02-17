@@ -43,7 +43,7 @@ const FastifyVite = fp<FastifyRendererOptions>(
     }
 
     const options: ResolvedOptions = {
-      renderer: 'react',
+      renderer: incomingOptions.renderer || { type: 'react', mode: 'streaming' },
       devMode,
       outDir,
       vite: incomingOptions.vite,

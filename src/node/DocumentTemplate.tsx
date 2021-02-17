@@ -2,8 +2,9 @@ import template from 'stream-template'
 
 /** Data passed to the template function by the renderer */
 export interface TemplateData<Props> {
-  scripts: NodeJS.ReadableStream
-  content: NodeJS.ReadableStream
+  head: string | NodeJS.ReadableStream
+  scripts: string | NodeJS.ReadableStream
+  content: string | NodeJS.ReadableStream
   props: Props
 }
 
@@ -17,9 +18,10 @@ export const DefaultDocumentTemplate: Template = (data: TemplateData<any>) => te
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${data.props.title || 'Fastify Renderer App'}</title>
+    ${data.head}
   </head>
   <body>
-    <div id="fstrapp" style="width: 100%; height: 100%;">${data.content}</div>
+    <div id="fstrapp">${data.content}</div>
     ${data.scripts}
   </body>
 </html>
