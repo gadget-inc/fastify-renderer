@@ -3,9 +3,24 @@ import { Switch, Route, useLocation, Router } from 'wouter'
 import { usePromise } from './fetcher'
 import { useTransitionLocation } from './locationHook'
 
+export interface LayoutProps {
+  isNavigating: boolean
+  children: React.ReactNode
+}
+
+const RouteTable = (props: { Layout: React.FunctionComponent<LayoutProps>; routes: JSX.Element[] }) => {
+  const isNavigating = (useLocation() as any)[2] as boolean // we hack in a third return value from our custom location hook to get at the transition current state
+
+  return (
+    <props.Layout isNavigating={isNavigating}>
+      <Switch>{props.routes}</Switch>
+    </props.Layout>
+  )
+}
+
 export const Root = <BootProps,>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
-  Layout: React.FunctionComponent
+  Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps
   basePath: string
   routes: Record<string, React.FunctionComponent<any>>
@@ -20,7 +35,7 @@ export const Root = <BootProps,>(props: {
         {(params) => {
           const [location] = useLocation()
 
-          const payload = usePromise(props.basePath + location, async () =>
+          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + location, async () =>
             (
               await fetch(props.basePath + location, {
                 method: 'GET',
@@ -32,7 +47,7 @@ export const Root = <BootProps,>(props: {
             ).json()
           )
 
-          return <Component params={params} {...(payload as any).props} />
+          return <Component params={params} {...payload.props} />
         }}
       </Route>
     )),
@@ -48,9 +63,7 @@ export const Root = <BootProps,>(props: {
 
   return (
     <Router base={props.basePath} hook={useTransitionLocation as any}>
-      <props.Layout>
-        <Switch>{routes}</Switch>
-      </props.Layout>
+      <RouteTable routes={routes} Layout={props.Layout} />
     </Router>
   )
 }
