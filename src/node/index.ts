@@ -78,7 +78,7 @@ const FastifyVite = fp<FastifyRendererOptions>(
         routeOptions.handler = async function (request, reply) {
           const props = await oldHandler.call(this, request, reply)
 
-          request.log.info({ headers: request.headers }, 'render')
+          void reply.header('Vary', 'Accept')
           switch (request.accepts().type(['html', 'json'])) {
             case 'json':
               await reply.type('application/json').send({ props })
