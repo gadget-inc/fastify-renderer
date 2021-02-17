@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Switch, Route, useLocation, Router } from 'wouter'
 import { usePromise } from './fetcher'
+import { useTransitionLocation } from './locationHook'
 
 export const Root = <BootProps,>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
@@ -46,7 +47,7 @@ export const Root = <BootProps,>(props: {
   }
 
   return (
-    <Router base={props.basePath}>
+    <Router base={props.basePath} hook={useTransitionLocation as any}>
       <props.Layout>
         <Switch>{routes}</Switch>
       </props.Layout>
