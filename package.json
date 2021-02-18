@@ -2,13 +2,31 @@
   "name": "fastify-renderer",
   "version": "0.1.0",
   "description": "Simple, high performance client side app renderer for Fastify.",
-  "main": "node/index.js",
-  "types": "node/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "require": "./node/cjs/index.js",
+      "default": "./node/es/index.js"
+    },
+    "./client/react": {
+      "require": "./client/cjs/react/index.js",
+      "default": "./client/es/react/index.js"
+    }
+  },
+  "main": "node/cjs/index.js",
+  "module": "node/es/index.js",
+  "types": "node/cjs/index.d.ts",
   "scripts": {
     "watch": "run-p watch:*",
-    "watch:client": "tsc --watch --incremental --project src/client",
-    "watch:node": "tsc --watch --incremental --project src/node",
-    "build": "rimraf client node && tsc --incremental --project src/client && tsc --incremental --project src/node",
+    "watch:client-es": "tsc --watch --incremental --project src/client",
+    "watch:client-cjs": "tsc --watch --incremental --project src/client/tsconfig.cjs.json",
+    "watch:node-es": "tsc --watch --incremental --project src/node",
+    "watch:node-cjs": "tsc --watch --incremental --project src/node/tsconfig.cjs.json",
+    "build": "rimraf client node && run-p build:*",
+    "build:client-es": "tsc --incremental --project src/client",
+    "build:client-cjs": "tsc --incremental --project src/client/tsconfig.cjs.json",
+    "build:node-es": "tsc --incremental --project src/node",
+    "build:node-cjs": "tsc --incremental --project src/node/tsconfig.cjs.json",
     "lint": "eslint \"*/**/*.{js,ts,tsx}\"",
     "lint:fix": "prettier --loglevel warn --write \"src/**/*.{ts,tsx}\" && eslint \"*/**/*.{ts,tsx}\" --quiet --fix",
     "prepublishOnly": "npm run build",
