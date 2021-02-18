@@ -3,6 +3,7 @@ import { FastifyInstance, RouteOptions } from 'fastify'
 import fastifyAccepts from 'fastify-accepts'
 import fp from 'fastify-plugin'
 import fastifyStatic from 'fastify-static'
+import { promises as fs } from 'fs'
 import 'middie'
 import path from 'path'
 import { build as viteBuild, createServer, InlineConfig, resolveConfig, ResolvedConfig, ViteDevServer } from 'vite'
@@ -35,8 +36,10 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     })
 
     // we need to register a wildcard route for all the files that vite might serve so fastify will run the middleware chain and vite will do the serving. 404 in this request handler because we expect vite to handle any real requests
+    const staticPath = path.join(plugin.outDir, 'client')
+    await fs.mkdir(staticPath, { recursive: true })
     void fastify.register(fastifyStatic, {
-      root: path.join(plugin.outDir, 'client'),
+      root: staticPath,
       prefix: plugin.base,
     })
 
