@@ -45,8 +45,8 @@ export class ReactRenderer implements Renderer {
 
     // load copies of the transformed modules we need that interact with other tranformed code in the layout or entrypoint
     // this ensures that only one copy, the transformed copy, of the module is used, and we don't get "versions of react mismatched" errors
-    this.React = await this.loadModule('react')
-    this.ReactDOMServer = await this.loadModule('react-dom/server')
+    this.React = (await this.loadModule('react')).default
+    this.ReactDOMServer = (await this.loadModule('react-dom/server')).default
     this.Client = await this.loadModule('fastify-renderer/client/react')
   }
 
