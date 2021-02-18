@@ -8,9 +8,9 @@ import { normalizePath } from 'vite/dist/node'
 import { Router } from 'wouter'
 import staticLocationHook from 'wouter/static-location'
 import { DefaultDocumentTemplate } from '../../DocumentTemplate'
+import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
-import { ResolvedOptions } from '../../types'
-import { escapeRegex, mapFilepathToEntrypointName, pushImportTagsFromManifest } from '../../utils'
+import { escapeRegex, mapFilepathToEntrypointName } from '../../utils'
 import { Render, Renderer } from '../Renderer'
 
 const ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
@@ -30,8 +30,8 @@ export class ReactRenderer implements Renderer {
   tmpdir!: string
   basePathRegexp: RegExp
 
-  constructor(readonly options: ResolvedOptions) {
-    this.basePathRegexp = new RegExp(`^${escapeRegex(this.options.base)}`)
+  constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
+    this.basePathRegexp = new RegExp(`^${escapeRegex(this.plugin.base)}`)
   }
 
   vitePlugins() {
@@ -49,7 +49,7 @@ export class ReactRenderer implements Renderer {
     try {
       const [entrypointModule, layoutModule] = await Promise.all([
         this.loadModule(render.renderable),
-        this.loadModule(this.options.layout),
+        this.loadModule(this.plugin.layout),
       ])
 
       const Layout = layoutModule.default as React.FunctionComponent
@@ -58,7 +58,7 @@ export class ReactRenderer implements Renderer {
 
       let app = (
         <RenderBus.context.Provider value={bus}>
-          <Router base={this.options.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+          <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
@@ -66,13 +66,13 @@ export class ReactRenderer implements Renderer {
         </RenderBus.context.Provider>
       )
 
-      for (const hook of this.options.hooks) {
+      for (const hook of this.plugin.hooks) {
         if (hook.transform) {
           app = hook.transform(app)
         }
       }
 
-      if (this.options.renderer.mode == 'streaming') {
+      if (this.options.mode == 'streaming') {
         await render.reply.send(this.renderStreamingTemplate(app, bus, render))
       } else {
         await render.reply.send(this.renderSynchronousTemplate(app, bus, render))
@@ -93,7 +93,7 @@ export class ReactRenderer implements Renderer {
     const bus = new RenderBus()
 
     // push the script for the react-refresh runtime that vite's plugin normally would
-    if (this.options.devMode) {
+    if (this.plugin.devMode) {
       bus.push('tail', this.reactRefreshScriptTag())
     }
 
@@ -102,17 +102,18 @@ export class ReactRenderer implements Renderer {
 
     const entrypointName = this.buildEntrypointModuleURL(render.renderable)
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
-    if (this.options.devMode) {
+    if (this.plugin.devMode) {
       bus.push(
         'tail',
         `<script type="module" src="${path.join(
-          this.options.base,
+          this.plugin.assetsHost,
+          this.plugin.base,
           this.clientEntrypointModuleURL(render.renderable)
         )}"></script>`
       )
     } else {
       const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      pushImportTagsFromManifest(this.options, bus, manifestEntryName)
+      this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
     }
 
     return bus
@@ -147,7 +148,7 @@ export class ReactRenderer implements Renderer {
 
   private runHooks(bus: RenderBus) {
     // when we're done rendering the content, run any hooks that might want to push more content after the content
-    for (const hook of this.options.hooks) {
+    for (const hook of this.plugin.hooks) {
       if (hook.tails) {
         bus.push('tail', hook.tails())
       }
@@ -159,10 +160,10 @@ export class ReactRenderer implements Renderer {
 
   /** Given a module ID, load it for use within this node process on the server */
   private async loadModule(id: string) {
-    if (this.options.devMode) {
+    if (this.plugin.devMode) {
       return await this.devServer!.ssrLoadModule(id)
     } else {
-      const builtPath = path.join(this.options.outDir, 'server', mapFilepathToEntrypointName(id))
+      const builtPath = path.join(this.plugin.outDir, 'server', mapFilepathToEntrypointName(id))
       return require(builtPath)
     }
   }
@@ -183,7 +184,7 @@ export class ReactRenderer implements Renderer {
       load: (id) => {
         if (id.startsWith(ENTRYPOINT_PREFIX)) {
           const importURL = id.replace(ENTRYPOINT_PREFIX, '/@fs/').replace(/\/hydrate\.jsx$/, '')
-          const layoutURL = this.options.layout
+          const layoutURL = this.plugin.layout
 
           return `
           // client side hydration entrypoint for a particular route generated by fastify-renderer
@@ -266,11 +267,11 @@ export const routes = {
   /** Given a node-land module id (path), return the client-land path to the script to hydrate the render client side */
   public clientEntrypointModuleURL(id: string) {
     const entrypointName = this.buildEntrypointModuleURL(id)
-    if (this.options.devMode) {
+    if (this.plugin.devMode) {
       return entrypointName
     } else {
       const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      const manifestEntry = this.options.clientManifest![manifestEntryName]
+      const manifestEntry = this.plugin.clientManifest![manifestEntryName]
       if (!manifestEntry) {
         throw new Error(
           `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName}. Was it included in the build?`

@@ -11,7 +11,7 @@ export interface Render<Props> {
 
 /** An object that knows how to render */
 export interface Renderer {
-  prepare(routes: RouteOptions[], viteOptions: ResolvedConfig, devServer: ViteDevServer): Promise<void>
+  prepare(routes: RouteOptions[], viteOptions: ResolvedConfig, devServer?: ViteDevServer): Promise<void>
   render<Props>(render: Render<Props>): Promise<void>
   clientEntrypointModuleURL(id: string): string
   buildEntrypointModuleURL(id: string): string
