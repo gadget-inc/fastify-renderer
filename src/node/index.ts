@@ -12,7 +12,7 @@ import './types' // necessary to make sure that the fastify types are augmented
 import { ServerRenderer } from './types'
 import { mapFilepathToEntrypointName } from './utils'
 
-export const instances: {
+const instances: {
   fastify: FastifyInstance
   routes: RouteOptions[]
   plugin: FastifyRendererPlugin
@@ -107,6 +107,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
   }
 )
 
+module.exports = exports = FastifyRenderer
 export default FastifyRenderer
 
 export const build = async () => {
