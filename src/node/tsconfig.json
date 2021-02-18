@@ -3,8 +3,8 @@
   "include": ["./"],
   "compilerOptions": {
     "target": "ES2019",
-    "outDir": "../../esm/node",
-    "module": "esnext",
+    "outDir": "../../node",
+    "module": "commonjs",
     "lib": ["ESNext"],
     "sourceMap": true
   }

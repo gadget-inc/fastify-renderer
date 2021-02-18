@@ -4,30 +4,23 @@
   "description": "Simple, high performance client side app renderer for Fastify.",
   "exports": {
     ".": {
-      "require": "./node/index.js",
-      "default": "./esm/node/index.js"
+      "require": "./node/index.js"
     },
     "./client/react": {
-      "require": "./client/react.js",
-      "default": "./esm/client/react.js"
+      "default": "./client/react/index.js"
     },
     "./package": "./package.json",
     "./package.json": "./package.json"
   },
-  "main": "node/cjs/index.js",
-  "module": "node/es/index.js",
-  "types": "node/cjs/index.d.ts",
+  "main": "node/index.js",
+  "types": "node/index.d.ts",
   "scripts": {
     "watch": "run-p watch:*",
     "watch:client-es": "tsc --watch --incremental --project src/client",
-    "watch:client-cjs": "tsc --watch --incremental --project src/client/tsconfig.cjs.json",
-    "watch:node-es": "tsc --watch --incremental --project src/node",
-    "watch:node-cjs": "tsc --watch --incremental --project src/node/tsconfig.cjs.json",
+    "watch:node-cjs": "tsc --watch --incremental --project src/node",
     "build": "rimraf client node && run-p build:*",
-    "build:client-es": "tsc --incremental --project src/client",
-    "build:client-cjs": "tsc --incremental --project src/client/tsconfig.cjs.json && mkdir client/react && cp src/client/react-package.json client/react/package.json",
-    "build:node-es": "tsc --incremental --project src/node",
-    "build:node-cjs": "tsc --incremental --project src/node/tsconfig.cjs.json",
+    "build:client-es": "tsc --incremental --project src/client && cp src/client/react/package.json client/react/",
+    "build:node-cjs": "tsc --incremental --project src/node",
     "lint": "eslint \"{src,test}/**/*.{js,ts,tsx}\"",
     "lint:fix": "prettier --loglevel warn --write \"{src,test}/**/*.{ts,tsx}\" && eslint \"{src,test}/**/*.{ts,tsx}\" --quiet --fix",
     "prepublishOnly": "npm run build",
@@ -107,7 +100,6 @@
   "files": [
     "client",
     "node",
-    "esm",
     "README.md",
     "LICENSE"
   ]

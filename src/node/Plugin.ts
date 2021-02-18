@@ -2,7 +2,7 @@
 import fs from 'fs'
 import 'middie'
 import path from 'path'
-import { InlineConfig } from '../../../vite/packages/vite/dist/node'
+import { InlineConfig } from 'vite'
 import { DefaultDocumentTemplate, Template } from './DocumentTemplate'
 import { RenderBus } from './RenderBus'
 import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
