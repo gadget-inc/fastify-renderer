@@ -45,6 +45,7 @@ export interface ViteServerManifest {
 }
 
 declare module 'fastify' {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
     render?: string
   }

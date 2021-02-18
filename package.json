@@ -28,8 +28,8 @@
     "build:client-cjs": "tsc --incremental --project src/client/tsconfig.cjs.json && mkdir client/react && cp src/client/react-package.json client/react/package.json",
     "build:node-es": "tsc --incremental --project src/node",
     "build:node-cjs": "tsc --incremental --project src/node/tsconfig.cjs.json",
-    "lint": "eslint \"*/**/*.{js,ts,tsx}\"",
-    "lint:fix": "prettier --loglevel warn --write \"src/**/*.{ts,tsx}\" && eslint \"*/**/*.{ts,tsx}\" --quiet --fix",
+    "lint": "eslint \"{src,test}/**/*.{js,ts,tsx}\"",
+    "lint:fix": "prettier --loglevel warn --write \"{src,test}/**/*.{ts,tsx}\" && eslint \"{src,test}/**/*.{ts,tsx}\" --quiet --fix",
     "prepublishOnly": "npm run build",
     "test": "run-s build test:unit lint",
     "test:unit": "jest"
@@ -107,6 +107,7 @@
   "files": [
     "client",
     "node",
+    "esm",
     "README.md",
     "LICENSE"
   ]
