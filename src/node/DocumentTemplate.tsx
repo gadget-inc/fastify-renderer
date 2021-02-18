@@ -2,8 +2,8 @@ import template from 'stream-template'
 
 /** Data passed to the template function by the renderer */
 export interface TemplateData<Props> {
-  head: string | NodeJS.ReadableStream
-  scripts: string | NodeJS.ReadableStream
+  head: string
+  tail: string
   content: string | NodeJS.ReadableStream
   props: Props
 }
@@ -22,7 +22,7 @@ export const DefaultDocumentTemplate: Template = (data: TemplateData<any>) => te
   </head>
   <body>
     <div id="fstrapp">${data.content}</div>
-    ${data.scripts}
+    ${data.tail}
   </body>
 </html>
 `

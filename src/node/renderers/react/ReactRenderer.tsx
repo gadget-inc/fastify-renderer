@@ -8,8 +8,9 @@ import { normalizePath } from 'vite/dist/node'
 import { Router } from 'wouter'
 import staticLocationHook from 'wouter/static-location'
 import { DefaultDocumentTemplate } from '../../DocumentTemplate'
+import { RenderBus } from '../../RenderBus'
 import { ResolvedOptions } from '../../types'
-import { escapeRegex, importTagsFromManifest, mapFilepathToEntrypointName, newStringStream } from '../../utils'
+import { escapeRegex, mapFilepathToEntrypointName, pushImportTagsFromManifest } from '../../utils'
 import { Render, Renderer } from '../Renderer'
 
 const ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
@@ -53,13 +54,16 @@ export class ReactRenderer implements Renderer {
 
       const Layout = layoutModule.default as React.FunctionComponent
       const Entrypoint = entrypointModule.default as React.FunctionComponent<Props>
+      const bus = this.startRenderBus(render)
 
       let app = (
-        <Router base={this.options.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
-          <Layout>
-            <Entrypoint {...render.props} />
-          </Layout>
-        </Router>
+        <RenderBus.context.Provider value={bus}>
+          <Router base={this.options.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+            <Layout>
+              <Entrypoint {...render.props} />
+            </Layout>
+          </Router>
+        </RenderBus.context.Provider>
       )
 
       for (const hook of this.options.hooks) {
@@ -69,9 +73,9 @@ export class ReactRenderer implements Renderer {
       }
 
       if (this.options.renderer.mode == 'streaming') {
-        await render.reply.send(this.renderStreamingTemplate(app, render))
+        await render.reply.send(this.renderStreamingTemplate(app, bus, render))
       } else {
-        await render.reply.send(this.renderSynchronousTemplate(app, render))
+        await render.reply.send(this.renderSynchronousTemplate(app, bus, render))
       }
     } catch (error) {
       this.devServer?.ssrFixStacktrace(error)
@@ -80,90 +84,77 @@ export class ReactRenderer implements Renderer {
     }
   }
 
-  /** Given a node-land module id (path), return the client-land path to the script to hydrate the render client side */
-  public clientEntrypointModuleURL(id: string) {
-    const entrypointName = this.buildEntrypointModuleURL(id)
-    if (this.options.devMode) {
-      return entrypointName
-    } else {
-      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      const manifestEntry = this.options.clientManifest![manifestEntryName]
-      if (!manifestEntry) {
-        throw new Error(
-          `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName}. Was it included in the build?`
-        )
-      }
-      return manifestEntry.file
-    }
-  }
-
   /** Given a node-land module id (path), return the build time path to the script to hydrate the render client side */
   public buildEntrypointModuleURL(id: string) {
     return path.join(ENTRYPOINT_PREFIX, id, 'hydrate.jsx')
   }
 
-  private renderStreamingTemplate<Props>(app: JSX.Element, render: Render<Props>) {
-    const scriptsStream = newStringStream()
-    const headsStream = newStringStream()
+  private startRenderBus(render: Render<any>) {
+    const bus = new RenderBus()
 
     // push the script for the react-refresh runtime that vite's plugin normally would
     if (this.options.devMode) {
-      scriptsStream.push(this.reactRefreshScriptTag())
+      bus.push('tail', this.reactRefreshScriptTag())
     }
 
     // push the props for the entrypoint to use when hydrating client side
-    scriptsStream.push(this.entrypointScriptTags(render))
+    bus.push('tail', `<script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>`)
+
+    const entrypointName = this.buildEntrypointModuleURL(render.renderable)
+    // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
+    if (this.options.devMode) {
+      bus.push(
+        'tail',
+        `<script type="module" src="${path.join(
+          this.options.base,
+          this.clientEntrypointModuleURL(render.renderable)
+        )}"></script>`
+      )
+    } else {
+      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
+      pushImportTagsFromManifest(this.options, bus, manifestEntryName)
+    }
+
+    return bus
+  }
+
+  private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
     const contentStream = ReactDOMServer.renderToNodeStream(app)
 
     contentStream.on('end', () => {
-      // when we're done rendering the content, run any hooks that might want to push more content after the content
-      for (const hook of this.options.hooks) {
-        if (hook.scripts) {
-          scriptsStream.push(hook.scripts())
-        }
-        if (hook.heads) {
-          headsStream.push(hook.heads())
-        }
-      }
-      scriptsStream.push(null)
-      headsStream.push(null)
+      this.runHooks(bus)
     })
 
     return DefaultDocumentTemplate({
-      head: headsStream,
       content: contentStream,
-      scripts: scriptsStream,
+      head: bus.stack('head').join('\n'),
+      tail: bus.stack('tail').join('\n'),
       props: render.props,
     })
   }
 
-  private renderSynchronousTemplate<Props>(app: JSX.Element, render: Render<Props>) {
-    const scripts: string[] = []
-    const heads: string[] = []
-    // push the script for the react-refresh runtime that vite's plugin normally would
-    if (this.options.devMode) {
-      scripts.push(this.reactRefreshScriptTag())
-    }
-    scripts.push(this.entrypointScriptTags(render))
-
+  private renderSynchronousTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
     const content = ReactDOMServer.renderToString(app)
-
-    // when we're done rendering the content, run any hooks that might want to push more content after the content
-    for (const hook of this.options.hooks) {
-      if (hook.scripts) {
-        scripts.push(hook.scripts())
-      }
-      if (hook.heads) {
-        heads.push(hook.heads())
-      }
-    }
+    this.runHooks(bus)
 
     return DefaultDocumentTemplate({
-      head: heads.join('\n'),
       content,
-      scripts: scripts.join('\n'),
+      head: bus.stack('head').join('\n'),
+      tail: bus.stack('tail').join('\n'),
       props: render.props,
     })
+  }
+
+  private runHooks(bus: RenderBus) {
+    // when we're done rendering the content, run any hooks that might want to push more content after the content
+    for (const hook of this.options.hooks) {
+      if (hook.tails) {
+        bus.push('tail', hook.tails())
+      }
+      if (hook.heads) {
+        bus.push('head', hook.heads())
+      }
+    }
   }
 
   /** Given a module ID, load it for use within this node process on the server */
@@ -272,12 +263,20 @@ export const routes = {
     </script>`
   }
 
-  private entrypointScriptTags(render: Render<any>) {
-    return `
-    <script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>
-    <script type="module" src="${path.join(
-      this.options.base,
-      this.clientEntrypointModuleURL(render.renderable)
-    )}"></script>`
+  /** Given a node-land module id (path), return the client-land path to the script to hydrate the render client side */
+  public clientEntrypointModuleURL(id: string) {
+    const entrypointName = this.buildEntrypointModuleURL(id)
+    if (this.options.devMode) {
+      return entrypointName
+    } else {
+      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
+      const manifestEntry = this.options.clientManifest![manifestEntryName]
+      if (!manifestEntry) {
+        throw new Error(
+          `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName}. Was it included in the build?`
+        )
+      }
+      return manifestEntry.file
+    }
   }
 }

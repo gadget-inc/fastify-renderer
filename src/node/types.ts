@@ -24,7 +24,7 @@ export type ServerRenderer<Props> = (
 
 export interface FastifyRendererHook {
   name?: string
-  scripts?: () => string
+  tails?: () => string
   heads?: () => string
   transform?: (app: ReactElement) => ReactElement
 }
