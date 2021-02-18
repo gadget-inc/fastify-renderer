@@ -1,7 +1,6 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { RouteOptions } from 'fastify'
 import path from 'path'
-import ReactDOMServer from 'react-dom/server'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
 import staticLocationHook from 'wouter/static-location'
@@ -27,6 +26,9 @@ export class ReactRenderer implements Renderer {
   routes!: RouteOptions[]
   tmpdir!: string
   basePathRegexp: RegExp
+  React!: any
+  ReactDOMServer!: any
+  Client!: any
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.basePathRegexp = new RegExp(`^${escapeRegex(this.plugin.base)}`)
@@ -40,31 +42,34 @@ export class ReactRenderer implements Renderer {
     this.viteConfig = viteConfig
     this.routes = routes
     this.devServer = devServer
+
+    // load copies of the transformed modules we need that interact with other tranformed code in the layout or entrypoint
+    // this ensures that only one copy, the transformed copy, of the module is used, and we don't get "versions of react mismatched" errors
+    this.React = await this.loadModule('react')
+    this.ReactDOMServer = await this.loadModule('react-dom/server')
+    this.Client = await this.loadModule('fastify-renderer/client/react')
   }
 
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
     try {
-      const [reactModule, clientModule, entrypointModule, layoutModule] = await Promise.all([
-        this.loadModule('react'), // get the inner react instance that may have been transformed by vite
-        this.loadModule('fastify-renderer/client/react'), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
+      const [entrypointModule, layoutModule] = await Promise.all([
         this.loadModule(render.renderable), // get the thing we're going to render
         this.loadModule(this.plugin.layout), // get the layout we're going to render it in
       ])
 
-      const React = reactModule.default
       const Layout = layoutModule.default
       const Entrypoint = entrypointModule.default
-      const { Router } = clientModule
       const bus = this.startRenderBus(render)
+      const React = this.React
 
       let app = (
         <RenderBus.context.Provider value={bus}>
-          <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+          <this.Client.Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
-          </Router>
+          </this.Client.Router>
         </RenderBus.context.Provider>
       )
 
@@ -122,7 +127,7 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
-    const contentStream = ReactDOMServer.renderToNodeStream(app)
+    const contentStream = this.ReactDOMServer.renderToNodeStream(app)
 
     contentStream.on('end', () => {
       this.runHooks(bus)
@@ -137,7 +142,7 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderSynchronousTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
-    const content = ReactDOMServer.renderToString(app)
+    const content = this.ReactDOMServer.renderToString(app)
     this.runHooks(bus)
 
     return DefaultDocumentTemplate({
