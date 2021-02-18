@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../../client/es",
+    "outDir": "../../esm/client",
     "module": "esnext",
     "types": ["react/experimental", "react-dom/experimental"],
     "lib": ["ESNext", "DOM"]

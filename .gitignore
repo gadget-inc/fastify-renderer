@@ -38,6 +38,7 @@ jspm_packages/
 # compiled lib
 /client
 /node
+/esm
 
 BUILD_SHA
 
