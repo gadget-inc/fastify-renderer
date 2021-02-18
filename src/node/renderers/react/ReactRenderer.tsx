@@ -45,13 +45,14 @@ export class ReactRenderer implements Renderer {
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
     try {
-      const [React, clientModule, entrypointModule, layoutModule] = await Promise.all([
+      const [reactModule, clientModule, entrypointModule, layoutModule] = await Promise.all([
         this.loadModule('react'), // get the inner react instance that may have been transformed by vite
         this.loadModule('fastify-renderer/client/react'), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
         this.loadModule(render.renderable), // get the thing we're going to render
         this.loadModule(this.plugin.layout), // get the layout we're going to render it in
       ])
 
+      const React = reactModule.default
       const Layout = layoutModule.default
       const Entrypoint = entrypointModule.default
       const { Router } = clientModule
