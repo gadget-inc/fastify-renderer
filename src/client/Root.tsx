@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Switch, Route, useLocation, Router } from 'wouter'
+import { Route, Router, Switch, useLocation } from 'wouter'
 import { usePromise } from './fetcher'
 import { useTransitionLocation } from './locationHook'
 

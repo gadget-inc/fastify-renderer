@@ -1,6 +1,6 @@
 import { spawnSync } from 'child_process'
-import semver from 'semver'
 import { join } from 'path'
+import semver from 'semver'
 
 describe('Native ESM import', () => {
   const defaultExportTest = semver.lt(process.versions.node, '13.3.0') ? it.skip : it

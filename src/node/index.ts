@@ -1,17 +1,16 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { promises as fs } from 'fs'
-import fastifyStatic from 'fastify-static'
-import path from 'path'
-import fastifyAccepts from 'fastify-accepts'
-import 'middie'
-import { createServer, resolveConfig, ViteDevServer, build as viteBuild, ResolvedConfig, InlineConfig } from 'vite'
 import { FastifyInstance, RouteOptions } from 'fastify'
+import fastifyAccepts from 'fastify-accepts'
 import fp from 'fastify-plugin'
-import { ReactRenderer } from './renderers/react/ReactRenderer'
-import './types' // necessary to make sure that the fastify types are augmented
-import { Render, Renderer } from './renderers/Renderer'
+import fastifyStatic from 'fastify-static'
+import { promises as fs } from 'fs'
+import 'middie'
+import path from 'path'
+import { build as viteBuild, createServer, InlineConfig, resolveConfig, ResolvedConfig, ViteDevServer } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
-import { mapFilepathToEntrypointName, unthunk } from './utils'
+import { ReactRenderer } from './renderers/react/ReactRenderer'
+import { Render, Renderer } from './renderers/Renderer'
+import './types' // necessary to make sure that the fastify types are augmented
 import {
   FastifyRendererOptions,
   ResolvedOptions,
@@ -19,6 +18,7 @@ import {
   ViteClientManifest,
   ViteServerManifest,
 } from './types'
+import { mapFilepathToEntrypointName, unthunk } from './utils'
 
 export const instances: {
   fastify: FastifyInstance

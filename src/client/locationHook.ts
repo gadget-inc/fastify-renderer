@@ -1,4 +1,4 @@
-import { unstable_useTransition as useTransition, useEffect, useRef, useState, useCallback } from 'react'
+import { unstable_useTransition as useTransition, useCallback, useEffect, useRef, useState } from 'react'
 
 /**
  * History API docs @see https://developer.mozilla.org/en-US/docs/Web/API/History
