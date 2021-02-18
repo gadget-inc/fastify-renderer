@@ -36,7 +36,8 @@ jspm_packages/
 .env
 
 # compiled lib
-dist
+/client
+/node
 
 BUILD_SHA
 

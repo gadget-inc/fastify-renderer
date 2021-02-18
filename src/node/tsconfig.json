@@ -3,7 +3,7 @@
   "include": ["./"],
   "compilerOptions": {
     "target": "ES2019",
-    "outDir": "../../dist/node",
+    "outDir": "../../node",
     "module": "commonjs",
     "lib": ["ESNext"],
     "sourceMap": true

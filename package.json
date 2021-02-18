@@ -2,15 +2,15 @@
   "name": "fastify-renderer",
   "version": "0.1.0",
   "description": "Simple, high performance client side app renderer for Fastify.",
-  "main": "dist/node/index.js",
-  "types": "dist/node/index.d.ts",
+  "main": "node/index.js",
+  "types": "node/index.d.ts",
   "scripts": {
     "watch": "run-p watch:*",
     "watch:client": "tsc --watch --incremental --project src/client",
     "watch:node": "tsc --watch --incremental --project src/node",
-    "build": "rimraf ./dist && mkdir dist && tsc --incremental --project src/client && tsc --incremental --project src/node",
+    "build": "rimraf client node && tsc --incremental --project src/client && tsc --incremental --project src/node",
     "lint": "eslint \"*/**/*.{js,ts,tsx}\"",
-    "lint:fix": "prettier --loglevel warn --write \"src/**/*.{ts,tsx}\" && eslint \"*/**/*.{js,ts,tsx}\" --quiet --fix",
+    "lint:fix": "prettier --loglevel warn --write \"src/**/*.{ts,tsx}\" && eslint \"*/**/*.{ts,tsx}\" --quiet --fix",
     "prepublishOnly": "npm run build",
     "test": "run-s build test:unit lint",
     "test:unit": "jest"
@@ -86,6 +86,9 @@
     "typescript": "^4.1.4"
   },
   "files": [
-    "dist"
+    "client",
+    "node",
+    "README.md",
+    "LICENSE"
   ]
 }
