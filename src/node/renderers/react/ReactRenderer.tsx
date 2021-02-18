@@ -192,7 +192,7 @@ export class ReactRenderer implements Renderer {
           import React from 'react'
           import ReactDOM from 'react-dom'
           import { routes } from '/@fstr!route-table.js'
-          import { Root } from 'fastify-renderer/dist/client/react'
+          import { Root } from 'fastify-renderer/client/react'
           import Layout from ${JSON.stringify(layoutURL)}
           import Entrypoint from ${JSON.stringify(importURL)}
 
