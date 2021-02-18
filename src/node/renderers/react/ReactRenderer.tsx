@@ -45,29 +45,26 @@ export class ReactRenderer implements Renderer {
 
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
-    const modulePath = 'fastify-renderer/client/react'
-    console.log('fastify renderer requiring react module', { modulePath })
     try {
       const [clientModule, entrypointModule, layoutModule] = await Promise.all([
-        this.loadModule(modulePath), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
+        this.loadModule('fastify-renderer/client/react'), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
         this.loadModule(render.renderable), // get the thing we're going to render
         this.loadModule(this.plugin.layout), // get the layout we're going to render it in
       ])
 
       const Layout = layoutModule.default as React.FunctionComponent
       const Entrypoint = entrypointModule.default as React.FunctionComponent<Props>
+      console.warn({ clientModule })
+      const { Router } = clientModule
       const bus = this.startRenderBus(render)
 
       let app = (
         <RenderBus.context.Provider value={bus}>
-          <clientModule.Router
-            base={this.plugin.base}
-            hook={staticLocationHook(this.stripBasePath(render.request.url))}
-          >
+          <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
-          </clientModule.Router>
+          </Router>
         </RenderBus.context.Provider>
       )
 
