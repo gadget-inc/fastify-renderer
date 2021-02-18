@@ -5,7 +5,6 @@ import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
-import { Router } from 'wouter'
 import staticLocationHook from 'wouter/static-location'
 import { DefaultDocumentTemplate } from '../../DocumentTemplate'
 import { FastifyRendererPlugin } from '../../Plugin'
@@ -47,9 +46,10 @@ export class ReactRenderer implements Renderer {
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
     try {
-      const [entrypointModule, layoutModule] = await Promise.all([
-        this.loadModule(render.renderable),
-        this.loadModule(this.plugin.layout),
+      const [clientModule, entrypointModule, layoutModule] = await Promise.all([
+        this.loadModule('../../../client/react'), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
+        this.loadModule(render.renderable), // get the thing we're going to render
+        this.loadModule(this.plugin.layout), // get the layout we're going to render it in
       ])
 
       const Layout = layoutModule.default as React.FunctionComponent
@@ -58,11 +58,14 @@ export class ReactRenderer implements Renderer {
 
       let app = (
         <RenderBus.context.Provider value={bus}>
-          <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+          <clientModule.Router
+            base={this.plugin.base}
+            hook={staticLocationHook(this.stripBasePath(render.request.url))}
+          >
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
-          </Router>
+          </clientModule.Router>
         </RenderBus.context.Provider>
       )
 
