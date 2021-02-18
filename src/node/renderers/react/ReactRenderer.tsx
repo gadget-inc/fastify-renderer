@@ -1,7 +1,6 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { RouteOptions } from 'fastify'
 import path from 'path'
-import React from 'react'
 import ReactDOMServer from 'react-dom/server'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
@@ -46,15 +45,15 @@ export class ReactRenderer implements Renderer {
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
     try {
-      const [clientModule, entrypointModule, layoutModule] = await Promise.all([
+      const [React, clientModule, entrypointModule, layoutModule] = await Promise.all([
+        this.loadModule('react'), // get the inner react instance that may have been transformed by vite
         this.loadModule('fastify-renderer/client/react'), // get exactly the same module other consumers of the react stuff will so that the contexts are exactly the same instance
         this.loadModule(render.renderable), // get the thing we're going to render
         this.loadModule(this.plugin.layout), // get the layout we're going to render it in
       ])
 
-      const Layout = layoutModule.default as React.FunctionComponent
-      const Entrypoint = entrypointModule.default as React.FunctionComponent<Props>
-      console.warn({ clientModule })
+      const Layout = layoutModule.default
+      const Entrypoint = entrypointModule.default
       const { Router } = clientModule
       const bus = this.startRenderBus(render)
 
