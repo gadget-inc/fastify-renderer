@@ -56,10 +56,8 @@ export class ReactRenderer implements Renderer {
     const bus = this.startRenderBus(render)
 
     try {
-      const [entrypointModule, layoutModule] = await Promise.all([
-        this.loadModule(render.renderable), // get the thing we're going to render
-        this.loadModule(this.plugin.layout), // get the layout we're going to render it in
-      ])
+      const entrypointModule = await this.loadModule(render.renderable) // get the thing we're going to render
+      const layoutModule = await this.loadModule(this.plugin.layout) // get the layout we're going to render it in
 
       const Layout = layoutModule.default
       const Entrypoint = entrypointModule.default
@@ -177,12 +175,12 @@ export class ReactRenderer implements Renderer {
   }
 
   /**
-   * Maps the internal Produces a bit of code we pass through Vite to import the specific hydration entrypoint for a route
+   * A vite/rollup plugin that provides a virtual module to run client side React hydration for a specific route & entrypoint
    * Served to the client to rehydrate the server rendered code
    */
   private hydrationEntrypointVitePlugin(): Plugin {
     return {
-      name: 'fastify-renderer:react-entrypoints',
+      name: 'fastify-renderer:react-client-entrypoints',
       enforce: 'pre',
       resolveId(id) {
         if (id.startsWith(ENTRYPOINT_PREFIX)) {
