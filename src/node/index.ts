@@ -71,6 +71,8 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       }
     })
 
+    let devServer: ViteDevServer | undefined = undefined
+
     // register vite once all the routes have been defined
     fastify.addHook('onReady', async () => {
       const viteOptions: InlineConfig = {
@@ -87,7 +89,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       }
 
       let config: ResolvedConfig
-      let devServer: ViteDevServer | undefined = undefined
 
       if (plugin.devMode) {
         fastify.log.debug('booting vite dev server')
@@ -101,6 +102,11 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       instances.push({ fastify, routes, plugin, vite: viteOptions })
 
       await plugin.renderer.prepare(routes, config, devServer)
+    })
+
+    fastify.addHook('onClose', async (_, done) => {
+      await devServer?.close()
+      done()
     })
   },
   {
