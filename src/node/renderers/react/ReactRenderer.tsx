@@ -1,8 +1,6 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import { RouteOptions } from 'fastify'
 import path from 'path'
-import React from 'react'
-import ReactDOMServer from 'react-dom/server'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
 import staticLocationHook from 'wouter/static-location'
@@ -28,7 +26,9 @@ export class ReactRenderer implements Renderer {
   routes!: RouteOptions[]
   tmpdir!: string
   basePathRegexp: RegExp
-  wouter!: any
+  React!: any
+  ReactDOMServer!: any
+  Client!: any
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.basePathRegexp = new RegExp(`^${escapeRegex(this.plugin.base)}`)
@@ -43,13 +43,18 @@ export class ReactRenderer implements Renderer {
     this.routes = routes
     this.devServer = devServer
 
-    // load the transformed client module, which is the same one that the transformed entrypoint or layout would load
-    // this ensures that the contexts and other singletons used inside are identical between the outer place we use them here and the inside places they might get used in the entrypoint
-    this.wouter = await this.loadModule('wouter')
+    // load copies of the transformed modules we need that interact with other tranformed code
+    // this ensures that only one copy, the transformed copy, of the module is used, and we don't get "versions of react mismatched" errors
+    this.React = (await this.loadModule('react')).default
+    this.ReactDOMServer = (await this.loadModule('react-dom/server')).default
+    this.Client = await this.loadModule('fastify-renderer/client/react')
   }
 
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   async render<Props>(render: Render<Props>) {
+    const React = this.React
+    const bus = this.startRenderBus(render)
+
     try {
       const [entrypointModule, layoutModule] = await Promise.all([
         this.loadModule(render.renderable), // get the thing we're going to render
@@ -58,15 +63,14 @@ export class ReactRenderer implements Renderer {
 
       const Layout = layoutModule.default
       const Entrypoint = entrypointModule.default
-      const bus = this.startRenderBus(render)
 
       let app = (
         <RenderBus.Context.Provider value={bus}>
-          <this.wouter.Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+          <this.Client.Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
-          </this.wouter.Router>
+          </this.Client.Router>
         </RenderBus.Context.Provider>
       )
 
@@ -82,7 +86,7 @@ export class ReactRenderer implements Renderer {
         await render.reply.send(this.renderSynchronousTemplate(app, bus, render))
       }
     } catch (error) {
-      this.devServer?.ssrFixStacktrace(error)
+      // this.devServer?.ssrFixStacktrace(error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
       throw error
     }
@@ -124,7 +128,7 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
-    const contentStream = ReactDOMServer.renderToNodeStream(app)
+    const contentStream = this.ReactDOMServer.renderToNodeStream(app)
 
     contentStream.on('end', () => {
       this.runHooks(bus)
@@ -139,7 +143,7 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderSynchronousTemplate<Props>(app: JSX.Element, bus: RenderBus, render: Render<Props>) {
-    const content = ReactDOMServer.renderToString(app)
+    const content = this.ReactDOMServer.renderToString(app)
     this.runHooks(bus)
 
     return DefaultDocumentTemplate({
