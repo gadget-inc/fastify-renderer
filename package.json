@@ -1,6 +1,6 @@
 {
   "name": "fastify-renderer",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "description": "Simple, high performance client side app renderer for Fastify.",
   "exports": {
     ".": {
