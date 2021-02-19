@@ -56,9 +56,9 @@ export class ReactRenderer implements Renderer {
 
     try {
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-      const { React, ReactDOMServer, Router, Layout, Entrypoint } = await this.loadModule(
-        this.buildServerEntrypointModuleURL(render.renderable)
-      )
+      const { React, ReactDOMServer, Router, Layout, Entrypoint } = (
+        await this.loadModule(this.buildServerEntrypointModuleURL(render.renderable))
+      ).default
 
       let app = (
         <RenderBus.Context.Provider value={bus}>
