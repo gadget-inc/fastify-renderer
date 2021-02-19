@@ -57,7 +57,7 @@
     "fastify-accepts": "^2.0.1",
     "fastify-express": "^0.3.2",
     "fastify-plugin": "^3.0.0",
-    "fastify-static": "^3.4.0",
+    "fastify-static": "^4.0.0",
     "find-my-way": "^4.0.0",
     "http-errors": "^1.8.0",
     "middie": "^5.2.0",
