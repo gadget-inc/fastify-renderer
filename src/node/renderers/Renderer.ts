@@ -14,6 +14,7 @@ export interface Renderer {
   prepare(routes: RouteOptions[], viteOptions: ResolvedConfig, devServer?: ViteDevServer): Promise<void>
   render<Props>(render: Render<Props>): Promise<void>
   clientEntrypointModuleURL(id: string): string
-  buildEntrypointModuleURL(id: string): string
+  buildClientEntrypointModuleURL(id: string): string
+  buildServerEntrypointModuleURL(id: string): string
   vitePlugins(): Plugin[]
 }

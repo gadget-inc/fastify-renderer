@@ -124,8 +124,8 @@ export const build = async () => {
     const serverEntrypoints: Record<string, string> = {}
     for (const route of routes) {
       const entrypointName = mapFilepathToEntrypointName(route.render!)
-      clientEntrypoints[entrypointName] = plugin.renderer.buildEntrypointModuleURL(route.render!)
-      serverEntrypoints[entrypointName] = route.render!
+      clientEntrypoints[entrypointName] = plugin.renderer.buildClientEntrypointModuleURL(route.render!)
+      serverEntrypoints[entrypointName] = plugin.renderer.buildServerEntrypointModuleURL(route.render!)
 
       serverEntrypoints[mapFilepathToEntrypointName(plugin.layout)] = plugin.layout
     }
