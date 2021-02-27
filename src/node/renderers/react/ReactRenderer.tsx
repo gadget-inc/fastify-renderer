@@ -56,18 +56,18 @@ export class ReactRenderer implements Renderer {
 
     try {
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-      const { React, ReactDOMServer, Router, Layout, Entrypoint } = (
-        await this.loadModule(this.buildServerEntrypointModuleURL(render.renderable))
+      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
+        await this.loadModule(this.entrypointRequirePathForServer(render.renderable))
       ).default
 
       let app = (
-        <RenderBus.Context.Provider value={bus}>
+        <RenderBusContext.Provider value={bus}>
           <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
           </Router>
-        </RenderBus.Context.Provider>
+        </RenderBusContext.Provider>
       )
 
       for (const hook of this.plugin.hooks) {
@@ -88,14 +88,56 @@ export class ReactRenderer implements Renderer {
     }
   }
 
-  /** Given a node-land module id (path), return the build time path to the script to hydrate the render client side */
-  public buildClientEntrypointModuleURL(id: string) {
+  /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
+  public buildVirtualClientEntrypointModuleURL(id: string) {
     return path.join(CLIENT_ENTRYPOINT_PREFIX, id, 'hydrate.jsx')
   }
 
-  /** Given a node-land module id (path), return the server run time path to a module to run the server side render*/
-  public buildServerEntrypointModuleURL(id: string) {
+  /** Given a node-land module id (path), return the server run time path to a virtual module to run the server side render */
+  public buildVirtualServerEntrypointModuleURL(id: string) {
     return path.join(SERVER_ENTRYPOINT_PREFIX, id, 'ssr.jsx')
+  }
+
+  /**
+   * Given a concrete, resolvable node-land module id (path), return the client-land path to the script to hydrate the render client side
+   * In dev mode, will return a virtual module url that will use use the client side hydration plugin to produce a script around the entrypoint
+   * In production, will reference the manifest to find the built module corresponding to the given entrypoint
+   */
+  public entrypointScriptTagSrcForClient(id: string) {
+    const entrypointName = this.buildVirtualClientEntrypointModuleURL(id)
+    if (this.plugin.devMode) {
+      return entrypointName
+    } else {
+      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
+      const manifestEntry = this.plugin.clientManifest![manifestEntryName]
+      if (!manifestEntry) {
+        throw new Error(
+          `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName} in manifest.json. Was it included in the build?`
+        )
+      }
+      return manifestEntry.file
+    }
+  }
+
+  /**
+   * Given a concrete, resolvable node-land module id (path), return the server-land path to the script to render server side
+   * Because we're using vite, we have special server side entrypoints too such that we can't just `require()` an entrypoint, even on the server, we need to a require a file that vite has built where all the copies of React are the same within.
+   * In dev mode, will return a virtual module url that will use use the server side render plugin to produce a script around the entrypoint
+   * In production
+   */
+  public entrypointRequirePathForServer(id: string) {
+    const entrypointName = this.buildVirtualServerEntrypointModuleURL(id)
+    if (this.plugin.devMode) {
+      return entrypointName
+    } else {
+      const manifestEntry = this.plugin.serverEntrypointManifest![entrypointName]
+      if (!manifestEntry) {
+        throw new Error(
+          `Module id ${id} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
+        )
+      }
+      return manifestEntry
+    }
   }
 
   private startRenderBus(render: Render<any>) {
@@ -109,7 +151,7 @@ export class ReactRenderer implements Renderer {
     // push the props for the entrypoint to use when hydrating client side
     bus.push('tail', `<script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>`)
 
-    const entrypointName = this.buildClientEntrypointModuleURL(render.renderable)
+    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render.renderable)
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
     if (this.plugin.devMode) {
       bus.push(
@@ -117,7 +159,7 @@ export class ReactRenderer implements Renderer {
         `<script type="module" src="${path.join(
           this.plugin.assetsHost,
           this.plugin.base,
-          this.clientEntrypointModuleURL(render.renderable)
+          this.entrypointScriptTagSrcForClient(render.renderable)
         )}"></script>`
       )
     } else {
@@ -247,7 +289,7 @@ export class ReactRenderer implements Renderer {
           // server side processed entrypoint for a particular route generated by fastify-renderer
           import React from 'react'
           import ReactDOMServer from 'react-dom/server'
-          import { Router } from 'fastify-renderer/client/react'
+          import { Router, RenderBusContext } from 'fastify-renderer/client/react'
           import Layout from ${JSON.stringify(layoutURL)}
           import Entrypoint from ${JSON.stringify(importURL)}
 
@@ -255,6 +297,7 @@ export class ReactRenderer implements Renderer {
             React,
             ReactDOMServer,
             Router,
+            RenderBusContext,
             Layout,
             Entrypoint
           }
@@ -315,22 +358,5 @@ export const routes = {
       window.$RefreshSig$ = () => (type) => type
       window.__vite_plugin_react_preamble_installed__ = true
     </script>`
-  }
-
-  /** Given a node-land module id (path), return the client-land path to the script to hydrate the render client side */
-  public clientEntrypointModuleURL(id: string) {
-    const entrypointName = this.buildClientEntrypointModuleURL(id)
-    if (this.plugin.devMode) {
-      return entrypointName
-    } else {
-      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      const manifestEntry = this.plugin.clientManifest![manifestEntryName]
-      if (!manifestEntry) {
-        throw new Error(
-          `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName}. Was it included in the build?`
-        )
-      }
-      return manifestEntry.file
-    }
   }
 }

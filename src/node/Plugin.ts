@@ -8,7 +8,7 @@ import { RenderBus } from './RenderBus'
 import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import { Renderer } from './renderers/Renderer'
 import './types' // necessary to make sure that the fastify types are augmented
-import { FastifyRendererHook, ViteClientManifest, ViteServerManifest } from './types'
+import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 import { unthunk } from './utils'
 
 export interface FastifyRendererOptions {
@@ -34,7 +34,7 @@ export class FastifyRendererPlugin {
   assetsHost: string
   hooks: FastifyRendererHook[]
   clientManifest?: ViteClientManifest
-  serverManifest?: ViteServerManifest
+  serverEntrypointManifest?: ServerEntrypointManifest
 
   constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
@@ -42,7 +42,9 @@ export class FastifyRendererPlugin {
 
     if (!this.devMode) {
       this.clientManifest = JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
-      this.serverManifest = JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'ssr-manifest.json'), 'utf-8'))
+      this.serverEntrypointManifest = JSON.parse(
+        fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8')
+      )
     }
 
     this.base = incomingOptions.vite?.base || '/'

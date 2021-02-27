@@ -40,8 +40,8 @@ export interface ViteClientManifest {
   }
 }
 
-export interface ViteServerManifest {
-  [file: string]: string[]
+export interface ServerEntrypointManifest {
+  [file: string]: string
 }
 
 declare module 'fastify' {
