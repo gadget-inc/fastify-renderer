@@ -47,6 +47,13 @@ export const Root = <BootProps,>(props: {
             ).json()
           )
 
+          // navigate to the anchor in the url after rendering
+          useEffect(() => {
+            if (window.location.hash) {
+              document.getElementById(window.location.hash.slice(1))?.scrollIntoView()
+            }
+          }, [location])
+
           return <Component params={params} {...payload.props} />
         }}
       </Route>
