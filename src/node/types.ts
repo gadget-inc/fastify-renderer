@@ -50,11 +50,6 @@ declare module 'fastify' {
     render?: string
   }
 
-  interface FastifyInstance {
-    vite: ViteDevServer
-    render(path: string)
-  }
-
   interface FastifyRequest {
     vite: ViteDevServer
   }

@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
+import { RouteOptions } from 'fastify'
 import fs from 'fs'
 import 'middie'
 import path from 'path'
@@ -14,12 +15,15 @@ import { unthunk } from './utils'
 export interface FastifyRendererOptions {
   renderer?: ReactRendererOptions
   vite?: InlineConfig
+  base?: string
   layout?: string
   document?: Template
   devMode?: boolean
   outDir?: string
   assetsHost?: string
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
+  clientManifest?: ViteClientManifest
+  serverEntrypointManifest?: ServerEntrypointManifest
 }
 
 export class FastifyRendererPlugin {
@@ -36,18 +40,22 @@ export class FastifyRendererPlugin {
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
 
-  constructor(incomingOptions: FastifyRendererOptions) {
+  routes: RouteOptions[] = []
+
+  constructor(private incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
     this.outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
 
     if (!this.devMode) {
-      this.clientManifest = JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
-      this.serverEntrypointManifest = JSON.parse(
-        fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8')
-      )
+      this.clientManifest =
+        incomingOptions.clientManifest ||
+        JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
+      this.serverEntrypointManifest =
+        incomingOptions.serverEntrypointManifest ||
+        JSON.parse(fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8'))
     }
 
-    this.base = incomingOptions.vite?.base || '/'
+    this.base = incomingOptions.base || '/'
     this.vite = incomingOptions.vite
     this.layout = incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout')
     this.document = incomingOptions.document || DefaultDocumentTemplate
@@ -102,5 +110,32 @@ export class FastifyRendererPlugin {
     } else if (file.endsWith('.css')) {
       bus.linkStylesheet(file)
     }
+  }
+
+  registerRoute(options: RouteOptions) {
+    this.routes.push(options)
+  }
+
+  clone() {
+    return new FastifyRendererPlugin({
+      renderer: this.incomingOptions.renderer,
+      vite: this.vite,
+      base: this.base,
+      layout: this.layout,
+      document: this.document,
+      devMode: this.devMode,
+      outDir: this.outDir,
+      assetsHost: this.assetsHost,
+      hooks: this.hooks,
+      clientManifest: this.clientManifest,
+      serverEntrypointManifest: this.serverEntrypointManifest,
+    })
+  }
+
+  reconfigure(options: FastifyRendererOptions) {
+    this.base = options.base ?? this.base
+    this.layout = options.layout ?? this.layout
+    this.document = options.document ?? this.document
+    if (options.hooks) this.hooks.push(...options.hooks.map(unthunk))
   }
 }
