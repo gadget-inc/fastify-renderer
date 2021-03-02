@@ -12,6 +12,7 @@
     "lint": "eslint \"packages/**/*.{js,ts,tsx}\"",
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "yarn workspace fastify-renderer publish",
+    "prerelease": "yarn workspace fastify-renderer run gitpkg publish",
     "test": "jest ",
     "test:ci": "run-s build test:unit lint",
     "test:unit": "jest"
