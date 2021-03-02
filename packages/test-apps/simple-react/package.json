@@ -1,0 +1,15 @@
+{
+  "name": "simple-react",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "run": "run-p watch:*"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "fastify": "*",
+    "fastify-renderer": "*",
+    "react": "*",
+    "react-dom": "*"
+  }
+}

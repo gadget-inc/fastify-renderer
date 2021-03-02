@@ -1,13 +1,12 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { RouteOptions } from 'fastify'
 import fs from 'fs'
 import 'middie'
 import path from 'path'
 import { InlineConfig } from 'vite'
-import { DefaultDocumentTemplate, Template } from './DocumentTemplate'
+import { Template } from './DocumentTemplate'
 import { RenderBus } from './RenderBus'
 import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
-import { Renderer } from './renderers/Renderer'
+import { RenderableRoute, Renderer } from './renderers/Renderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 import { unthunk } from './utils'
@@ -21,44 +20,36 @@ export interface FastifyRendererOptions {
   devMode?: boolean
   outDir?: string
   assetsHost?: string
+  skipWildcardRoute?: boolean
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
-  clientManifest?: ViteClientManifest
-  serverEntrypointManifest?: ServerEntrypointManifest
 }
 
 export class FastifyRendererPlugin {
   renderer: Renderer
-
   devMode: boolean
-  vite?: InlineConfig
-  base: string
+  vite: InlineConfig
+  viteBase: string
   outDir: string
-  layout: string
-  document: Template
   assetsHost: string
   hooks: FastifyRendererHook[]
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
+  routes: RenderableRoute[] = []
 
-  routes: RouteOptions[] = []
-
-  constructor(private incomingOptions: FastifyRendererOptions) {
+  constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
     this.outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
 
     if (!this.devMode) {
-      this.clientManifest =
-        incomingOptions.clientManifest ||
-        JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
-      this.serverEntrypointManifest =
-        incomingOptions.serverEntrypointManifest ||
-        JSON.parse(fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8'))
+      this.clientManifest = JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
+      this.serverEntrypointManifest = JSON.parse(
+        fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8')
+      )
     }
 
-    this.base = incomingOptions.base || '/'
-    this.vite = incomingOptions.vite
-    this.layout = incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout')
-    this.document = incomingOptions.document || DefaultDocumentTemplate
+    this.vite = incomingOptions.vite || {}
+    this.vite.base ??= '/.vite/'
+    this.viteBase = this.vite.base
     this.assetsHost = incomingOptions.assetsHost || ''
     this.hooks = (incomingOptions.hooks || []).map(unthunk)
 
@@ -70,7 +61,7 @@ export class FastifyRendererPlugin {
    * Adds in the `base`, and the `assetsHost` if it exists
    */
   clientAssetPath(asset: string) {
-    const absolutePath = path.join(this.base, asset)
+    const absolutePath = path.join(this.viteBase, asset)
     if (this.assetsHost) {
       return this.assetsHost + absolutePath
     }
@@ -112,30 +103,7 @@ export class FastifyRendererPlugin {
     }
   }
 
-  registerRoute(options: RouteOptions) {
+  registerRoute(options: RenderableRoute) {
     this.routes.push(options)
-  }
-
-  clone() {
-    return new FastifyRendererPlugin({
-      renderer: this.incomingOptions.renderer,
-      vite: this.vite,
-      base: this.base,
-      layout: this.layout,
-      document: this.document,
-      devMode: this.devMode,
-      outDir: this.outDir,
-      assetsHost: this.assetsHost,
-      hooks: this.hooks,
-      clientManifest: this.clientManifest,
-      serverEntrypointManifest: this.serverEntrypointManifest,
-    })
-  }
-
-  reconfigure(options: FastifyRendererOptions) {
-    this.base = options.base ?? this.base
-    this.layout = options.layout ?? this.layout
-    this.document = options.document ?? this.document
-    if (options.hooks) this.hooks.push(...options.hooks.map(unthunk))
   }
 }

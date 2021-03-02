@@ -6,6 +6,7 @@
     "declaration": true,
     "noUnusedLocals": true,
     "esModuleInterop": true,
+    "lib": ["ES2020"],
     "jsx": "react",
     "noImplicitAny": false,
     "skipLibCheck": true,

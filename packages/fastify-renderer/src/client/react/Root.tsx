@@ -18,13 +18,13 @@ const RouteTable = (props: { Layout: React.FunctionComponent<LayoutProps>; route
   )
 }
 
-export const Root = <BootProps,>(props: {
+export function Root<BootProps>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
   Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps
   basePath: string
   routes: Record<string, React.FunctionComponent<any>>
-}) => {
+}) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
 
   useEffect(() => setFirstRenderComplete(true))

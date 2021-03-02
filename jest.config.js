@@ -1,5 +1,6 @@
 module.exports = {
-  preset: "ts-jest",
-  testEnvironment: "node",
-  testPathIgnorePatterns: ["/build/", "/node_modules/"],
-};
+  projects: [
+    '<rootDir>/packages/fastify-renderer/jest.config.js',
+    '<rootDir>/packages/test-apps/simple-react/jest.config.js',
+  ],
+}

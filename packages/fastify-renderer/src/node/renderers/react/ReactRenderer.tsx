@@ -1,14 +1,14 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import { RouteOptions } from 'fastify'
 import path from 'path'
+import querystring from 'querystring'
+import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
-import staticLocationHook from 'wouter/static-location'
 import { DefaultDocumentTemplate } from '../../DocumentTemplate'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { escapeRegex, mapFilepathToEntrypointName } from '../../utils'
-import { Render, Renderer } from '../Renderer'
+import { Render, RenderableRoute, Renderer } from '../Renderer'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
@@ -18,21 +18,36 @@ export interface ReactRendererOptions {
   mode: 'sync' | 'streaming'
 }
 
+const staticLocationHook = (path = '/', { record = false } = {}) => {
+  // eslint-disable-next-line prefer-const
+  let hook
+  const navigate = (to, { replace }: { replace?: boolean } = {}) => {
+    if (record) {
+      if (replace) {
+        hook.history.pop()
+      }
+      hook.history.push(to)
+    }
+  }
+  hook = () => [path, navigate]
+  hook.history = [path]
+  return hook
+}
+
 export class ReactRenderer implements Renderer {
   static ROUTE_TABLE_ID = '/@fstr!route-table.js'
   static LAZY_ROUTE_TABLE_ID = '/@fstr!lazy-route-table.js'
 
   viteConfig!: ResolvedConfig
   devServer?: ViteDevServer
-  routes!: RouteOptions[]
+  routes!: RenderableRoute[]
   tmpdir!: string
   basePathRegexp: RegExp
-  React!: any
-  ReactDOMServer!: any
-  Client!: any
+  clientModulePath: string
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
-    this.basePathRegexp = new RegExp(`^${escapeRegex(this.plugin.base)}`)
+    this.basePathRegexp = new RegExp(`^${escapeRegex(this.plugin.viteBase)}`)
+    this.clientModulePath = require.resolve('../../../client/react')
   }
 
   vitePlugins() {
@@ -44,7 +59,7 @@ export class ReactRenderer implements Renderer {
     ]
   }
 
-  async prepare(routes: RouteOptions[], viteConfig: ResolvedConfig, devServer?: ViteDevServer) {
+  async prepare(routes: RenderableRoute[], viteConfig: ResolvedConfig, devServer?: ViteDevServer) {
     this.viteConfig = viteConfig
     this.routes = routes
     this.devServer = devServer
@@ -55,14 +70,15 @@ export class ReactRenderer implements Renderer {
     const bus = this.startRenderBus(render)
 
     try {
+      const url = this.entrypointRequirePathForServer(render)
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
       const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
-        await this.loadModule(this.entrypointRequirePathForServer(render.renderable))
+        await this.loadModule(url)
       ).default
 
       let app = (
         <RenderBusContext.Provider value={bus}>
-          <Router base={this.plugin.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
+          <Router base={render.base} hook={staticLocationHook(this.stripBasePath(render.request.url))}>
             <Layout>
               <Entrypoint {...render.props} />
             </Layout>
@@ -89,13 +105,21 @@ export class ReactRenderer implements Renderer {
   }
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
-  public buildVirtualClientEntrypointModuleURL(id: string) {
-    return path.join(CLIENT_ENTRYPOINT_PREFIX, id, 'hydrate.jsx')
+  public buildVirtualClientEntrypointModuleURL(route: RenderableRoute) {
+    return (
+      path.join(this.plugin.viteBase, CLIENT_ENTRYPOINT_PREFIX, route.renderable, 'hydrate.jsx') +
+      '?' +
+      querystring.stringify({ layout: route.layout, base: route.base })
+    )
   }
 
   /** Given a node-land module id (path), return the server run time path to a virtual module to run the server side render */
-  public buildVirtualServerEntrypointModuleURL(id: string) {
-    return path.join(SERVER_ENTRYPOINT_PREFIX, id, 'ssr.jsx')
+  public buildVirtualServerEntrypointModuleURL(route: RenderableRoute) {
+    return (
+      path.join(SERVER_ENTRYPOINT_PREFIX, route.renderable, 'ssr.jsx') +
+      '?' +
+      querystring.stringify({ layout: route.layout, base: route.base })
+    )
   }
 
   /**
@@ -103,8 +127,8 @@ export class ReactRenderer implements Renderer {
    * In dev mode, will return a virtual module url that will use use the client side hydration plugin to produce a script around the entrypoint
    * In production, will reference the manifest to find the built module corresponding to the given entrypoint
    */
-  public entrypointScriptTagSrcForClient(id: string) {
-    const entrypointName = this.buildVirtualClientEntrypointModuleURL(id)
+  public entrypointScriptTagSrcForClient(render: Render) {
+    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render)
     if (this.plugin.devMode) {
       return entrypointName
     } else {
@@ -112,7 +136,7 @@ export class ReactRenderer implements Renderer {
       const manifestEntry = this.plugin.clientManifest![manifestEntryName]
       if (!manifestEntry) {
         throw new Error(
-          `Module id ${id} was not found in the built assets manifest. Looked for it at ${manifestEntryName} in manifest.json. Was it included in the build?`
+          `Module id ${render.renderable} was not found in the built assets manifest. Looked for it at ${manifestEntryName} in manifest.json. Was it included in the build?`
         )
       }
       return manifestEntry.file
@@ -125,15 +149,15 @@ export class ReactRenderer implements Renderer {
    * In dev mode, will return a virtual module url that will use use the server side render plugin to produce a script around the entrypoint
    * In production
    */
-  public entrypointRequirePathForServer(id: string) {
-    const entrypointName = this.buildVirtualServerEntrypointModuleURL(id)
+  public entrypointRequirePathForServer(render: Render<any>) {
+    const entrypointName = this.buildVirtualServerEntrypointModuleURL(render)
     if (this.plugin.devMode) {
       return entrypointName
     } else {
       const manifestEntry = this.plugin.serverEntrypointManifest![entrypointName]
       if (!manifestEntry) {
         throw new Error(
-          `Module id ${id} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
+          `Module id ${render.renderable} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
         )
       }
       return manifestEntry
@@ -151,15 +175,15 @@ export class ReactRenderer implements Renderer {
     // push the props for the entrypoint to use when hydrating client side
     bus.push('tail', `<script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>`)
 
-    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render.renderable)
+    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render)
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
     if (this.plugin.devMode) {
       bus.push(
         'tail',
         `<script type="module" src="${path.join(
           this.plugin.assetsHost,
-          this.plugin.base,
-          this.entrypointScriptTagSrcForClient(render.renderable)
+          render.base,
+          this.entrypointScriptTagSrcForClient(render)
         )}"></script>`
       )
     } else {
@@ -239,8 +263,10 @@ export class ReactRenderer implements Renderer {
       },
       load: (id) => {
         if (id.startsWith(CLIENT_ENTRYPOINT_PREFIX)) {
-          const importURL = id.replace(CLIENT_ENTRYPOINT_PREFIX, '/@fs/').replace(/\/hydrate\.jsx$/, '')
-          const layoutURL = this.plugin.layout
+          const url = new URL('fstr://' + id)
+          const entrypoint = id.replace(CLIENT_ENTRYPOINT_PREFIX, '/@fs/').replace(/\/hydrate\.jsx\?.+$/, '')
+          const layout = url.searchParams.get('layout')!
+          const base = url.searchParams.get('base')!
 
           return `
           // client side hydration entrypoint for a particular route generated by fastify-renderer
@@ -248,16 +274,16 @@ export class ReactRenderer implements Renderer {
           import React from 'react'
           import ReactDOM from 'react-dom'
           import { routes } from '/@fstr!route-table.js'
-          import { Root } from 'fastify-renderer/client/react'
-          import Layout from ${JSON.stringify(layoutURL)}
-          import Entrypoint from ${JSON.stringify(importURL)}
+          import { Root } from ${JSON.stringify(this.clientModulePath)}
+          import Layout from ${JSON.stringify(layout)}
+          import Entrypoint from ${JSON.stringify(entrypoint)}
 
           ReactDOM.unstable_createRoot(document.getElementById('fstrapp'), {
             hydrate: true
           }).render(<Root
             Layout={Layout}
             Entrypoint={Entrypoint}
-            basePath={${JSON.stringify(this.viteConfig.base.slice(0, -1))}}
+            basePath={${JSON.stringify(base)}}
             routes={routes}
             bootProps={window.__FSTR_PROPS}
           />)
@@ -282,16 +308,17 @@ export class ReactRenderer implements Renderer {
       },
       load: (id) => {
         if (id.startsWith(SERVER_ENTRYPOINT_PREFIX)) {
-          const importURL = id.replace(SERVER_ENTRYPOINT_PREFIX, '').replace(/\/ssr\.jsx$/, '')
-          const layoutURL = this.plugin.layout
+          const entrypoint = id.replace(SERVER_ENTRYPOINT_PREFIX, '').replace(/\/ssr\.jsx\?.+$/, '')
+          const url = new URL('fstr://' + id)
+          const layout = url.searchParams.get('layout')!
 
-          return `
+          const code = `
           // server side processed entrypoint for a particular route generated by fastify-renderer
           import React from 'react'
           import ReactDOMServer from 'react-dom/server'
-          import { Router, RenderBusContext } from 'fastify-renderer/client/react'
-          import Layout from ${JSON.stringify(layoutURL)}
-          import Entrypoint from ${JSON.stringify(importURL)}
+          import { Router, RenderBusContext } from ${JSON.stringify(this.clientModulePath)}
+          import Layout from ${JSON.stringify(layout)}
+          import Entrypoint from ${JSON.stringify(entrypoint)}
 
           export default {
             React,
@@ -302,6 +329,8 @@ export class ReactRenderer implements Renderer {
             Entrypoint
           }
           `
+
+          return code
         }
       },
     }
@@ -320,7 +349,7 @@ export class ReactRenderer implements Renderer {
       },
       load: (id) => {
         if (id == ReactRenderer.ROUTE_TABLE_ID || id == ReactRenderer.LAZY_ROUTE_TABLE_ID) {
-          const pathsToModules = this.routes.map((route) => [this.stripBasePath(route.url), route.render!])
+          const pathsToModules = this.routes.map((route) => [this.stripBasePath(route.url), route.renderable])
 
           if (id == ReactRenderer.LAZY_ROUTE_TABLE_ID) {
             return `

@@ -36,9 +36,9 @@ jspm_packages/
 .env
 
 # compiled lib
-/client
-/node
-/esm
+/packages/fastify-renderer/client
+/packages/fastify-renderer/node
+/packages/fastify-renderer/esm
 
 BUILD_SHA
 

@@ -1,11 +1,11 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../../tsconfig.json",
   "include": ["./"],
   "compilerOptions": {
     "target": "ES2019",
     "outDir": "../../node",
     "module": "commonjs",
-    "lib": ["ESNext"],
+    "lib": ["ES2020"],
     "sourceMap": true
   }
 }
