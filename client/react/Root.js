@@ -1,0 +1,39 @@
+import React, { useEffect, useState } from 'react';
+import { Route, Router, Switch, useLocation } from 'wouter';
+import { usePromise } from './fetcher';
+import { useTransitionLocation } from './locationHook';
+const RouteTable = (props) => {
+    const isNavigating = useLocation()[2]; // we hack in a third return value from our custom location hook to get at the transition current state
+    return (React.createElement(props.Layout, { isNavigating: isNavigating },
+        React.createElement(Switch, null, props.routes)));
+};
+export function Root(props) {
+    const [firstRenderComplete, setFirstRenderComplete] = useState(false);
+    useEffect(() => setFirstRenderComplete(true));
+    const routes = [
+        ...Object.entries(props.routes).map(([route, Component]) => (React.createElement(Route, { path: route, key: route }, (params) => {
+            const [location] = useLocation();
+            const payload = usePromise(props.basePath + location, async () => (await fetch(props.basePath + location, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                },
+                credentials: 'same-origin',
+            })).json());
+            // navigate to the anchor in the url after rendering
+            useEffect(() => {
+                var _a;
+                if (window.location.hash) {
+                    (_a = document.getElementById(window.location.hash.slice(1))) === null || _a === void 0 ? void 0 : _a.scrollIntoView();
+                }
+            }, [location]);
+            return React.createElement(Component, Object.assign({ params: params }, payload.props));
+        }))),
+    ];
+    if (!firstRenderComplete) {
+        routes.unshift(React.createElement(Route, { key: "first-render-root" },
+            React.createElement(props.Entrypoint, Object.assign({}, props.bootProps))));
+    }
+    return (React.createElement(Router, { base: props.basePath, hook: useTransitionLocation },
+        React.createElement(RouteTable, { routes: routes, Layout: props.Layout })));
+}
