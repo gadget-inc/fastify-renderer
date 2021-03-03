@@ -45,11 +45,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     }
 
     fastify[kRendererPlugin] = plugin
-    fastify[kRenderOptions] = {
-      base: incomingOptions.base || '',
-      layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
-      document: incomingOptions.document || DefaultDocumentTemplate,
-    }
 
     fastify.addHook('onRegister', (instance) => {
       const innerOptions = { ...instance[kRenderOptions] }
@@ -57,7 +52,17 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     })
 
     fastify.decorate('setRenderConfig', function (this: FastifyInstance, config: Partial<RenderOptions>) {
-      this[kRenderOptions] = { ...this[kRenderOptions], ...config }
+      const newOptions = { ...this[kRenderOptions], ...config }
+      if (newOptions.base.endsWith('/')) {
+        this.log.warn(`fastify-renderer base paths shouldn't end in a slash, got ${newOptions.base}`)
+      }
+      this[kRenderOptions] = newOptions
+    })
+
+    fastify.setRenderConfig({
+      base: incomingOptions.base || '',
+      layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
+      document: incomingOptions.document || DefaultDocumentTemplate,
     })
 
     // Wrap routes that have the `render` option set to invoke the rendererer with the result of the route handler as the props

@@ -15,6 +15,13 @@ export const server = async () => {
       type: 'react',
       mode: 'sync',
     },
+    vite: {
+      server: {
+        hmr: {
+          port: 27123,
+        },
+      },
+    },
   })
 
   server.get('/', { render: require.resolve('./Home') }, async () => {
@@ -30,6 +37,17 @@ export const server = async () => {
 
     instance.get('/red/about', { render: require.resolve('./About') }, async (request) => {
       return { hostname: os.hostname(), requestIP: request.ip }
+    })
+  })
+
+  await server.register(async (instance) => {
+    instance.setRenderConfig({ base: '/subpath' })
+
+    instance.get('/subpath/this', { render: require.resolve('./subapp/This') }, async (request) => {
+      return {}
+    })
+    instance.get('/subpath/that', { render: require.resolve('./subapp/That') }, async (request) => {
+      return {}
     })
   })
 
