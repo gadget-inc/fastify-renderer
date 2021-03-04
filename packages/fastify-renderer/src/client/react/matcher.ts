@@ -20,7 +20,7 @@ const getRegexp = (pattern: string) => cache[pattern] || (cache[pattern] = conve
 
 export const matcher: MatcherFn = (pattern, path) => {
   const { regexp, keys } = getRegexp(pattern || '')
-  const out = regexp.exec(path)
+  const out = regexp.exec(path.split('#')[0])
 
   if (!out) return [false, null]
 

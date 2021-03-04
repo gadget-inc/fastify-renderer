@@ -61,6 +61,7 @@
     "fastify-static": "^3.4.0",
     "http-errors": "^1.8.0",
     "middie": "^5.2.0",
+    "path-to-regexp": "^6.2.0",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
     "vite": "^2.0.5",
