@@ -1,3 +1,4 @@
-import { Strategy } from '../../dist/index.js'
+import assert from 'assert'
+import { build } from '../../node/index.js'
 
-class MS extends Strategy {}
+assert(build)

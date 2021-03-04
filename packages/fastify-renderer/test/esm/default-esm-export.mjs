@@ -1,3 +1,4 @@
-import renderer from '../../dist/index.js'
+import assert from 'assert'
+import renderer from '../../node/index.js'
 
-renderer.initialize()
+assert(renderer)
