@@ -379,7 +379,12 @@ export const routes = {
 
   private stripBasePath(fullyQualifiedPath: string, base: string) {
     if (fullyQualifiedPath.startsWith(base)) {
-      return fullyQualifiedPath.slice(base.length)
+      const baseless = fullyQualifiedPath.slice(base.length)
+      if (baseless == '') {
+        return '/'
+      } else {
+        return baseless
+      }
     } else {
       return fullyQualifiedPath
     }
