@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "run": "run-p watch:*"
+    "dev": "ts-node --files server.ts"
   },
   "license": "MIT",
   "dependencies": {
-    "fastify": "*",
+    "fastify": "^3.13.0",
     "fastify-renderer": "*",
     "react": "*",
     "react-dom": "*"
