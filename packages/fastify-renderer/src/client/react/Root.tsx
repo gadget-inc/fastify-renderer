@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Route, Router, Switch, useLocation } from 'wouter'
 import { usePromise } from './fetcher'
 import { useTransitionLocation } from './locationHook'
+import { matcher } from './matcher'
 
 export interface LayoutProps {
   isNavigating: boolean
@@ -26,7 +27,6 @@ export function Root<BootProps>(props: {
   routes: Record<string, React.FunctionComponent<any>>
 }) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
-
   useEffect(() => setFirstRenderComplete(true))
 
   const routes: JSX.Element[] = [
@@ -69,7 +69,7 @@ export function Root<BootProps>(props: {
   }
 
   return (
-    <Router base={props.basePath} hook={useTransitionLocation as any}>
+    <Router base={props.basePath} hook={useTransitionLocation as any} matcher={matcher}>
       <RouteTable routes={routes} Layout={props.Layout} />
     </Router>
   )
