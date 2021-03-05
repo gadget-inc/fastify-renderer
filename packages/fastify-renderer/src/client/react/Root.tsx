@@ -24,13 +24,13 @@ export function Root<BootProps>(props: {
   Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps
   basePath: string
-  routes: Record<string, React.FunctionComponent<any>>
+  routes: [string, React.FunctionComponent<any>][]
 }) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
   useEffect(() => setFirstRenderComplete(true))
 
   const routes: JSX.Element[] = [
-    ...Object.entries(props.routes).map(([route, Component]) => (
+    ...props.routes.map(([route, Component]) => (
       <Route path={route} key={route}>
         {(params) => {
           const [location] = useLocation()
