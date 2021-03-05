@@ -347,6 +347,11 @@ export class ReactRenderer implements Renderer {
         return 0
       }
     }
+    // b before a if greater than 0
+    // b=2, a=1 if greater than 0
+
+    // Convert find-my-way route paths to path-to-regexp syntax
+    const pathToRegexpify = (path: string) => path.replace('*', ':splat*')
 
     return {
       name: 'fastify-renderer:react-route-table',
@@ -360,11 +365,13 @@ export class ReactRenderer implements Renderer {
           const url = new URL('fstr://' + id)
           const lazy = !!url.searchParams.get('lazy')!
           const base = url.searchParams.get('base')!
-          const pathsToModules = this.routes
-            .filter((route) => route.base == base)
-            .map((route) => [this.stripBasePath(route.url, base), route.renderable])
+          const applicableRoutes = this.routes.filter((route) => route.base == base)
+          applicableRoutes.sort((a, b) => routeSortScore(a.url) - routeSortScore(b.url))
 
-          pathsToModules.sort((a, b) => routeSortScore(a[0]) - routeSortScore(b[0]))
+          const pathsToModules = applicableRoutes.map((route) => [
+            pathToRegexpify(this.stripBasePath(route.url, base)),
+            route.renderable,
+          ])
 
           if (lazy) {
             return `

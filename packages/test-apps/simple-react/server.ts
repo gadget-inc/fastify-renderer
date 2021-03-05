@@ -24,6 +24,10 @@ export const server = async () => {
     },
   })
 
+  server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
+    return { params: request.params }
+  })
+
   server.get('/', { render: require.resolve('./Home') }, async () => {
     return { time: Date.now() }
   })
