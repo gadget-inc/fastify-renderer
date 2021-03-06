@@ -61,6 +61,14 @@ export class ReactRenderer implements Renderer {
     this.viteConfig = viteConfig
     this.routes = routes
     this.devServer = devServer
+
+    // in production mode, we eagerly require all the endpoints during server boot, so that the first request to the endpoint isn't slow
+    // if the service running fastify-renderer is being gracefully restarted, this will block the fastify server from listening until all the code is required, keeping the old server in service a bit longer while this require is done, which is good for users
+    if (!this.plugin.devMode) {
+      for (const route of routes) {
+        await this.loadModule(this.entrypointRequirePathForServer(route))
+      }
+    }
   }
 
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
@@ -147,15 +155,15 @@ export class ReactRenderer implements Renderer {
    * In dev mode, will return a virtual module url that will use use the server side render plugin to produce a script around the entrypoint
    * In production
    */
-  public entrypointRequirePathForServer(render: Render<any>) {
-    const entrypointName = this.buildVirtualServerEntrypointModuleURL(render)
+  public entrypointRequirePathForServer(route: RenderableRoute) {
+    const entrypointName = this.buildVirtualServerEntrypointModuleURL(route)
     if (this.plugin.devMode) {
       return entrypointName
     } else {
       const manifestEntry = this.plugin.serverEntrypointManifest![entrypointName]
       if (!manifestEntry) {
         throw new Error(
-          `Module id ${render.renderable} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
+          `Module id ${route.renderable} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
         )
       }
       return manifestEntry
