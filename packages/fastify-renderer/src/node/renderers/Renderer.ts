@@ -26,7 +26,7 @@ export interface Render<Props = any> extends RenderableRoute {
 export interface Renderer {
   prepare(routes: RenderableRoute[], viteOptions: ResolvedConfig, devServer?: ViteDevServer): Promise<void>
   render<Props>(render: Render<Props>): Promise<void>
-  buildVirtualClientEntrypointModuleURL(route: RenderableRoute): string
-  buildVirtualServerEntrypointModuleURL(route: RenderableRoute): string
+  buildVirtualClientEntrypointModuleID(route: RenderableRoute): string
+  buildVirtualServerEntrypointModuleID(route: RenderableRoute): string
   vitePlugins(): Plugin[]
 }

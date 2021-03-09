@@ -39,6 +39,7 @@ jspm_packages/
 /packages/fastify-renderer/client
 /packages/fastify-renderer/node
 /packages/fastify-renderer/esm
+/packages/test-apps/*/dist
 
 BUILD_SHA
 

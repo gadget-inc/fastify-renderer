@@ -176,15 +176,15 @@ export const build = async (fastify: FastifyInstance) => {
   const serverEntrypoints: Record<string, string> = {}
   for (const renderableRoute of plugin.routes) {
     const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable)
-    clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleURL(renderableRoute)
-    serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleURL(renderableRoute)
+    clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleID(renderableRoute)
+    serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleID(renderableRoute)
 
     serverEntrypoints[mapFilepathToEntrypointName(renderableRoute.layout)] = renderableRoute.layout
   }
 
   const vite = fastify[kRendererViteOptions]
 
-  fastify.log.info(`Building client side assets for fastify-renderer`)
+  fastify.log.info(`Building ${Object.keys(clientEntrypoints).length} client side asset(s) for fastify-renderer`)
   await viteBuild({
     ...vite,
     build: {
@@ -199,7 +199,7 @@ export const build = async (fastify: FastifyInstance) => {
     },
   })
 
-  fastify.log.info(`Building server side side assets for fastify-renderer`)
+  fastify.log.info(`Building ${Object.keys(serverEntrypoints).length} server side side asset(s) for fastify-renderer`)
   await viteBuild({
     ...vite,
     build: {

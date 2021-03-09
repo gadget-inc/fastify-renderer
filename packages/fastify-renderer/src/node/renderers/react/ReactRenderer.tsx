@@ -111,16 +111,16 @@ export class ReactRenderer implements Renderer {
   }
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
-  public buildVirtualClientEntrypointModuleURL(route: RenderableRoute) {
+  public buildVirtualClientEntrypointModuleID(route: RenderableRoute) {
     return (
-      path.join(this.plugin.viteBase, CLIENT_ENTRYPOINT_PREFIX, route.renderable, 'hydrate.jsx') +
+      path.join(CLIENT_ENTRYPOINT_PREFIX, route.renderable, 'hydrate.jsx') +
       '?' +
       querystring.stringify({ layout: route.layout, base: route.base })
     )
   }
 
   /** Given a node-land module id (path), return the server run time path to a virtual module to run the server side render */
-  public buildVirtualServerEntrypointModuleURL(route: RenderableRoute) {
+  public buildVirtualServerEntrypointModuleID(route: RenderableRoute) {
     return (
       path.join(SERVER_ENTRYPOINT_PREFIX, route.renderable, 'ssr.jsx') +
       '?' +
@@ -134,9 +134,9 @@ export class ReactRenderer implements Renderer {
    * In production, will reference the manifest to find the built module corresponding to the given entrypoint
    */
   public entrypointScriptTagSrcForClient(render: Render) {
-    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render)
+    const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
     if (this.plugin.devMode) {
-      return entrypointName
+      return path.join(this.plugin.viteBase, entrypointName)
     } else {
       const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
       const manifestEntry = this.plugin.clientManifest![manifestEntryName]
@@ -156,7 +156,7 @@ export class ReactRenderer implements Renderer {
    * In production
    */
   public entrypointRequirePathForServer(route: RenderableRoute) {
-    const entrypointName = this.buildVirtualServerEntrypointModuleURL(route)
+    const entrypointName = this.buildVirtualServerEntrypointModuleID(route)
     if (this.plugin.devMode) {
       return entrypointName
     } else {
@@ -181,7 +181,7 @@ export class ReactRenderer implements Renderer {
     // push the props for the entrypoint to use when hydrating client side
     bus.push('tail', `<script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>`)
 
-    const entrypointName = this.buildVirtualClientEntrypointModuleURL(render)
+    const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
     if (this.plugin.devMode) {
       bus.push(
