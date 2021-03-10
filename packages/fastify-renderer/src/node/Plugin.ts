@@ -29,7 +29,8 @@ export class FastifyRendererPlugin {
   devMode: boolean
   vite: InlineConfig
   viteBase: string
-  outDir: string
+  clientOutDir: string
+  serverOutDir: string
   assetsHost: string
   hooks: FastifyRendererHook[]
   clientManifest?: ViteClientManifest
@@ -38,20 +39,23 @@ export class FastifyRendererPlugin {
 
   constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
-    this.outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
-
-    if (!this.devMode) {
-      this.clientManifest = JSON.parse(fs.readFileSync(path.join(this.outDir, 'client', 'manifest.json'), 'utf-8'))
-      this.serverEntrypointManifest = JSON.parse(
-        fs.readFileSync(path.join(this.outDir, 'server', 'virtual-manifest.json'), 'utf-8')
-      )
-    }
 
     this.vite = incomingOptions.vite || {}
     this.vite.base ??= '/.vite/'
     this.viteBase = this.vite.base
     this.assetsHost = incomingOptions.assetsHost || ''
     this.hooks = (incomingOptions.hooks || []).map(unthunk)
+
+    const outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
+    this.clientOutDir = path.join(outDir, 'client', this.viteBase)
+    this.serverOutDir = path.join(outDir, 'server')
+
+    if (!this.devMode) {
+      this.clientManifest = JSON.parse(fs.readFileSync(path.join(this.clientOutDir, 'manifest.json'), 'utf-8'))
+      this.serverEntrypointManifest = JSON.parse(
+        fs.readFileSync(path.join(this.serverOutDir, 'virtual-manifest.json'), 'utf-8')
+      )
+    }
 
     this.renderer = new ReactRenderer(this, incomingOptions.renderer || { type: 'react', mode: 'streaming' })
   }

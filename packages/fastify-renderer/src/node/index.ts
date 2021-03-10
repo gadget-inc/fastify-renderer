@@ -108,10 +108,9 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         // we need to register a wildcard route for all the files that vite might serve, which we use fastify-static to do
         // in dev mode, this is needed so the fastify router will recognize the route and dispatch it, which will then run the middleware chain, letting vite take over and serve the file
         // in production, this will actually serve the files that vite has built for the client
-        const staticPath = path.join(plugin.outDir, 'client')
-        await fs.mkdir(staticPath, { recursive: true })
+        await fs.mkdir(plugin.clientOutDir, { recursive: true })
         await instance.register(fastifyStatic, {
-          root: staticPath,
+          root: plugin.clientOutDir,
         })
 
         if (plugin.devMode) {
@@ -172,6 +171,8 @@ export const build = async (fastify: FastifyInstance) => {
     throw new Error('No fastify-renderer registered to build, have all your fastify plugins been loaded?')
   }
 
+  const log = fastify.log.child({ name: 'fastify-renderer' })
+
   const clientEntrypoints: Record<string, string> = {}
   const serverEntrypoints: Record<string, string> = {}
   for (const renderableRoute of plugin.routes) {
@@ -184,12 +185,12 @@ export const build = async (fastify: FastifyInstance) => {
 
   const vite = fastify[kRendererViteOptions]
 
-  fastify.log.info(`Building ${Object.keys(clientEntrypoints).length} client side asset(s) for fastify-renderer`)
+  log.info(`Building ${Object.keys(clientEntrypoints).length} client side asset(s) to ${plugin.clientOutDir}`)
   await viteBuild({
     ...vite,
     build: {
       ...vite.build,
-      outDir: path.join(plugin.outDir, 'client'),
+      outDir: plugin.clientOutDir,
       ssrManifest: true,
       manifest: true,
       rollupOptions: {
@@ -199,16 +200,16 @@ export const build = async (fastify: FastifyInstance) => {
     },
   })
 
-  fastify.log.info(`Building ${Object.keys(serverEntrypoints).length} server side side asset(s) for fastify-renderer`)
+  log.info(`Building ${Object.keys(serverEntrypoints).length} server side side asset(s) for ${plugin.serverOutDir}`)
   await viteBuild({
     ...vite,
     build: {
       ...vite.build,
+      outDir: plugin.serverOutDir,
       rollupOptions: {
         input: serverEntrypoints,
         ...vite?.build?.rollupOptions,
       },
-      outDir: path.join(plugin.outDir, 'server'),
       ssr: true,
     },
   })
@@ -219,7 +220,7 @@ export const build = async (fastify: FastifyInstance) => {
     Object.entries(serverEntrypoints).map(([key, value]) => [value, key])
   )
   await fs.writeFile(
-    path.join(plugin.outDir, 'server', 'virtual-manifest.json'),
+    path.join(plugin.serverOutDir, 'virtual-manifest.json'),
     JSON.stringify(virtualModulesToRenderedEntrypoints, null, 2)
   )
 }

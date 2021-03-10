@@ -248,7 +248,7 @@ export class ReactRenderer implements Renderer {
     if (this.plugin.devMode) {
       return await this.devServer!.ssrLoadModule(id)
     } else {
-      const builtPath = path.join(this.plugin.outDir, 'server', mapFilepathToEntrypointName(id))
+      const builtPath = path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(id))
       return require(builtPath)
     }
   }
