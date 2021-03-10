@@ -172,6 +172,8 @@ export const build = async (fastify: FastifyInstance) => {
     throw new Error('No fastify-renderer registered to build, have all your fastify plugins been loaded?')
   }
 
+  const log = fastify.log.child({ name: 'fastify-renderer' })
+
   const clientEntrypoints: Record<string, string> = {}
   const serverEntrypoints: Record<string, string> = {}
   for (const renderableRoute of plugin.routes) {
@@ -183,13 +185,15 @@ export const build = async (fastify: FastifyInstance) => {
   }
 
   const vite = fastify[kRendererViteOptions]
+  const clientOutDir = path.join(plugin.outDir, 'client', plugin.viteBase)
+  const serverOutDir = path.join(plugin.outDir, 'server')
 
-  fastify.log.info(`Building ${Object.keys(clientEntrypoints).length} client side asset(s) for fastify-renderer`)
+  log.info(`Building ${Object.keys(clientEntrypoints).length} client side asset(s) to ${clientOutDir}`)
   await viteBuild({
     ...vite,
     build: {
       ...vite.build,
-      outDir: path.join(plugin.outDir, 'client'),
+      outDir: clientOutDir,
       ssrManifest: true,
       manifest: true,
       rollupOptions: {
@@ -199,16 +203,16 @@ export const build = async (fastify: FastifyInstance) => {
     },
   })
 
-  fastify.log.info(`Building ${Object.keys(serverEntrypoints).length} server side side asset(s) for fastify-renderer`)
+  log.info(`Building ${Object.keys(serverEntrypoints).length} server side side asset(s) for ${serverOutDir}`)
   await viteBuild({
     ...vite,
     build: {
       ...vite.build,
+      outDir: serverOutDir,
       rollupOptions: {
         input: serverEntrypoints,
         ...vite?.build?.rollupOptions,
       },
-      outDir: path.join(plugin.outDir, 'server'),
       ssr: true,
     },
   })
