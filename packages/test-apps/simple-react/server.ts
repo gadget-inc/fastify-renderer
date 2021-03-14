@@ -21,6 +21,9 @@ export const server = async () => {
           port: 27123,
         },
       },
+      optimizeDeps: {
+        include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp'],
+      },
     },
   })
 

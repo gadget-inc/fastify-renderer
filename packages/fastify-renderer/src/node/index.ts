@@ -10,6 +10,7 @@ import { build as viteBuild, createServer, InlineConfig, resolveConfig, Resolved
 import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { FastifyRendererOptions, FastifyRendererPlugin } from './Plugin'
 import { Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
+import { wrap } from './tracing'
 import './types' // necessary to make sure that the fastify types are augmented
 import { ServerRenderer } from './types'
 import { mapFilepathToEntrypointName } from './utils'
@@ -68,14 +69,14 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     // Wrap routes that have the `render` option set to invoke the rendererer with the result of the route handler as the props
     fastify.addHook('onRoute', function (this: FastifyInstance, routeOptions) {
       if (routeOptions.render) {
-        const oldHandler = routeOptions.handler as ServerRenderer<any>
+        const oldHandler = wrap('fastify-renderer.getProps', routeOptions.handler as ServerRenderer<any>)
         const renderable = routeOptions.render
         const plugin = this[kRendererPlugin]
         const renderableRoute: RenderableRoute = { ...this[kRenderOptions], url: routeOptions.url, renderable }
 
         plugin.registerRoute(renderableRoute)
 
-        routeOptions.handler = async function (request, reply) {
+        routeOptions.handler = wrap('fastify-renderer.handler', async function (this: FastifyInstance, request, reply) {
           const props = await oldHandler.call(this, request, reply)
 
           void reply.header('Vary', 'Accept')
@@ -92,7 +93,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
               await reply.type('text/plain').send('Content type not supported')
               break
           }
-        }
+        })
       }
     })
 
