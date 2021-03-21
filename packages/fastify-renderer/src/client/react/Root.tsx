@@ -35,17 +35,21 @@ export function Root<BootProps>(props: {
         {(params) => {
           const [location] = useLocation()
 
-          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + location, async () =>
-            (
-              await fetch(props.basePath + location, {
-                method: 'GET',
-                headers: {
-                  Accept: 'application/json',
-                },
-                credentials: 'same-origin',
-              })
-            ).json()
-          )
+          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + location, async () => {
+            if (!firstRenderComplete) {
+              return { props: props.bootProps }
+            } else {
+              return (
+                await fetch(props.basePath + location, {
+                  method: 'GET',
+                  headers: {
+                    Accept: 'application/json',
+                  },
+                  credentials: 'same-origin',
+                })
+              ).json()
+            }
+          })
 
           // navigate to the anchor in the url after rendering
           useEffect(() => {
@@ -59,14 +63,6 @@ export function Root<BootProps>(props: {
       </Route>
     )),
   ]
-
-  if (!firstRenderComplete) {
-    routes.unshift(
-      <Route key="first-render-root">
-        <props.Entrypoint {...props.bootProps} />
-      </Route>
-    )
-  }
 
   return (
     <Router base={props.basePath} hook={useTransitionLocation as any} matcher={matcher}>
