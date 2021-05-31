@@ -216,7 +216,7 @@ export const build = async (fastify: FastifyInstance) => {
   })
 
   // Write a special manifest for the server side entrypoints
-  // Somewhat strangely we also use virtual entrypoints for the server side code used during SSR -- that means that in production, the server needs to require code from a special spot to get the SSR-safe version of each entrypoint. We write out our own manifesth here because there's a bug in rollup or vite that errors when trying to generate a manifest in SSR mode.
+  // Somewhat strangely we also use virtual entrypoints for the server side code used during SSR -- that means that in production, the server needs to require code from a special spot to get the SSR-safe version of each entrypoint. We write out our own manifest here because there's a bug in rollup or vite that errors when trying to generate a manifest in SSR mode.
   const virtualModulesToRenderedEntrypoints = Object.fromEntries(
     Object.entries(serverEntrypoints).map(([key, value]) => [value, key])
   )
