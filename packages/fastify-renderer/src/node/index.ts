@@ -99,6 +99,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
 
     let devServer: ViteDevServer | undefined = undefined
     let viteMountInstance: FastifyInstance = fastify
+    await fs.mkdir(plugin.clientOutDir, { recursive: true })
 
     // this nasty bit is to support vite's middlewares running at a prefix where they don't collide with other routes the user might have added
     // we use the fastify router's prefix functionality to only let vite operate on routes that match it's prefix
@@ -109,8 +110,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         // we need to register a wildcard route for all the files that vite might serve, which we use fastify-static to do
         // in dev mode, this is needed so the fastify router will recognize the route and dispatch it, which will then run the middleware chain, letting vite take over and serve the file
         // in production, this will actually serve the files that vite has built for the client
-        await fs.mkdir(plugin.clientOutDir, { recursive: true })
-        await instance.register(fastifyStatic, {
+        void instance.register(fastifyStatic, {
           root: plugin.clientOutDir,
         })
 
