@@ -20,3 +20,8 @@ export const newFastifyRendererPlugin = (options: FastifyRendererOptions = {}) =
   return new FastifyRendererPlugin(options)
 }
 
+export const newReactRenderer = (options?: ReactRendererOptions): ReactRenderer => {
+  const plugin = newFastifyRendererPlugin({ renderer: options })
+  return plugin.renderer as ReactRenderer
+}
+
