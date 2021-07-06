@@ -1,6 +1,6 @@
 # fastify-renderer
 
-![Build Status](https://github.com/fastify/fastify-renderer/workflows/ci/badge.svg)
+![Build Status](https://github.com/gadget-inc/fastify-renderer/workflows/ci/badge.svg)
 [![NPM version](https://img.shields.io/npm/v/fastify-renderer.svg?style=flat)](https://www.npmjs.com/package/fastify-renderer)
 
 `fastify-renderer` renders client side JavaScript applications on the server to improve the user experience.
