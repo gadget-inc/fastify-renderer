@@ -1,3 +1,4 @@
-/client
-/node
-/esm
+packages/fastify-renderer/client
+packages/fastify-renderer/node
+packages/fastify-renderer/*.config.js
+packages/test-apps/simple-react/dist

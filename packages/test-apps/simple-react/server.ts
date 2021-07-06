@@ -50,10 +50,10 @@ export const server = async () => {
   await server.register(async (instance) => {
     instance.setRenderConfig({ base: '/subpath' })
 
-    instance.get('/subpath/this', { render: require.resolve('./subapp/This') }, async (request) => {
+    instance.get('/subpath/this', { render: require.resolve('./subapp/This') }, async (_request) => {
       return {}
     })
-    instance.get('/subpath/that', { render: require.resolve('./subapp/That') }, async (request) => {
+    instance.get('/subpath/that', { render: require.resolve('./subapp/That') }, async (_request) => {
       return {}
     })
   })
