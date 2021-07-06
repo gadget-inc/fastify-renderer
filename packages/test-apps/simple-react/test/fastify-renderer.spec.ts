@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify'
+import validator from 'html-validator'
 import { server } from '../server'
 
 describe('fastify-renderer', () => {
@@ -16,6 +17,10 @@ describe('fastify-renderer', () => {
     })
 
     expect(response.statusCode).toEqual(200)
-    expect(response.body).toMatchSnapshot()
+    expect(() =>
+      validator({
+        data: response.body,
+      })
+    ).not.toThrow()
   })
 })
