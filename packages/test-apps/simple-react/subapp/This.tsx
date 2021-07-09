@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'wouter'
 
-const This = (props: { time: number }) => {
+const This = (_props: { time: number }) => {
   return (
     <>
       <h1>This</h1>

@@ -1,9 +1,8 @@
 module.exports = {
-  parser: '@typescript-eslint/parser', // Specifies the ESLint parser
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaVersion: 2020, // Allows for the parsing of modern ECMAScript features
-    sourceType: 'module', // Allows for the use of imports
-    project: ['./packages/**/*/tsconfig.json'],
+    tsconfigRootDir: __dirname,
+    project: ['./packages/fastify-renderer/tsconfig.eslint.json', './packages/test-apps/simple-react/tsconfig.json'],
   },
   settings: {
     react: {

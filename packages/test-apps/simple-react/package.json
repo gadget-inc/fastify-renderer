@@ -11,5 +11,8 @@
     "fastify-renderer": "*",
     "react": "*",
     "react-dom": "*"
+  },
+  "devDependencies": {
+    "html-validator": "^5.1.17"
   }
 }
