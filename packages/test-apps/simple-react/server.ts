@@ -1,6 +1,6 @@
+import renderer from 'fastify-renderer/src/node'
+import { newFastify } from 'fastify-renderer/test/helpers'
 import os from 'os'
-import renderer from '../../fastify-renderer/src/node'
-import { newFastify } from '../../fastify-renderer/test/helpers'
 
 export const server = async () => {
   const server = await newFastify({
