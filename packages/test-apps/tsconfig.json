@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["."],
+  "compilerOptions": {
+    "target": "ES2019",
+    "outDir": "../../node",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "sourceMap": true,
+    "types": ["fastify-renderer", "jest", "node"]
+  }
+}
