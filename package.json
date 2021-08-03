@@ -13,7 +13,8 @@
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "yarn workspace fastify-renderer publish",
     "prerelease": "yarn workspace fastify-renderer run gitpkg publish",
-    "test": "jest"
+    "test": "jest",
+    "test:debug": "cross-env FR_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest"
   },
   "repository": {
     "type": "git",
@@ -42,6 +43,7 @@
     "react-dom": "0.0.0-experimental-4ead6b530"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "fs-extra": "^10.0.0",
     "playwright-chromium": "^1.13.0"
   }
