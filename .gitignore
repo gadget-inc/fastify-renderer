@@ -44,6 +44,3 @@ jspm_packages/
 BUILD_SHA
 
 tsconfig.tsbuildinfo
-
-# Ignore temp directory used during testing
-temp

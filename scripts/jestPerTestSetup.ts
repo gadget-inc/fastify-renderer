@@ -3,8 +3,6 @@ import { resolve } from 'path'
 import { FastifyInstance } from 'fastify'
 import { Page } from 'playwright-chromium'
 
-// const isBuildTest = !!process.env.FR_TEST_BUILD
-
 export function slash(p: string): string {
   return p.replace(/\\/g, '/')
 }
@@ -21,8 +19,6 @@ declare global {
 }
 
 let server: FastifyInstance
-let tempDir: string
-let rootDir: string
 let err: Error
 
 const logs: string[] = ((global as any).browserLogs = [])
@@ -44,24 +40,10 @@ beforeAll(async () => {
     if (testName) {
       const testAppsRoot = resolve(__dirname, '../packages/test-apps')
       const srcDir = resolve(testAppsRoot, testName)
-      tempDir = resolve(__dirname, '../temp', testName)
-      await fs.copy(srcDir, tempDir, {
-        dereference: true,
-        filter(file) {
-          file = slash(file)
-          return (
-            !file.includes('test/') &&
-            !file.includes('node_modules') &&
-            !file.match(/dist(\/|$)/)
-          )
-        }
-      })
 
-      rootDir = tempDir
-
-      const serverEntrypoint = resolve(rootDir, 'server.ts')
+      const serverEntrypoint = resolve(srcDir, 'server.ts')
       if (!fs.existsSync(serverEntrypoint)) {
-        throw Error(`Missing server entrypoint file: ${serverEntrypoint}`)
+        throw Error(`Missing server entrypoint file at: ${serverEntrypoint}`)
       }
 
       const { server: fastifyServer } = require(serverEntrypoint)
