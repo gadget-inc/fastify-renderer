@@ -1,7 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "include": ["."],
-  "exclude": ["**/dist/**"],
+  "exclude": ["**/node_modules", "**/dist/**"],
   "compilerOptions": {
     "target": "ES2019",
     "outDir": "../../node",
