@@ -6,5 +6,4 @@ declare global {
 
   // injected in scripts/jestPerTestSetup.ts
   const browserLogs: string[]
-  const fastifyRendererTestUrl: string
 }
