@@ -6,7 +6,7 @@ const Home = (props: { time: number }) => {
     <>
       <h1>Hello</h1>
       <p>Hi.</p>
-      <p>This page was rendered at {props.time}</p>
+      <p suppressHydrationWarning={true}>This page was rendered at {props.time}</p>
       <Link href="about">
         <a>About</a>
       </Link>
