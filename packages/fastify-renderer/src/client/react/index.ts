@@ -1,6 +1,6 @@
 import { createContext } from 'react'
 export { Link, Redirect, Route, Router, Switch, useLocation, useRoute, useRouter } from 'wouter'
-export { useTransitionLocation } from './locationHook'
+export { useNavigationDetails, useTransitionLocation } from './locationHook'
 export { Root } from './Root'
 export type { LayoutProps } from './Root'
 

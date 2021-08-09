@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react'
 import { Route, Router, Switch, useLocation } from 'wouter'
 import { usePromise } from './fetcher'
-import { useTransitionLocation } from './locationHook'
+import { useNavigationDetails, useTransitionLocation } from './locationHook'
 import { matcher } from './matcher'
 
 export interface LayoutProps {
   isNavigating: boolean
+  navigationDestination: string
   children: React.ReactNode
 }
 
 const RouteTable = (props: { Layout: React.FunctionComponent<LayoutProps>; routes: JSX.Element[] }) => {
-  const isNavigating = (useLocation() as any)[2] as boolean // we hack in a third return value from our custom location hook to get at the transition current state
+  const [isNavigating, navigationDestination] = useNavigationDetails()
 
   return (
-    <props.Layout isNavigating={isNavigating}>
+    <props.Layout isNavigating={isNavigating} navigationDestination={navigationDestination}>
       <Switch>{props.routes}</Switch>
     </props.Layout>
   )
