@@ -1,25 +1,11 @@
-import { FastifyInstance } from 'fastify'
 import validator from 'html-validator'
-import { server } from '../server'
 
-describe('fastify-renderer', () => {
-  let instance: FastifyInstance
-  beforeEach(async () => {
-    instance = await server()
-  })
-  afterEach(async () => {
-    await instance.close()
-  })
-
-  test('it should render a simple route', async () => {
-    const response = await instance.inject({
-      path: '/',
-    })
-
-    expect(response.statusCode).toEqual(200)
+describe('simple-react', () => {
+  test('Returns valid HTML content', async () => {
+    const html = await page.content()
     expect(() =>
       validator({
-        data: response.body,
+        data: html,
       })
     ).not.toThrow()
   })
