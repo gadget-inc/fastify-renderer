@@ -13,8 +13,8 @@
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "yarn workspace fastify-renderer publish",
     "prerelease": "yarn workspace fastify-renderer run gitpkg publish",
-    "test": "jest",
-    "test:debug": "cross-env FR_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest"
+    "test": "jest --forceExit",
+    "test:debug": "cross-env FR_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest --forceExit"
   },
   "repository": {
     "type": "git",
