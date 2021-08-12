@@ -11,7 +11,17 @@ const Home = (props: { time: number }) => {
         <a>About</a>
       </Link>
       <br />
-      <Link href="red/about">
+      <a href="/imperative">Imperative About</a>
+      <br />
+      <Link href="/widget/1">
+        <a>Widget 1</a>
+      </Link>
+      <br />
+      <Link href="/widget/2">
+        <a>Widget 2</a>
+      </Link>
+      <br />
+      <Link href="/red/about">
         <a>Red About</a>
       </Link>
     </>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Route, Router, Switch, useLocation } from 'wouter'
 import { usePromise } from './fetcher'
 import { useNavigationDetails, useTransitionLocation } from './locationHook'
@@ -10,32 +10,24 @@ export interface LayoutProps {
   children: React.ReactNode
 }
 
-const RouteTable = (props: { Layout: React.FunctionComponent<LayoutProps>; routes: JSX.Element[] }) => {
-  const [isNavigating, navigationDestination] = useNavigationDetails()
-
-  return (
-    <props.Layout isNavigating={isNavigating} navigationDestination={navigationDestination}>
-      <Switch>{props.routes}</Switch>
-    </props.Layout>
-  )
-}
-
-export function Root<BootProps>(props: {
+function RouteTable<BootProps>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
   Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps
   basePath: string
   routes: [string, React.FunctionComponent<any>][]
 }) {
-  const [firstRenderComplete, setFirstRenderComplete] = useState(false)
   useEffect(() => {
-    setFirstRenderComplete(true)
     if (typeof window != 'undefined') {
       // fire an event on the window when the layout mounts for downstream tooling to know the app has booted
       window.dispatchEvent(new Event('fastify-renderer:ready'))
       window.fastifyRendererReady = true
     }
   }, [])
+
+  const [location] = useLocation()
+  const [isNavigating, navigationDestination] = useNavigationDetails()
+  const bootLocation = useMemo(() => location, [])
 
   const routes: JSX.Element[] = [
     ...props.routes.map(([route, Component]) => (
@@ -44,8 +36,8 @@ export function Root<BootProps>(props: {
           const [location] = useLocation()
           const backendPath = location.split('#')[0] // remove current anchor for fetching data from the server side
 
-          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + backendPath, async () => {
-            if (!firstRenderComplete) {
+          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + location, async () => {
+            if (location == bootLocation) {
               return { props: props.bootProps }
             } else {
               return (
@@ -74,8 +66,22 @@ export function Root<BootProps>(props: {
   ]
 
   return (
+    <props.Layout isNavigating={isNavigating} navigationDestination={navigationDestination}>
+      <Switch>{routes}</Switch>
+    </props.Layout>
+  )
+}
+
+export function Root<BootProps>(props: {
+  Entrypoint: React.FunctionComponent<BootProps>
+  Layout: React.FunctionComponent<LayoutProps>
+  bootProps: BootProps
+  basePath: string
+  routes: [string, React.FunctionComponent<any>][]
+}) {
+  return (
     <Router base={props.basePath} hook={useTransitionLocation as any} matcher={matcher}>
-      <RouteTable routes={routes} Layout={props.Layout} />
+      <RouteTable {...props} />
     </Router>
   )
 }

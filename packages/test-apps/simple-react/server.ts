@@ -43,6 +43,18 @@ export const server = async () => {
     return {}
   })
 
+  server.get('/imperative', async (request, reply) => {
+    await reply.render(require.resolve('./About'), { hostname: os.hostname(), requestIP: request.ip })
+  })
+
+  server.get('/imperative-no-boot', async (request, reply) => {
+    await reply.render(require.resolve('./About'), { hostname: os.hostname(), requestIP: request.ip }, { boot: false })
+  })
+
+  server.get<{ Params: { id: string } }>('/widget/:id', { render: require.resolve('./Widget') }, async (request) => {
+    return { widget: { id: request.params.id } }
+  })
+
   await server.register(async (instance) => {
     instance.setRenderConfig({ layout: require.resolve('./RedLayout') })
 

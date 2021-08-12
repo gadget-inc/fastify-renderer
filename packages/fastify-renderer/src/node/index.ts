@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyReply } from 'fastify'
 import 'fastify-accepts'
 import fp from 'fastify-plugin'
 import fastifyStatic from 'fastify-static'
@@ -63,13 +63,38 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       document: incomingOptions.document || DefaultDocumentTemplate,
     })
 
-    // Wrap routes that have the `render` option set to invoke the rendererer with the result of the route handler as the props
+    // Add a function to replies to explicitly render a renderable
+    fastify.decorateReply('render', async function <
+      Props extends Record<string, any>
+    >(this: FastifyReply, renderable: string, props: Props, options?: { boot?: boolean }) {
+      void this.type('text/html')
+      const plugin = this.server[kRendererPlugin]
+
+      const render: Render<Props> = {
+        ...this.server[kRenderOptions],
+        url: this.request.url,
+        renderable,
+        request: this.request,
+        reply: this,
+        props,
+        boot: options?.boot ?? true,
+      }
+
+      await plugin.renderer.render(render)
+    })
+
+    // Wrap routes that have the `render` option set to invoke the renderer with the result of the route handler as the props
     fastify.addHook('onRoute', function (this: FastifyInstance, routeOptions) {
       if (routeOptions.render) {
         const oldHandler = wrap('fastify-renderer.getProps', routeOptions.handler as ServerRenderer<any>)
         const renderable = routeOptions.render
         const plugin = this[kRendererPlugin]
-        const renderableRoute: RenderableRoute = { ...this[kRenderOptions], url: routeOptions.url, renderable }
+        const renderableRoute: RenderableRoute = {
+          ...this[kRenderOptions],
+          url: routeOptions.url,
+          boot: (routeOptions as any).boot || true,
+          renderable,
+        }
 
         plugin.registerRoute(renderableRoute)
 
@@ -83,7 +108,13 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
               break
             case 'html':
               void reply.type('text/html')
-              const render: Render<typeof props> = { ...renderableRoute, request, reply, props, renderable }
+              const render: Render<typeof props> = {
+                ...renderableRoute,
+                request,
+                reply,
+                props,
+                boot: renderableRoute.boot ?? true,
+              }
               await plugin.renderer.render(render)
               break
             default:
