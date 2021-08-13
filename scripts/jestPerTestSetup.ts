@@ -1,7 +1,9 @@
+import { FastifyInstance } from 'fastify'
 import fs from 'fs-extra'
 import { resolve } from 'path'
-import { FastifyInstance } from 'fastify'
 import { Page } from 'playwright-chromium'
+
+process.env.NODE_ENV ??= 'test'
 
 export function slash(p: string): string {
   return p.replace(/\\/g, '/')
@@ -21,7 +23,9 @@ let server: FastifyInstance
 let err: Error
 
 const logs: string[] = ((global as any).browserLogs = [])
-const onConsole = (msg) => { logs.push(msg.text()) }
+const onConsole = (msg) => {
+  logs.push(msg.text())
+}
 
 beforeAll(async () => {
   const page = global.page

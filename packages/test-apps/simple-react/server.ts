@@ -5,7 +5,7 @@ import { newFastify } from '../../fastify-renderer/test/helpers'
 export const server = async () => {
   const server = await newFastify({
     logger: {
-      level: 'info',
+      level: process.env.LOG_LEVEL ?? process.env.NODE_ENV == 'test' ? 'warn' : 'info',
       prettyPrint: true,
     },
   })
