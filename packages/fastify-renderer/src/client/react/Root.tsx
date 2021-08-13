@@ -27,8 +27,7 @@ export function Root<BootProps>(props: {
   routes: [string, React.FunctionComponent<any>][]
 }) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
-  useEffect(() => setFirstRenderComplete(true))
-
+  useEffect(() => setFirstRenderComplete(true), [])
   const routes: JSX.Element[] = [
     ...props.routes.map(([route, Component]) => (
       <Route path={route} key={route}>
