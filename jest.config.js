@@ -4,5 +4,4 @@ module.exports = {
   globalSetup: './scripts/jestGlobalSetup.js',
   globalTeardown: './scripts/jestGlobalTeardown.js',
   testEnvironment: './scripts/jestEnv.js',
-  setupFilesAfterEnv: ['./scripts/jestPerTestSetup.ts'],
 }

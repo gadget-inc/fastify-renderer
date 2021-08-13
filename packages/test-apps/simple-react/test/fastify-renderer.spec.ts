@@ -1,9 +1,15 @@
 import validator from 'html-validator'
-import { reactReady } from './helpers'
+import { Page } from 'playwright-chromium'
+import { newTestPage, reactReady, rootURL } from '../../helpers'
 
 describe('simple-react', () => {
+  let page: Page
+  beforeEach(async () => {
+    page = await newTestPage()
+  })
+
   test('Returns valid HTML content', async () => {
-    await page.goto(`http://localhost:${3000}`)
+    await page.goto(rootURL)
     const html = await page.content()
     expect(() =>
       validator({
