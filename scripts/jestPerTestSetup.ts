@@ -52,8 +52,6 @@ beforeAll(async () => {
       const { server: fastifyServer } = require(serverEntrypoint)
       server = await fastifyServer()
       await server.listen(3000)
-      const url = `http://localhost:${3000}`
-      await page.goto(url)
     }
   } catch (e) {
     // jest doesn't exit if our setup has error here

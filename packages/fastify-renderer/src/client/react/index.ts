@@ -5,3 +5,9 @@ export { Root } from './Root'
 export type { LayoutProps } from './Root'
 
 export const RenderBusContext = createContext<any>(null as any)
+
+declare global {
+  interface Window {
+    fastifyRendererReady?: boolean
+  }
+}

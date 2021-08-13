@@ -28,7 +28,15 @@ export function Root<BootProps>(props: {
   routes: [string, React.FunctionComponent<any>][]
 }) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
-  useEffect(() => setFirstRenderComplete(true), [])
+  useEffect(() => {
+    setFirstRenderComplete(true)
+    if (typeof window != 'undefined') {
+      // fire an event on the window when the layout mounts for downstream tooling to know the app has booted
+      window.dispatchEvent(new Event('fastify-renderer:ready'))
+      window.fastifyRendererReady = true
+    }
+  }, [])
+
   const routes: JSX.Element[] = [
     ...props.routes.map(([route, Component]) => (
       <Route path={route} key={route}>
