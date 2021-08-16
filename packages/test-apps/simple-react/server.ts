@@ -40,7 +40,7 @@ export const server = async () => {
   })
 
   await server.register(async (instance) => {
-    instance.setRenderConfig({ layout: require.resolve('./RedLayout') })
+    instance.setRenderConfig({ base: '/red', layout: require.resolve('./RedLayout') })
 
     instance.get('/red/about', { render: require.resolve('./About') }, async (request) => {
       return { hostname: os.hostname(), requestIP: request.ip }
