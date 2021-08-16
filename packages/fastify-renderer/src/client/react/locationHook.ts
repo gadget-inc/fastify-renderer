@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useLocation } from 'wouter'
 
 /**
  * History API docs @see https://developer.mozilla.org/en-US/docs/Web/API/History
@@ -8,6 +9,13 @@ const eventPushState = 'pushState'
 const eventReplaceState = 'replaceState'
 export const events = [eventPopstate, eventPushState, eventReplaceState]
 
+/**
+ * This is a customized `useLocation` hook for `wouter`, adapted to use React's new Concurrent mode with `useTransition` for fastify-renderer.
+ * @see https://github.com/molefrog/wouter#customizing-the-location-hook
+ *
+ * Extended to return an array of 4 elements:
+ * @return [currentLocation, setLocation, isNavigating, navigationDestination]
+ */
 export const useTransitionLocation = ({ base = '' } = {}) => {
   const [path, update] = useState(() => currentPathname(base)) // @see https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
   const prevLocation = useRef(path + location.search + location.hash)
@@ -19,13 +27,12 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
     // unfortunately, we can't rely on `path` value here, since it can be stale,
     // that's why we store the last pathname in a ref.
     const checkForUpdates = () => {
-      const pathname = currentPathname(base),
-        destination = pathname + location.search + location.hash
+      const destination = currentPathname(base)
 
       if (prevLocation.current !== destination) {
         prevLocation.current = destination
         startTransition(() => {
-          update(pathname)
+          update(destination)
         })
       }
     }
@@ -58,7 +65,7 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
     [base]
   )
 
-  return [path, navigate, isPending]
+  return [path, navigate, isPending, prevLocation.current]
 }
 
 // While History API does have `popstate` event, the only
@@ -81,5 +88,14 @@ if (typeof history !== 'undefined') {
   }
 }
 
-const currentPathname = (base, path = location.pathname + location.hash) =>
+/**
+ * React hook to access the navigation details of the current context. Useful for capturing the details of an ongoing navigation in the existing page while React is rendering the new page.
+ * @returns [isNavigating: boolean, navigationDestination: string]
+ */
+export const useNavigationDetails = (): [boolean, string] => {
+  const [_, __, isNavigating, navigationDestination] = (useLocation() as unknown) as [any, any, boolean, string] // we hack in more return values from our custom location hook to get at the transition current state and the destination
+  return [isNavigating, navigationDestination]
+}
+
+const currentPathname = (base, path = location.pathname + location.search + location.hash) =>
   !path.toLowerCase().indexOf(base.toLowerCase()) ? path.slice(base.length) || '/' : '~' + path

@@ -39,6 +39,10 @@ export const server = async () => {
     return { hostname: os.hostname(), requestIP: request.ip }
   })
 
+  server.get('/navigation-test', { render: require.resolve('./NavigationTest') }, async (_request) => {
+    return {}
+  })
+
   await server.register(async (instance) => {
     instance.setRenderConfig({ layout: require.resolve('./RedLayout') })
 

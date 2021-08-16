@@ -24,10 +24,9 @@ module.exports = class PlaywrightEnvironment extends NodeEnvironment {
       return
     }
 
-    const browser = (this.browser = await chromium.connect({
-      wsEndpoint
-    }))
-    this.global.page = await browser.newPage()
+    this.global.browser = this.browser = await chromium.connect({
+      wsEndpoint,
+    })
   }
 
   async teardown() {

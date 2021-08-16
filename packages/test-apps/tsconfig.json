@@ -6,7 +6,7 @@
     "target": "ES2019",
     "outDir": "../../node",
     "module": "commonjs",
-    "lib": ["ES2020"],
+    "lib": ["ES2020", "dom"],
     "sourceMap": true,
     "types": ["jest", "node"]
   }
