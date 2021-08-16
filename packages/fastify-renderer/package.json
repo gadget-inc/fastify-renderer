@@ -63,8 +63,8 @@
     "http-errors": "^1.8.0",
     "middie": "^5.2.0",
     "path-to-regexp": "^6.2.0",
-    "react": "^18.0.0-alpha-19092ac8c-20210803",
-    "react-dom": "^18.0.0-alpha-19092ac8c-20210803",
+    "react": "^18.0.0-alpha-82583617b-20210812",
+    "react-dom": "^18.0.0-alpha-82583617b-20210812",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
     "vite": "^2.2.2",
@@ -72,8 +72,8 @@
   },
   "peerDependencies": {
     "fastify": "^3.13.0",
-    "react": "^18.0.0-alpha-19092ac8c-20210803",
-    "react-dom": "^18.0.0-alpha-19092ac8c-20210803"
+    "react": "^18.0.0-alpha-82583617b-20210812",
+    "react-dom": "^18.0.0-alpha-82583617b-20210812"
   },
   "devDependencies": {
     "@types/connect": "^3.4.34",

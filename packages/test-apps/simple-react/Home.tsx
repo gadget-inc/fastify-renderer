@@ -11,7 +11,7 @@ const Home = (props: { time: number }) => {
         <a>About</a>
       </Link>
       <br />
-      <Link href="red/about">
+      <Link href="/red/about">
         <a>Red About</a>
       </Link>
     </>

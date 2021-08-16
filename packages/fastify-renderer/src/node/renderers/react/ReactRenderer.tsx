@@ -383,7 +383,8 @@ export class ReactRenderer implements Renderer {
           const base = url.searchParams.get('base')!
           const applicableRoutes = this.routes.filter((route) => route.base == base)
           applicableRoutes.sort((a, b) => routeSortScore(a.url) - routeSortScore(b.url))
-
+          const remainingBases = this.routes.filter((route) => route.base !== base).map((route) => route.base)
+          const pathToBases = [...new Set(remainingBases)].map((base) => pathToRegexpify(`${base}/*`))
           const pathsToModules = applicableRoutes.map((route) => [
             pathToRegexpify(this.stripBasePath(route.url, base)),
             route.renderable,
@@ -405,7 +406,8 @@ export const routes = [
 ${pathsToModules.map(([_url, component], index) => `import mod_${index} from ${JSON.stringify(component)}`).join('\n')}
 
 export const routes = [
-  ${pathsToModules.map(([url], index) => `[${JSON.stringify(url)}, mod_${index}]`).join(',\n')}
+${pathsToModules.map(([url], index) => `[${JSON.stringify(url)}, mod_${index}]`).join(',\n')},
+${pathToBases.map((url) => `[${JSON.stringify(url)}]`).join(',\n')}
 ]`
           }
         }

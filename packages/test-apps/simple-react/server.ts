@@ -18,6 +18,7 @@ export const server = async () => {
     vite: {
       server: {
         hmr: {
+          host: 'localhost',
           port: 27123,
         },
       },
@@ -27,9 +28,11 @@ export const server = async () => {
     },
   })
 
-  server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
-    return { params: request.params }
-  })
+  // Commented out because I didn't implement route sorting from shortest to longest yet,
+  // and this wildcard route matches paths for other bases
+  // server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
+  //   return { params: request.params }
+  // })
 
   server.get('/', { render: require.resolve('./Home') }, async () => {
     return { time: Date.now() }
@@ -40,7 +43,7 @@ export const server = async () => {
   })
 
   await server.register(async (instance) => {
-    instance.setRenderConfig({ layout: require.resolve('./RedLayout') })
+    instance.setRenderConfig({ base: '/red', layout: require.resolve('./RedLayout') })
 
     instance.get('/red/about', { render: require.resolve('./About') }, async (request) => {
       return { hostname: os.hostname(), requestIP: request.ip }
