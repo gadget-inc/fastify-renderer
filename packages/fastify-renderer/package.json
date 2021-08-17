@@ -67,7 +67,7 @@
     "react-dom": "^18.0.0-alpha-19092ac8c-20210803",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
-    "vite": "^2.2.2",
+    "vite": "^2.5.0",
     "wouter": "^2.7.3"
   },
   "peerDependencies": {
