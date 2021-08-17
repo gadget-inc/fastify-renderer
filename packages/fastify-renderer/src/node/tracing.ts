@@ -1,4 +1,4 @@
-import { context, setSpan, SpanStatusCode, trace } from '@opentelemetry/api'
+import { context, SpanStatusCode, trace } from '@opentelemetry/api'
 
 export const tracer = trace.getTracer('fastify-renderer', '0.1.0')
 
@@ -9,7 +9,7 @@ export const wrap = <V, Args extends any[]>(
 ): ((...args: Args) => Promise<V>) => {
   return async function (this: any, ...args: Args) {
     const span = tracer.startSpan(name, undefined, context.active())
-    return await context.with(setSpan(context.active(), span), async () => {
+    return await context.with(trace.setSpan(context.active(), span), async () => {
       try {
         const result = await func.call(this, ...args)
         span.end()
