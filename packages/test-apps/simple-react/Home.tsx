@@ -7,13 +7,11 @@ const Home = (props: { time: number }) => {
       <h1>Hello</h1>
       <p>Hi.</p>
       <p suppressHydrationWarning={true}>This page was rendered at {props.time}</p>
-      <Link href="about">
-        <a>About</a>
-      </Link>
+      <Link href="about"> About</Link>
       <br />
-      <Link href="red/about">
-        <a>Red About</a>
-      </Link>
+      <Link href="~/red/about"> Red About </Link>
+      <br />
+      <Link href="navigation-test"> Navigation Test </Link>
     </>
   )
 }
