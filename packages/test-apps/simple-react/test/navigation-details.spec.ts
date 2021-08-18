@@ -22,7 +22,13 @@ describe('navigation details', () => {
     expect(testCalls[1].navigationDestination).toBe('/')
   })
 
-  test('navigation to new anchors on the same page triggers a fastify-renderer navigation', async () => {
+  test('navigation to new anchors on the same page triggers a fastify-renderer navigation but no data fetch', async () => {
+    page.on('request', (request) => {
+      throw new Error(
+        `Expecting no requests to be made during hash navigation, request made: ${request.method()} ${request.url()}`
+      )
+    })
+
     await page.click('#section-link')
 
     const testCalls: any[] = await page.evaluate('window.test')

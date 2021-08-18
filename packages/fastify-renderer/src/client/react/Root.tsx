@@ -42,13 +42,14 @@ export function Root<BootProps>(props: {
       <Route path={route} key={route}>
         {(params) => {
           const [location] = useLocation()
+          const backendPath = location.split('#')[0] // remove current anchor for fetching data from the server side
 
-          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + location, async () => {
+          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + backendPath, async () => {
             if (!firstRenderComplete) {
               return { props: props.bootProps }
             } else {
               return (
-                await fetch(props.basePath + location, {
+                await fetch(props.basePath + backendPath, {
                   method: 'GET',
                   headers: {
                     Accept: 'application/json',
