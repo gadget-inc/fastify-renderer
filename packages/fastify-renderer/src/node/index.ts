@@ -50,6 +50,10 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     })
 
     fastify.decorate('setRenderConfig', function (this: FastifyInstance, config: PartialRenderOptions) {
+      if ('layout' in config && !('base' in config)) {
+        throw new Error('The base property is required when setting a new layout')
+      }
+
       const newOptions = { ...this[kRenderOptions], ...config }
       if (newOptions.base.endsWith('/')) {
         this.log.warn(`fastify-renderer base paths shouldn't end in a slash, got ${newOptions.base}`)
