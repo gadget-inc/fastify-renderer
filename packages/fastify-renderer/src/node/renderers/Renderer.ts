@@ -9,6 +9,13 @@ export interface RenderOptions {
   base: string
 }
 
+export type PartialRenderOptions =
+  | { layout: string; document: Template; base: string }
+  | { layout: string; base: string }
+  | { document: Template; base: string }
+  | { base: string }
+  | { document: Template }
+
 /** One renderable route */
 export interface RenderableRoute extends RenderOptions {
   url: string
