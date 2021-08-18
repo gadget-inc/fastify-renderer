@@ -55,13 +55,19 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
   // the function reference should stay the same between re-renders, so that
   // it can be passed down as an element prop without any performance concerns.
   const navigate = useCallback(
-    (to, { replace = false } = {}) =>
+    (to, { replace = false } = {}) => {
+      if (to[0] === '~') {
+        window.location.href = to.slice(1)
+        return
+      }
+
       history[replace ? eventReplaceState : eventPushState](
         null,
         '',
         // handle nested routers and absolute paths
-        to[0] === '~' ? to.slice(1) : base + to
-      ),
+        base + to
+      )
+    },
     [base]
   )
 
