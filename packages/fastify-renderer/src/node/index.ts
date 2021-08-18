@@ -9,7 +9,7 @@ import path from 'path'
 import { build as viteBuild, createServer, InlineConfig, resolveConfig, ResolvedConfig, ViteDevServer } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { FastifyRendererOptions, FastifyRendererPlugin } from './Plugin'
-import { Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
+import { PartialRenderOptions, Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
 import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'
 import { wrap } from './tracing'
 import './types' // necessary to make sure that the fastify types are augmented
@@ -21,7 +21,7 @@ declare module 'fastify' {
     [kRendererPlugin]: FastifyRendererPlugin
     [kRendererViteOptions]: InlineConfig
     [kRenderOptions]: RenderOptions
-    setRenderConfig(options: FastifyRendererOptions): void
+    setRenderConfig(options: PartialRenderOptions): void
   }
 }
 
@@ -49,7 +49,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       instance[kRenderOptions] = innerOptions
     })
 
-    fastify.decorate('setRenderConfig', function (this: FastifyInstance, config: Partial<RenderOptions>) {
+    fastify.decorate('setRenderConfig', function (this: FastifyInstance, config: PartialRenderOptions) {
       const newOptions = { ...this[kRenderOptions], ...config }
       if (newOptions.base.endsWith('/')) {
         this.log.warn(`fastify-renderer base paths shouldn't end in a slash, got ${newOptions.base}`)
