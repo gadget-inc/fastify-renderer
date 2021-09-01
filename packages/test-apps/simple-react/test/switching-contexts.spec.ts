@@ -22,7 +22,6 @@ describe('navigation details', () => {
 
   test('navigating between pages of different contexts triggers a server side render request', async () => {
     page.on('request', (request) => {
-      console.log(request.headers())
       if (request.headers().accept === 'application/json') {
         throw new Error(`Expecting request to trigger SSR, request made: ${request.method()} ${request.url()}`)
       }
