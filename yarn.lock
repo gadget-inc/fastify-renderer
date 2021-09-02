@@ -2272,10 +2272,10 @@ es-to-primitive@^1.2.1:
     is-date-object "^1.0.1"
     is-symbol "^1.0.2"
 
-esbuild@^0.11.23:
-  version "0.11.23"
-  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.11.23.tgz#c42534f632e165120671d64db67883634333b4b8"
-  integrity sha512-iaiZZ9vUF5wJV8ob1tl+5aJTrwDczlvGP0JoMmnpC2B0ppiMCu8n8gmy5ZTGl5bcG081XBVn+U+jP+mPFm5T5Q==
+esbuild@^0.12.17:
+  version "0.12.24"
+  resolved "https://registry.yarnpkg.com/esbuild/-/esbuild-0.12.24.tgz#21966fad25a80f368ed308101e88102bce0dc68f"
+  integrity sha512-C0ibY+HsXzYB6L/pLWEiWjMpghKsIc58Q5yumARwBQsHl9DXPakW+5NI/Y9w4YXiz0PEP6XTGTT/OV4Nnsmb4A==
 
 escalade@^3.1.1:
   version "3.1.1"
@@ -2945,7 +2945,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-fsevents@^2.3.2, fsevents@~2.3.1:
+fsevents@^2.3.2, fsevents@~2.3.1, fsevents@~2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
@@ -4957,10 +4957,10 @@ pngjs@^5.0.0:
   resolved "https://registry.yarnpkg.com/pngjs/-/pngjs-5.0.0.tgz#e79dd2b215767fd9c04561c01236df960bce7fbb"
   integrity sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==
 
-postcss@^8.2.10:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.3.0.tgz#b1a713f6172ca427e3f05ef1303de8b65683325f"
-  integrity sha512-+ogXpdAjWGa+fdYY5BQ96V/6tAo+TdSSIMP5huJBIygdWwKtVoB5JWZ7yUd4xZ8r+8Kvvx4nyg/PQ071H4UtcQ==
+postcss@^8.3.6:
+  version "8.3.6"
+  resolved "https://registry.yarnpkg.com/postcss/-/postcss-8.3.6.tgz#2730dd76a97969f37f53b9a6096197be311cc4ea"
+  integrity sha512-wG1cc/JhRgdqB6WHEuyLTedf3KIRuD0hG6ldkFEZNCjRxiC+3i6kkWUUbiJQayP28iwG35cEmAbe98585BYV0A==
   dependencies:
     colorette "^1.2.2"
     nanoid "^3.1.23"
@@ -5121,13 +5121,13 @@ raw-body@2.4.0:
     unpipe "1.0.0"
 
 react-dom@*, react-dom@^18.0.0-alpha-19092ac8c-20210803, react-dom@^18.0.0-alpha-82583617b-20210812:
-  version "18.0.0-alpha-ed6c091fe-20210701"
-  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-18.0.0-alpha-ed6c091fe-20210701.tgz#f07510c6b0a5fa38ce2ab48d39caf39e8cc320d8"
-  integrity sha512-AdtHYY5PRP8KNe7ijIwTSG5ckip0+h6kksvy+8K/mV+VHYEYUIrfaerrZzFOuV/oeJxnM2zXh9/93cheAjJ2UQ==
+  version "18.0.0-alpha-edfe50510-20210823"
+  resolved "https://registry.yarnpkg.com/react-dom/-/react-dom-18.0.0-alpha-edfe50510-20210823.tgz#5a56f55d90c9b4578c97f98559c5dc0b2d35271a"
+  integrity sha512-AseRrDncRUdndWQIS26rWNaEd2OB0YcJznzUx8xJjNu/bbExEy4OQmZDVhMWsRJa7+0P+VtQNSFlvt8qtD3CGA==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
-    scheduler "0.21.0-alpha-ed6c091fe-20210701"
+    scheduler "0.21.0-alpha-edfe50510-20210823"
 
 react-is@^16.8.1:
   version "16.13.1"
@@ -5145,9 +5145,9 @@ react-refresh@^0.9.0:
   integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
 react@*, react@^18.0.0-alpha-19092ac8c-20210803, react@^18.0.0-alpha-82583617b-20210812:
-  version "18.0.0-alpha-ed6c091fe-20210701"
-  resolved "https://registry.yarnpkg.com/react/-/react-18.0.0-alpha-ed6c091fe-20210701.tgz#238c16a3262b0d30f5c9483335b42a28656c1e81"
-  integrity sha512-zfb1gZyRC0AxtNLb48jM1zPhP60OS79Jekj28Qve/HaogOp9a/hjoC6THx4YXtEdP4bq6Z/OS+ecAeJ8I4JSug==
+  version "18.0.0-alpha-edfe50510-20210823"
+  resolved "https://registry.yarnpkg.com/react/-/react-18.0.0-alpha-edfe50510-20210823.tgz#11bfeb8f7f30994b9b0bd4f86e1bdda94a61f4d1"
+  integrity sha512-8YwjfY+TJQcq81sbZxnImdo79kEjzLlJl1GQhi8O6DYlJVRa0ynYkc7fnRGOYcQNjFvwGDJFYAs95XouJvbN3w==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
@@ -5271,7 +5271,7 @@ resolve-from@^5.0.0:
   resolved "https://registry.yarnpkg.com/resolve-from/-/resolve-from-5.0.0.tgz#c35225843df8f776df21c57557bc087e9dfdfc69"
   integrity sha512-qYg9KP24dD5qka9J47d0aVky0N+b4fTU89LN9iDnjB5waksiC49rvMB0PrUJQGoTmH50XPiqOvAjDfaijGxYZw==
 
-resolve@^1.10.0, resolve@^1.13.1, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.19.0, resolve@^1.20.0:
+resolve@^1.10.0, resolve@^1.13.1, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.20.0:
   version "1.20.0"
   resolved "https://registry.yarnpkg.com/resolve/-/resolve-1.20.0.tgz#629a013fb3f70755d6f0b7935cc1c2c5378b1975"
   integrity sha512-wENBPt4ySzg4ybFQW2TT1zMQucPK95HSh/nq2CFTZVOGut2+pQvSsgtda4d26YrYcr067wjbmzOG8byDPBX63A==
@@ -5376,10 +5376,10 @@ saxes@^5.0.1:
   dependencies:
     xmlchars "^2.2.0"
 
-scheduler@0.21.0-alpha-ed6c091fe-20210701:
-  version "0.21.0-alpha-ed6c091fe-20210701"
-  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.21.0-alpha-ed6c091fe-20210701.tgz#281f04c3d2b0276b528c1c04c3e51f68db4241f6"
-  integrity sha512-DBDJeyzJXEWV1AvQr8Jw/66q9RNyMjCeVVRrOtGZb6iqHeI5Up9aWK08K5KZlbemkr8dVlD9fIDDTzxTZZpd2Q==
+scheduler@0.21.0-alpha-edfe50510-20210823:
+  version "0.21.0-alpha-edfe50510-20210823"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.21.0-alpha-edfe50510-20210823.tgz#c7cf608c356dd86b04cdc072b526cdfb44c12cb3"
+  integrity sha512-eATO6TfDNV4qYWWxPpXGcOUQ4B3AvOtd6K8DZuiTiiLOIbIRqgwyJSEccfeXKVmEap7+wYAY/MaI+mrdwYzCsg==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
@@ -6129,17 +6129,17 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-vite@^2.2.2:
-  version "2.3.4"
-  resolved "https://registry.yarnpkg.com/vite/-/vite-2.3.4.tgz#370118e0334725b898ff754ea43d5db4c5e120e3"
-  integrity sha512-7orxrF65+Q5n/sMCnO91S8OS0gkPJ7g+y3bLlc7CPCXVswK8to1T8YycCk9SZh+AcIc0TuN6YajWTBFS5atMNA==
+vite@^2.5.3:
+  version "2.5.3"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-2.5.3.tgz#88d40a9efb9bec66bd87a7676c5689f35ff63742"
+  integrity sha512-1wMDnjflvtTTkMov8O/Xb5+w1/VW/Gw8oCf8f6dqgHn8lMOEqq0SaPtFEQeikFcOKCfSbiU0nEi0LDIx6DNsaQ==
   dependencies:
-    esbuild "^0.11.23"
-    postcss "^8.2.10"
-    resolve "^1.19.0"
+    esbuild "^0.12.17"
+    postcss "^8.3.6"
+    resolve "^1.20.0"
     rollup "^2.38.5"
   optionalDependencies:
-    fsevents "~2.3.1"
+    fsevents "~2.3.2"
 
 w3c-hr-time@^1.0.2:
   version "1.0.2"
