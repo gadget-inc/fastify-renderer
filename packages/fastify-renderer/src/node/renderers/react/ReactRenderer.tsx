@@ -208,16 +208,14 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, ReactDOMServer: any, render: Render<Props>) {
+    this.runHeadHooks(bus)
     const contentStream = ReactDOMServer.renderToNodeStream(app)
-
-    contentStream.on('end', () => {
-      this.runHooks(bus)
-    })
+    contentStream.on('end', () => this.runTailHooks(bus))
 
     return DefaultDocumentTemplate({
       content: contentStream,
-      head: bus.stack('head').join('\n'),
-      tail: bus.stack('tail').join('\n'),
+      head: bus.stack('head'),
+      tail: bus.stack('tail'),
       props: render.props,
     })
   }
@@ -228,27 +226,36 @@ export class ReactRenderer implements Renderer {
     ReactDOMServer: any,
     render: Render<Props>
   ) {
+    this.runHeadHooks(bus)
     const content = ReactDOMServer.renderToString(app)
-    this.runHooks(bus)
+    this.runTailHooks(bus)
 
     return DefaultDocumentTemplate({
       content,
-      head: bus.stack('head').join('\n'),
-      tail: bus.stack('tail').join('\n'),
+      head: bus.stack('head'),
+      tail: bus.stack('tail'),
       props: render.props,
     })
   }
 
-  private runHooks(bus: RenderBus) {
-    // when we're done rendering the content, run any hooks that might want to push more content after the content
+  private runHeadHooks(bus: RenderBus) {
+    // Run any heads hooks that might want to push something before the content
     for (const hook of this.plugin.hooks) {
-      if (hook.tails) {
-        bus.push('tail', hook.tails())
-      }
       if (hook.heads) {
         bus.push('head', hook.heads())
       }
     }
+    bus.push('head', null)
+  }
+
+  private runTailHooks(bus: RenderBus) {
+    // when we're done rendering the content, run any hooks that might want to push more stuff after the content
+    for (const hook of this.plugin.hooks) {
+      if (hook.tails) {
+        bus.push('tail', hook.tails())
+      }
+    }
+    bus.push('tail', null)
   }
 
   /** Given a module ID, load it for use within this node process on the server */
