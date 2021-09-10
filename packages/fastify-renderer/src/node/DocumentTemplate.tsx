@@ -2,8 +2,8 @@ import template from 'stream-template'
 
 /** Data passed to the template function by the renderer */
 export interface TemplateData<Props> {
-  head: string
-  tail: string
+  head: NodeJS.ReadableStream
+  tail: NodeJS.ReadableStream
   content: string | NodeJS.ReadableStream
   props: Props
 }
