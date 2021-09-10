@@ -1,15 +1,40 @@
+import { Readable } from 'stream'
+
+export interface Stack {
+  content: string[]
+  hasEnded: boolean
+  stream: Readable
+}
+
 /** Holds groups of content during a render that eventually get pushed into the template. */
 export class RenderBus {
-  stacks: Record<string, string[]> = {}
+  stacks: Record<string, Stack> = {}
   included = new Set<string>()
 
-  push(key: string, content: string) {
-    this.stacks[key] ??= []
-    this.stacks[key].push(content)
+  private createStack(key) {
+    const stack = (this.stacks[key] = {
+      content: [],
+      hasEnded: false,
+      stream: new Readable(),
+    })
+
+    stack.stream._read = function () {
+      this.push(stack.hasEnded ? null : stack.content.join('\n'))
+    }
+
+    return stack
+  }
+
+  push(key: string, content: string | null) {
+    if (!this.stacks[key]) this.createStack(key)
+
+    if (content === null) this.stacks[key].hasEnded = true
+    else this.stacks[key].content.push(content)
   }
 
   stack(key) {
-    return this.stacks[key] || []
+    if (!this.stacks[key]) this.createStack(key)
+    return this.stacks[key].stream
   }
 
   preloadModule(path: string) {
