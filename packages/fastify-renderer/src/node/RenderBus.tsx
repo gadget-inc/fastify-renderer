@@ -3,6 +3,7 @@ import { Readable } from 'stream'
 export interface Stack {
   content: string[]
   hasEnded: boolean
+  contentStreamed: boolean
   stream: Readable
 }
 
@@ -12,14 +13,20 @@ export class RenderBus {
   included = new Set<string>()
 
   private createStack(key) {
-    const stack = (this.stacks[key] = {
+    const stack: Stack = (this.stacks[key] = {
       content: [],
       hasEnded: false,
+      contentStreamed: false,
       stream: new Readable(),
     })
 
     stack.stream._read = function () {
-      this.push(stack.hasEnded ? null : stack.content.join('\n'))
+      if (stack.hasEnded && stack.contentStreamed) {
+        this.push(null)
+      } else {
+        this.push(stack.content.join('\n'))
+        stack.contentStreamed = true
+      }
     }
 
     return stack
@@ -27,9 +34,13 @@ export class RenderBus {
 
   push(key: string, content: string | null) {
     if (!this.stacks[key]) this.createStack(key)
+    if (this.stacks[key].hasEnded) return
 
-    if (content === null) this.stacks[key].hasEnded = true
-    else this.stacks[key].content.push(content)
+    if (content === null) {
+      this.stacks[key].hasEnded = true
+    } else if (!this.stacks[key].hasEnded) {
+      this.stacks[key].content.push(content)
+    }
   }
 
   stack(key) {
