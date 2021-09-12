@@ -34,7 +34,7 @@ export class RenderBus {
 
   push(key: string, content: string | null) {
     if (!this.stacks[key]) this.createStack(key)
-    if (this.stacks[key].hasEnded) return
+    if (this.stacks[key].hasEnded) throw new Error(`Stack with key=${key} has ended, no more content can be added`)
 
     if (content === null) {
       this.stacks[key].hasEnded = true
