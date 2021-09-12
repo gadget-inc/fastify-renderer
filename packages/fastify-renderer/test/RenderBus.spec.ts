@@ -1,4 +1,5 @@
-import { RenderBus } from '../node/RenderBus'
+import { Readable } from 'stream'
+import { RenderBus } from '../src/node/RenderBus'
 import { newRenderBus } from './helpers'
 
 describe('RenderBus', () => {
@@ -15,45 +16,58 @@ describe('RenderBus', () => {
 
     renderBus.push(testKey, testContent)
 
-    expect(renderBus.stacks[testKey]).toBeInstanceOf(Array)
-    expect(renderBus.stacks[testKey].length).toEqual(1)
-    expect(renderBus.stacks[testKey][0]).toEqual(testContent)
+    expect(renderBus.stacks[testKey].content.length).toEqual(1)
+    expect(renderBus.stacks[testKey].content[0]).toEqual(testContent)
   })
 
-  test('should return the stack with the specified key', async () => {
-    expect(renderBus.stack(testKey)).toEqual([])
+  test('should return the stream for the stack with the specified key', async () => {
+    expect(renderBus.stack(testKey).read()).toEqual(null)
 
     renderBus.push(testKey, testContent)
 
-    const stack = renderBus.stack(testKey)
+    const stream = renderBus.stack(testKey)
 
-    expect(stack).toBeInstanceOf(Array)
-    expect(stack.length).toEqual(1)
-    expect(stack[0]).toEqual(testContent)
+    expect(stream).toBeInstanceOf(Readable)
+    expect(stream.read().toString()).toEqual(testContent)
+  })
+
+  test('should throw an error if stack hasEnded', async () => {
+    const stream = renderBus.stack(testKey)
+
+    expect(stream.read()).toEqual(null)
+
+    renderBus.push(testKey, testContent)
+    renderBus.push(testKey, null) // Mark stack as ended
+
+    try {
+      renderBus.push(testKey, testContent)
+    } catch (error) {
+      expect(error).not.toBeUndefined()
+    }
   })
 
   describe('preloadModule', () => {
     const path = 'module-path'
 
     test('should push a newlink tag to "head" stack and mark the path as included', async () => {
-      expect(renderBus.stack('head')).toEqual([])
+      expect(renderBus.stack('head').read()).toEqual(null)
 
       renderBus.preloadModule(path)
 
       expect(renderBus.included.has(path)).toEqual(true)
-      expect(renderBus.stack('head').length).toEqual(1)
+      expect(renderBus.stack('head').read().toString()).toContain('modulepreload')
     })
 
     test('should not include a path if its already included', async () => {
-      expect(renderBus.stack('head')).toEqual([])
+      expect(renderBus.stack('head').read()).toEqual(null)
 
       renderBus.preloadModule(path)
 
       expect(renderBus.included.has(path)).toEqual(true)
-      expect(renderBus.stack('head').length).toEqual(1)
+      expect(renderBus.stack('head').read().toString()).toContain('modulepreload')
 
       renderBus.preloadModule(path)
-      expect(renderBus.stack('head').length).toEqual(1)
+      expect(renderBus.stack('head').read().toString()).toContain('modulepreload')
     })
   })
 
@@ -61,24 +75,24 @@ describe('RenderBus', () => {
     const path = 'module-path'
 
     test('should push a new link tag to "head" stack and mark the path as included', async () => {
-      expect(renderBus.stack('head')).toEqual([])
+      expect(renderBus.stack('head').read()).toEqual(null)
 
-      renderBus.preloadModule(path)
+      renderBus.linkStylesheet(path)
 
       expect(renderBus.included.has(path)).toEqual(true)
-      expect(renderBus.stack('head').length).toEqual(1)
+      expect(renderBus.stack('head').read().toString()).toContain('stylesheet')
     })
 
     test('should not include a path if its already included', async () => {
-      expect(renderBus.stack('head')).toEqual([])
+      expect(renderBus.stack('head').read()).toEqual(null)
 
-      renderBus.preloadModule(path)
+      renderBus.linkStylesheet(path)
 
       expect(renderBus.included.has(path)).toEqual(true)
-      expect(renderBus.stack('head').length).toEqual(1)
+      expect(renderBus.stack('head').read().toString()).toContain('stylesheet')
 
-      renderBus.preloadModule(path)
-      expect(renderBus.stack('head').length).toEqual(1)
+      renderBus.linkStylesheet(path)
+      expect(renderBus.stack('head').read().toString()).toContain('stylesheet')
     })
   })
 })
