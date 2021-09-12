@@ -53,6 +53,10 @@ const server = fastify()
 server.register(renderer)
 ```
 
+## Docs
+
+- [Navigating between routes from different Fastify contexts](./docs/fastify-contexts)
+
 ## License
 
 [MIT](./LICENSE)
