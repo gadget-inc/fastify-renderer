@@ -66,7 +66,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     // Add a function to replies to explicitly render a renderable
     fastify.decorateReply('render', async function <
       Props extends Record<string, any>
-    >(this: FastifyReply, renderable: string, props: Props, options?: { boot?: boolean }) {
+    >(this: FastifyReply, renderable: string, props: Props) {
       void this.type('text/html')
       const plugin = this.server[kRendererPlugin]
 
@@ -77,7 +77,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         request: this.request,
         reply: this,
         props,
-        boot: options?.boot ?? true,
       }
 
       await plugin.renderer.render(render)
@@ -92,7 +91,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         const renderableRoute: RenderableRoute = {
           ...this[kRenderOptions],
           url: routeOptions.url,
-          boot: (routeOptions as any).boot || true,
           renderable,
         }
 
@@ -113,7 +111,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
                 request,
                 reply,
                 props,
-                boot: renderableRoute.boot ?? true,
               }
               await plugin.renderer.render(render)
               break

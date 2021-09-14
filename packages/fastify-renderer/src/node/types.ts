@@ -67,7 +67,7 @@ declare module 'fastify' {
      * @param renderable: a string path to a component to render
      * @param props: The props to pass to the rendered component
      */
-    render(renderable: string, props: Record<string, any>, options?: { boot?: boolean }): Promise<void>
+    render(renderable: string, props: Record<string, any>): Promise<void>
   }
 
   interface RouteShorthandMethod<
@@ -80,7 +80,6 @@ declare module 'fastify' {
       path: string,
       opts: RouteShorthandOptions<RawServer, RawRequest, RawReply, RouteGeneric, ContextConfig> & {
         render: string
-        boot?: boolean
       }, // this creates an overload that only applies these different types if the handler is for rendering
       handler: ServerRenderer<Props, RawServer, RawRequest, RawReply, RouteGeneric>
     ): FastifyInstance<RawServer, RawRequest, RawReply>

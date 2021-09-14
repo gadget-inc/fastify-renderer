@@ -16,8 +16,6 @@ export interface RenderOptions {
 export interface RenderableRoute extends RenderOptions {
   url: string
   renderable: string
-  // Should we actually boot the client side application once loaded on the client. Useful for rendering something server side and not bothering to hydrate it client side after.
-  boot: boolean
 }
 
 /**
