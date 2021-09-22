@@ -78,7 +78,7 @@
   "devDependencies": {
     "@types/connect": "^3.4.34",
     "@types/jest": "^26.0.20",
-    "@types/node": "^14.14.17",
+    "@types/node": "^16.9.6",
     "@types/react": "^17.0.15",
     "@types/react-dom": "^17.0.9",
     "@types/sanitize-filename": "^1.6.3",
