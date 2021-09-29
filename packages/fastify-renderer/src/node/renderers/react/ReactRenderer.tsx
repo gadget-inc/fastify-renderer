@@ -4,7 +4,6 @@ import querystring from 'querystring'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
-import { DefaultDocumentTemplate } from '../../DocumentTemplate'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
@@ -212,7 +211,7 @@ export class ReactRenderer implements Renderer {
     const contentStream = ReactDOMServer.renderToNodeStream(app)
     contentStream.on('end', () => this.runTailHooks(bus))
 
-    return DefaultDocumentTemplate({
+    return render.document({
       content: contentStream,
       head: bus.stack('head'),
       tail: bus.stack('tail'),
@@ -230,7 +229,7 @@ export class ReactRenderer implements Renderer {
     const content = ReactDOMServer.renderToString(app)
     this.runTailHooks(bus)
 
-    return DefaultDocumentTemplate({
+    return render.document({
       content,
       head: bus.stack('head'),
       tail: bus.stack('tail'),
