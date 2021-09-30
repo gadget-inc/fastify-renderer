@@ -1,6 +1,7 @@
 import os from 'os'
 import renderer from '../../fastify-renderer/src/node'
 import { newFastify } from '../../fastify-renderer/test/helpers'
+import { CustomDocumentTemplate } from './CustomDocumentTemplate'
 
 export const server = async () => {
   const server = await newFastify({
@@ -41,6 +42,14 @@ export const server = async () => {
 
   server.get('/navigation-test', { render: require.resolve('./NavigationTest') }, async (_request) => {
     return {}
+  })
+
+  await server.register(async (instance) => {
+    instance.setRenderConfig({ document: CustomDocumentTemplate })
+
+    instance.get('/custom-template', { render: require.resolve('./CustomTemplateTest') }, async (_request) => {
+      return {}
+    })
   })
 
   await server.register(async (instance) => {
