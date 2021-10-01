@@ -930,10 +930,10 @@
     "@nodelib/fs.scandir" "2.1.4"
     fastq "^1.6.0"
 
-"@opentelemetry/api@^1.0.2":
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.0.2.tgz#921e1f2b2484b762d77225a8a25074482d93fccf"
-  integrity sha512-DCF9oC89ao8/EJUqrp/beBlDR8Bp2R43jqtzayqCoomIvkwTuPfLcHdVhIGRR69GFlkykFjcDW+V92t0AS7Tww==
+"@opentelemetry/api@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.0.3.tgz#13a12ae9e05c2a782f7b5e84c3cbfda4225eaf80"
+  integrity sha512-puWxACExDe9nxbBB3lOymQFrLYml2dVOrd7USiVRnSbgXE+KwBu+HxFvxrzfqsiSda9IWsXJG1ef7C1O2/GmKQ==
 
 "@sidvind/better-ajv-errors@^0.6.9":
   version "0.6.10"
@@ -5380,6 +5380,14 @@ scheduler@0.21.0-alpha-ed6c091fe-20210701:
   version "0.21.0-alpha-ed6c091fe-20210701"
   resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.21.0-alpha-ed6c091fe-20210701.tgz#281f04c3d2b0276b528c1c04c3e51f68db4241f6"
   integrity sha512-DBDJeyzJXEWV1AvQr8Jw/66q9RNyMjCeVVRrOtGZb6iqHeI5Up9aWK08K5KZlbemkr8dVlD9fIDDTzxTZZpd2Q==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+
+scheduler@^0.20.2:
+  version "0.20.2"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.20.2.tgz#4baee39436e34aa93b4874bddcbf0fe8b8b50e91"
+  integrity sha512-2eWfGgAqqWFGqtdMmcL5zCMK1U8KlXv8SQFGglL3CEtd0aDVDWgeF/YoCmvln55m5zSk3J/20hTaSBeSObsQDQ==
   dependencies:
     loose-envify "^1.1.0"
     object-assign "^4.1.1"
