@@ -39,8 +39,10 @@
     "fastify-renderer": "*"
   },
   "resolutions": {
-    "react": "^18.0.0-alpha-82583617b-20210812",
-    "react-dom": "^18.0.0-alpha-82583617b-20210812"
+    "react": "0.0.0-experimental-4ead6b530",
+    "react-dom": "0.0.0-experimental-4ead6b530",
+    "@types/react": "17.0.4",
+    "@types/react-dom": "17.0.4"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",

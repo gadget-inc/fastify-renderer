@@ -297,7 +297,7 @@ export class ReactRenderer implements Renderer {
           import Layout from ${JSON.stringify(layout)}
           import Entrypoint from ${JSON.stringify(entrypoint)}
 
-          ReactDOM.createRoot(document.getElementById('fstrapp'), {
+          ReactDOM.unstable_createRoot(document.getElementById('fstrapp'), {
             hydrate: true
           }).render(<Root
             Layout={Layout}

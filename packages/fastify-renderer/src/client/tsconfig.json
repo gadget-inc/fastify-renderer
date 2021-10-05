@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "../../client",
     "module": "esnext",
-    "types": ["react/next", "react-dom/next"],
+    "types": ["react/experimental", "react-dom/experimental"],
     "lib": ["ESNext", "DOM"]
   }
 }
