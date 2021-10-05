@@ -38,4 +38,18 @@ describe('navigation details', () => {
     expect(testCalls[1].isNavigating).toBe(true)
     expect(testCalls[1].navigationDestination).toBe('/navigation-test#section')
   })
+
+  test('ensure navigation to pages with query parameters does not consider the query parameters as part of the route match', async () => {
+    await page.goto(`${rootURL}/`)
+    await reactReady(page)
+
+    await page.goto(`${rootURL}/navigation-test?foo=bar#section`)
+    await reactReady(page)
+
+    const testCalls: any[] = await page.evaluate('window.test')
+    expect(testCalls).toBeDefined()
+    expect(testCalls).toHaveLength(3)
+    expect(testCalls[2].isNavigating).toBe(false)
+    expect(testCalls[2].navigationDestination).toBe('/navigation-test?foo=bar#section')
+  })
 })
