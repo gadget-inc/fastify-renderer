@@ -88,7 +88,7 @@
     "eslint-plugin-prettier": "^3.4.1",
     "eslint-plugin-react": "^7.26.1",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "fastify": "^3.13.0",
+    "fastify": "^3.22.1",
     "gitpkg": "^1.0.0-beta.2",
     "jest": "^27.3.1",
     "npm-run-all": "^4.1.5",
