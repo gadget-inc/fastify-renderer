@@ -2866,10 +2866,10 @@ fastify-error@^0.3.0:
   resolved "https://registry.yarnpkg.com/fastify-error/-/fastify-error-0.3.1.tgz#8eb993e15e3cf57f0357fc452af9290f1c1278d2"
   integrity sha512-oCfpcsDndgnDVgiI7bwFKAun2dO+4h84vBlkWsWnz/OUK9Reff5UFoFl241xTiLeHWX/vU9zkDVXqYUxjOwHcQ==
 
-fastify-express@^0.3.2:
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/fastify-express/-/fastify-express-0.3.2.tgz#cfdf20da404acab61e1a484df33ae16fb3c1601b"
-  integrity sha512-UfNw4Ok4kRhozyn1UfyBXOdpyjm6MNobSVpfS4dGgVYGEi4vgQjSKymRpIPOA9O38Dz8WSQbfN6/SxkxtBDW8A==
+fastify-express@^0.3.3:
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/fastify-express/-/fastify-express-0.3.3.tgz#d87acf6461e91ff141864e191abf25b9bdd3a262"
+  integrity sha512-1b95R59zUJET/RQg3RaOeHq7DToDaFr1Nslhd/ND+zH2sMUe5/fF4gj4XbFt3Nfteay4hXjCWTBjOKe+KUOlMA==
   dependencies:
     express "^4.17.1"
     fastify-plugin "^3.0.0"
