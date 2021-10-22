@@ -1375,7 +1375,7 @@ acorn@^8.2.4:
   resolved "https://registry.yarnpkg.com/acorn/-/acorn-8.4.1.tgz#56c36251fc7cabc7096adc18f05afe814321a28c"
   integrity sha512-asabaBSkEKosYKMITunzX177CXxQ4Q8BSSzMTKD+FefUhipQC70gfW5SiUDhYQ3vk8G+81HqQk7Fv9OXwwn9KA==
 
-agent-base@6:
+agent-base@6, agent-base@^6.0.2:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/agent-base/-/agent-base-6.0.2.tgz#49fff58577cfee3f37176feab4c22e00f86d7f77"
   integrity sha512-RZNwNclF7+MS/8bDg70amg32dyeZGZxiDuQmZxKLAlQjr3jGyLx+4Kkk58UO7D2QdgFIQCovuSuZESne6RG6XQ==
@@ -1972,10 +1972,10 @@ combined-stream@^1.0.6, combined-stream@^1.0.8, combined-stream@~1.0.6:
   dependencies:
     delayed-stream "~1.0.0"
 
-commander@^6.1.0:
-  version "6.2.1"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-6.2.1.tgz#0792eb682dfbc325999bb2b84fddddba110ac73c"
-  integrity sha512-U7VdrJFnJgo4xjrHpTzu0yrHPGImdsmD95ZlgYSEajAn2JKzDhDTPG9kBTefmObL2w/ngeZnilk+OV9CG3d7UA==
+commander@^8.2.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/commander/-/commander-8.3.0.tgz#4837ea1b2da67b9c616a67afbb0fafee567bca66"
+  integrity sha512-OkTL9umf+He2DZkUq8f8J9of7yL6RJKI24dVITBmNfZBmri9zYZQrKkuXiKhyfPSu8tUhnVBB1iKXevvnlR4Ww==
 
 concat-map@0.0.1:
   version "0.0.1"
@@ -3522,6 +3522,11 @@ internal-slot@^1.0.3:
     get-intrinsic "^1.1.0"
     has "^1.0.3"
     side-channel "^1.0.4"
+
+ip@^1.1.5:
+  version "1.1.5"
+  resolved "https://registry.yarnpkg.com/ip/-/ip-1.1.5.tgz#bdded70114290828c0a039e72ef25f5aaec4354a"
+  integrity sha1-vd7XARQpCCjAoDnnLvJfWq7ENUo=
 
 ipaddr.js@1.9.1:
   version "1.9.1"
@@ -5124,12 +5129,19 @@ pkg-dir@^4.2.0:
   dependencies:
     find-up "^4.0.0"
 
-playwright-chromium@^1.15.2:
-  version "1.15.2"
-  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.15.2.tgz#59493f7843c7fd0e40b909cce7494a8032026b96"
-  integrity sha512-YF1hnBHXAMSXRaVN+wzEoifWq0Q2zEH5P8CoTAKp/Xvzgetc0x/IVzcyIgPzrGxfdqczP43bXhpD6TY0NTOubQ==
+playwright-chromium@^1.16.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/playwright-chromium/-/playwright-chromium-1.16.0.tgz#3bbabf48930e4b8614fb157c96b93c685d3dd7a8"
+  integrity sha512-e4mPETLJ768+BzKfwFCQBxNUNSrvHtyceZtDRGYKtQwzQisk38tcW+LL1WU549cWsfAhcGA0MvVs6t6Yk44KSg==
   dependencies:
-    commander "^6.1.0"
+    playwright-core "=1.16.0"
+
+playwright-core@=1.16.0:
+  version "1.16.0"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.16.0.tgz#c23fca9a0086c00f3e684b1dcaffd2f0d2d55ec6"
+  integrity sha512-bJBIceYaNvdGKUreCltfBgsQbvwnWdWd8u+9Ncx9aSHzWUNFDh9cQGTQxqOI2egbMw+ovSG0YU/0lJIzm/Uj/w==
+  dependencies:
+    commander "^8.2.0"
     debug "^4.1.1"
     extract-zip "^2.0.1"
     https-proxy-agent "^5.0.0"
@@ -5140,8 +5152,10 @@ playwright-chromium@^1.15.2:
     proper-lockfile "^4.1.1"
     proxy-from-env "^1.1.0"
     rimraf "^3.0.2"
+    socks-proxy-agent "^6.1.0"
     stack-utils "^2.0.3"
     ws "^7.4.6"
+    yauzl "^2.10.0"
     yazl "^2.5.1"
 
 pngjs@^5.0.0:
@@ -5732,6 +5746,28 @@ slice-ansi@^4.0.0:
     ansi-styles "^4.0.0"
     astral-regex "^2.0.0"
     is-fullwidth-code-point "^3.0.0"
+
+smart-buffer@^4.1.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/smart-buffer/-/smart-buffer-4.2.0.tgz#6e1d71fa4f18c05f7d0ff216dd16a481d0e8d9ae"
+  integrity sha512-94hK0Hh8rPqQl2xXc3HsaBoOXKV20MToPkcXvwbISWLEs+64sBq5kFgn2kJDHb1Pry9yrP0dxrCI9RRci7RXKg==
+
+socks-proxy-agent@^6.1.0:
+  version "6.1.0"
+  resolved "https://registry.yarnpkg.com/socks-proxy-agent/-/socks-proxy-agent-6.1.0.tgz#869cf2d7bd10fea96c7ad3111e81726855e285c3"
+  integrity sha512-57e7lwCN4Tzt3mXz25VxOErJKXlPfXmkMLnk310v/jwW20jWRVcgsOit+xNkN3eIEdB47GwnfAEBLacZ/wVIKg==
+  dependencies:
+    agent-base "^6.0.2"
+    debug "^4.3.1"
+    socks "^2.6.1"
+
+socks@^2.6.1:
+  version "2.6.1"
+  resolved "https://registry.yarnpkg.com/socks/-/socks-2.6.1.tgz#989e6534a07cf337deb1b1c94aaa44296520d30e"
+  integrity sha512-kLQ9N5ucj8uIcxrDwjm0Jsqk06xdpBjGNQtpXy4Q8/QY2k+fY7nZH8CARy+hkbG+SGAovmzzuauCpBlb8FrnBA==
+  dependencies:
+    ip "^1.1.5"
+    smart-buffer "^4.1.0"
 
 sonic-boom@^1.0.2:
   version "1.4.1"
