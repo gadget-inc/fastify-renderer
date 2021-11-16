@@ -59,7 +59,7 @@
     "fastify-accepts": "^2.1.0",
     "fastify-express": "^0.3.3",
     "fastify-plugin": "^3.0.0",
-    "fastify-static": "^4.2.4",
+    "fastify-static": "^4.5.0",
     "http-errors": "^1.8.0",
     "middie": "^5.3.0",
     "path-to-regexp": "^6.2.0",
