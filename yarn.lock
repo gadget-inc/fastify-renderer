@@ -1360,10 +1360,15 @@ acorn-jsx@^5.3.1:
   resolved "https://registry.yarnpkg.com/acorn-jsx/-/acorn-jsx-5.3.1.tgz#fc8661e11b7ac1539c47dbfea2e72b3af34d267b"
   integrity sha512-K0Ptm/47OKfQRpNQ2J/oIN/3QYiK6FwW+eJbILhsdxh2WTLdl+30o8aGdTbm5JbffpFFAg/g+zi1E+jvJha5ng==
 
-acorn-walk@^7.0.0, acorn-walk@^7.1.1:
+acorn-walk@^7.1.1:
   version "7.2.0"
   resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-7.2.0.tgz#0de889a601203909b0fbe07b8938dc21d2e967bc"
   integrity sha512-OPdCF6GsMIP+Az+aWfAAOEt2/+iVDKE7oy6lJ098aoe59oAmK76qV6Gw60SbZ8jHuG2wH058GF4pLFbYamYrVA==
+
+acorn-walk@^8.0.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/acorn-walk/-/acorn-walk-8.2.0.tgz#741210f2e2426454508853a2f44d0ab83b7f69c1"
+  integrity sha512-k+iyHEuPgSw6SbuDpGQM+06HQUa04DZ3o+F6CSzXMvvI5KMvnaEqXe+YVe555R9nn6GPt404fos4wcgpw12SDA==
 
 acorn@^7.1.1, acorn@^7.4.0:
   version "7.4.1"
@@ -3334,14 +3339,14 @@ html-escaper@^2.0.0:
   resolved "https://registry.yarnpkg.com/html-escaper/-/html-escaper-2.0.2.tgz#dfd60027da36a36dfcbe236262c00a5822681453"
   integrity sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==
 
-html-validate@3.3.0:
-  version "3.3.0"
-  resolved "https://registry.yarnpkg.com/html-validate/-/html-validate-3.3.0.tgz#c3d7e2d0d7504001f3ef98bcf688e15924d88933"
-  integrity sha512-g5t+SdIMRzHLOdCfh15bQYqtExOMyHsjZKBHmC1A53+qUusQ7Fxs9SGL/Y2re3OBp9IZGeYYqaGzjLtFvFUcbA==
+html-validate@3.5.0:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/html-validate/-/html-validate-3.5.0.tgz#701dbcaec06d382c646eec6d0013f784ddaedcb7"
+  integrity sha512-nuwLJqs4Igp5msppvO1oelHMwLl4jzSSqq7/T+5bMyT0txUp0KBfhj7du7LPz+UtKag0PL+TpIovnbmBFkOekQ==
   dependencies:
     "@babel/code-frame" "^7.0.0"
     "@sidvind/better-ajv-errors" "^0.6.9"
-    acorn-walk "^7.0.0"
+    acorn-walk "^8.0.0"
     ajv "^6.10.0"
     chalk "^4.0.0"
     deepmerge "^4.0.0"
@@ -3352,12 +3357,12 @@ html-validate@3.3.0:
     json-merge-patch "^1.0.0"
     minimist "^1.2.0"
 
-html-validator@^5.1.17:
-  version "5.1.17"
-  resolved "https://registry.yarnpkg.com/html-validator/-/html-validator-5.1.17.tgz#1b8be1a8986bee7bc36fe94d8bf204ee37577279"
-  integrity sha512-sF+9OYyHZB5+hnnlqpoBt5+vBldLS9JjkPedv9Xg9+3+UVxUhyBTbnmqQ2FxCdkZ5LPK/jC/HydwioikGA4ZdQ==
+html-validator@^5.1.18:
+  version "5.1.18"
+  resolved "https://registry.yarnpkg.com/html-validator/-/html-validator-5.1.18.tgz#d964134b4f69531f979bf9d4a728d5ceb8b19940"
+  integrity sha512-cK8vfV6o1jBnzLcIWgAS3PDPEHzOsgtaqtP23b6/eFdFrV8hxPhm0DGrXpjomWuubFb0kH0FAa6oUM1URA/0KQ==
   dependencies:
-    html-validate "3.3.0"
+    html-validate "3.5.0"
     request "2.88.2"
     valid-url "1.0.9"
 
