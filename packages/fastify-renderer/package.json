@@ -60,7 +60,7 @@
     "fastify-express": "^0.3.3",
     "fastify-plugin": "^3.0.0",
     "fastify-static": "^4.5.0",
-    "http-errors": "^1.8.0",
+    "http-errors": "^1.8.1",
     "middie": "^5.3.0",
     "path-to-regexp": "^6.2.0",
     "sanitize-filename": "^1.6.3",
