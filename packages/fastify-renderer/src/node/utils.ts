@@ -21,10 +21,10 @@ const longestCommonPrefix = (...input: string[]) => {
 
 const cwd = process.cwd()
 
-export const mapFilepathToEntrypointName = (filepath: string) => {
+export const mapFilepathToEntrypointName = (filepath: string, base = '') => {
   const prefix = longestCommonPrefix(cwd, filepath)
   filepath = filepath.slice(prefix.length)
-  return filepath.replace(/\//g, '~')
+  return base.replace(/\//g, '~') + filepath.replace(/\//g, '~')
 }
 
 export const escapeRegex = (string: string) => {
