@@ -178,10 +178,9 @@ export const build = async (fastify: FastifyInstance) => {
   const clientEntrypoints: Record<string, string> = {}
   const serverEntrypoints: Record<string, string> = {}
   for (const renderableRoute of plugin.routes) {
-    const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable)
+    const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable, renderableRoute.base)
     clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleID(renderableRoute)
     serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleID(renderableRoute)
-
     serverEntrypoints[mapFilepathToEntrypointName(renderableRoute.layout)] = renderableRoute.layout
   }
 
@@ -221,7 +220,6 @@ export const build = async (fastify: FastifyInstance) => {
   // that means that in production, the server needs to require code from a special spot to get the
   // SSR-safe version of each entrypoint. We write out our own manifest here because there's a bug
   // in rollup or vite that errors when trying to generate a manifest in SSR mode.
-  // TODO(@ayoubelk): Figure out why we need this bit and if we can fix the issue? in rollup/vite
   const virtualModulesToRenderedEntrypoints = Object.fromEntries(
     Object.entries(serverEntrypoints).map(([key, value]) => [value, key])
   )
