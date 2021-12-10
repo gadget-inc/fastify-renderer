@@ -81,6 +81,10 @@ The goal of fastify-renderer is to bring a great developer/user experience and i
 - bundling for production is hard and reinventing that wheel is no fun
 - esbuild is very fast
 
+## Additional details
+
+- [Navigating between routes from different Fastify contexts](./docs/fastify-contexts)
+
 
 ## Roadmap
 - Add support for rendering outside the main thread by using Piscina.js
