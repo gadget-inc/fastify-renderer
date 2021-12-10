@@ -20,7 +20,6 @@ export interface FastifyRendererOptions {
   devMode?: boolean
   outDir?: string
   assetsHost?: string
-  skipWildcardRoute?: boolean
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
 }
 
