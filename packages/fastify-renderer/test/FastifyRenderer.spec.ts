@@ -77,7 +77,10 @@ describe('FastifyRenderer', () => {
     const prepareSpy = jest.spyOn(ReactRenderer.prototype, 'prepare')
 
     await server.register(FastifyRenderer)
-    await server.listen(0)
+    // TODO: Figure out why this stopped working later on
+    // Previously we used server.listen without a callback. It doesn't work anymore and the server doesn't start, when adding a then/catch block it works
+    // await server.listen(0)
+    server.listen(0).catch((err) => console.log(err))
     await server.close()
 
     expect(prepareSpy).toHaveBeenCalled()
