@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import fs from 'fs-extra'
 import { resolve } from 'path'
-import { Browser, Page } from 'playwright-chromium'
+import { Browser, ConsoleMessage, Page } from 'playwright-chromium'
 
 // injected by the test env
 declare global {
@@ -18,7 +18,7 @@ export function slash(p: string): string {
 }
 
 const logs: string[] = ((global as any).browserLogs = [])
-const onConsole = (msg) => {
+const onConsole = (msg: ConsoleMessage) => {
   logs.push(msg.text())
 }
 let pages: Page[] = []
@@ -72,7 +72,7 @@ afterEach(async () => {
 
 /** Create a new playwright page for testing against */
 export const newTestPage = async (): Promise<Page> => {
-  const page = await (global as any).browser.newPage()
+  const page: Page = await (global as any).browser.newPage()
   page.on('console', onConsole)
   pages.push(page)
 

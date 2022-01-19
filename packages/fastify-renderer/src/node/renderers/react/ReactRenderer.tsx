@@ -77,46 +77,42 @@ export class ReactRenderer implements Renderer {
   }
 
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
-  private wrappedRender = wrap(
-    'fastify-renderer.render',
-    async <Props,>(render: Render<Props>): Promise<void> => {
-      const bus = this.startRenderBus(render)
+  private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
+    const bus = this.startRenderBus(render)
 
-      try {
-        const url = this.entrypointRequirePathForServer(render)
-        // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-        const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
-          await this.loadModule(url)
-        ).default
+    try {
+      const url = this.entrypointRequirePathForServer(render)
+      // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
+      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (await this.loadModule(url))
+        .default
 
-        let app = (
-          <RenderBusContext.Provider value={bus}>
-            <Router base={render.base} hook={staticLocationHook(this.stripBasePath(render.request.url, render.base))}>
-              <Layout>
-                <Entrypoint {...render.props} />
-              </Layout>
-            </Router>
-          </RenderBusContext.Provider>
-        )
+      let app = (
+        <RenderBusContext.Provider value={bus}>
+          <Router base={render.base} hook={staticLocationHook(this.stripBasePath(render.request.url, render.base))}>
+            <Layout>
+              <Entrypoint {...render.props} />
+            </Layout>
+          </Router>
+        </RenderBusContext.Provider>
+      )
 
-        for (const hook of this.plugin.hooks) {
-          if (hook.transform) {
-            app = hook.transform(app)
-          }
+      for (const hook of this.plugin.hooks) {
+        if (hook.transform) {
+          app = hook.transform(app)
         }
-
-        if (this.options.mode == 'streaming') {
-          await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render))
-        } else {
-          await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render))
-        }
-      } catch (error: any) {
-        this.devServer?.ssrFixStacktrace(error)
-        // let fastify's error handling system figure out what to do with this after fixing the stack trace
-        throw error
       }
+
+      if (this.options.mode == 'streaming') {
+        await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render))
+      } else {
+        await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render))
+      }
+    } catch (error: unknown) {
+      this.devServer?.ssrFixStacktrace(error as Error)
+      // let fastify's error handling system figure out what to do with this after fixing the stack trace
+      throw error
     }
-  )
+  })
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
   public buildVirtualClientEntrypointModuleID(route: RenderableRoute) {
