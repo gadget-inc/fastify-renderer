@@ -180,7 +180,6 @@ export const build = async (fastify: FastifyInstance) => {
     const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable, renderableRoute.base)
     clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleID(renderableRoute)
     serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleID(renderableRoute)
-    serverEntrypoints[mapFilepathToEntrypointName(renderableRoute.layout)] = renderableRoute.layout
   }
 
   const vite = fastify[kRendererViteOptions]
