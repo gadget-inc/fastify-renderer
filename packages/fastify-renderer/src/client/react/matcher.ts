@@ -7,7 +7,7 @@ import { MatcherFn } from 'wouter'
  * @param {string} path — a path like "/:foo/:bar"
  * @return {{ keys: [], regexp: RegExp }}
  */
-const convertPathToRegexp = (path) => {
+const convertPathToRegexp = (path: string) => {
   const keys: Key[] = []
   const regexp = pathToRegexp(path, keys, { strict: true })
   return { keys, regexp }

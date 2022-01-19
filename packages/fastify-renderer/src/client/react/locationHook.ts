@@ -99,7 +99,7 @@ if (typeof history !== 'undefined') {
  * @returns [isNavigating: boolean, navigationDestination: string]
  */
 export const useNavigationDetails = (): [boolean, string] => {
-  const [_, __, isNavigating, navigationDestination] = (useLocation() as unknown) as [any, any, boolean, string] // we hack in more return values from our custom location hook to get at the transition current state and the destination
+  const [_, __, isNavigating, navigationDestination] = useLocation() as unknown as [any, any, boolean, string] // we hack in more return values from our custom location hook to get at the transition current state and the destination
   return [isNavigating, navigationDestination]
 }
 
