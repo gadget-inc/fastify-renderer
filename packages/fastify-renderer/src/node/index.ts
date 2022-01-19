@@ -152,9 +152,8 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       await plugin.renderer.prepare(plugin.routes, config, devServer)
     })
 
-    fastify.addHook('onClose', async (_, done) => {
+    fastify.addHook('onClose', async () => {
       await devServer?.close()
-      done()
     })
   },
   {
