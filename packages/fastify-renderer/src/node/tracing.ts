@@ -14,7 +14,7 @@ export const wrap = <V, Args extends any[]>(
         const result = await func.call(this, ...args)
         span.end()
         return result
-      } catch (err) {
+      } catch (err: any) {
         span.setStatus({ code: SpanStatusCode.ERROR, message: err?.message })
         span.end()
         throw err

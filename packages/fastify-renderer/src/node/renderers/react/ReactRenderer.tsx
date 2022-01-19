@@ -110,7 +110,7 @@ export class ReactRenderer implements Renderer {
         } else {
           await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render))
         }
-      } catch (error) {
+      } catch (error: any) {
         this.devServer?.ssrFixStacktrace(error)
         // let fastify's error handling system figure out what to do with this after fixing the stack trace
         throw error
