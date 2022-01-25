@@ -44,3 +44,5 @@ jspm_packages/
 BUILD_SHA
 
 tsconfig.tsbuildinfo
+
+dist/

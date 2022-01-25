@@ -3,18 +3,19 @@ import path from 'path'
 import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
 import { RenderBus } from '../src/node/RenderBus'
-// import * as ReactRendererModule from '../src/node/renderers/react/ReactRenderer';
 import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
 import { RenderableRoute } from '../src/node/renderers/Renderer'
 import { newFastifyRendererPlugin } from './helpers'
 
-jest.mock('fs')
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'), // import and retain the original functionalities
+  readFileSync: jest.fn().mockImplementation(() => '{ "test": "value" }'),
+}))
 jest.mock('../src/node/renderers/react/ReactRenderer')
 
 describe('FastifyRendererPlugin', () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    fs.readFileSync = jest.fn().mockImplementation(() => '{ "test": "value" }')
   })
 
   test('should create a new instance with default options', async () => {

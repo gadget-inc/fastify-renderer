@@ -72,17 +72,6 @@ describe('FastifyRenderer', () => {
     expect(closeSpy).toHaveBeenCalled()
   })
 
-  test('should prepare routes', async () => {
-    const server = await newFastify()
-    const prepareSpy = jest.spyOn(ReactRenderer.prototype, 'prepare')
-
-    await server.register(FastifyRenderer)
-    await server.listen(0)
-    await server.close()
-
-    expect(prepareSpy).toHaveBeenCalled()
-  })
-
   test('should do nothing if the registered route is not renderable', async () => {
     const server = await newFastify()
     const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'registerRoute')

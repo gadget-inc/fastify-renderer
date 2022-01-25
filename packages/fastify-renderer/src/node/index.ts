@@ -6,7 +6,15 @@ import fastifyStatic from 'fastify-static'
 import { promises as fs } from 'fs'
 import 'middie'
 import path from 'path'
-import { build as viteBuild, createServer, InlineConfig, resolveConfig, ResolvedConfig, ViteDevServer } from 'vite'
+import {
+  build as viteBuild,
+  createServer,
+  InlineConfig,
+  resolveConfig,
+  ResolvedConfig,
+  SSROptions,
+  ViteDevServer,
+} from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { FastifyRendererOptions, FastifyRendererPlugin } from './Plugin'
 import { PartialRenderOptions, Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
@@ -19,7 +27,7 @@ import { mapFilepathToEntrypointName } from './utils'
 declare module 'fastify' {
   interface FastifyInstance {
     [kRendererPlugin]: FastifyRendererPlugin
-    [kRendererViteOptions]: InlineConfig
+    [kRendererViteOptions]: InlineConfig & { ssr?: SSROptions }
     [kRenderOptions]: RenderOptions
     setRenderConfig(options: PartialRenderOptions): void
   }
@@ -136,6 +144,9 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
           middlewareMode: true,
           ...plugin.vite?.server,
         },
+        ssr: {
+          noExternal: ['fastify-renderer'],
+        },
       }
 
       let config: ResolvedConfig
@@ -152,9 +163,8 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       await plugin.renderer.prepare(plugin.routes, config, devServer)
     })
 
-    fastify.addHook('onClose', async (_, done) => {
+    fastify.addHook('onClose', async () => {
       await devServer?.close()
-      done()
     })
   },
   {
@@ -181,7 +191,6 @@ export const build = async (fastify: FastifyInstance) => {
     const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable, renderableRoute.base)
     clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleID(renderableRoute)
     serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleID(renderableRoute)
-    serverEntrypoints[mapFilepathToEntrypointName(renderableRoute.layout)] = renderableRoute.layout
   }
 
   const vite = fastify[kRendererViteOptions]
