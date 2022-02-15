@@ -5,8 +5,10 @@ import { FastifyRendererOptions, FastifyRendererPlugin } from '../src/node/Plugi
 import { RenderBus } from '../src/node/RenderBus'
 import { ReactRenderer, ReactRendererOptions } from '../src/node/renderers/react/ReactRenderer'
 
+const logLevel = process.env.LOG_LEVEL || 'error'
+
 export const newFastify = async (options?: FastifyServerOptions) => {
-  const server = fastify(options)
+  const server = fastify({ ...options, logger: { level: logLevel, prettyPrint: true } })
   await server.register(fastifyAccepts)
   await server.register(Middie)
   return server
