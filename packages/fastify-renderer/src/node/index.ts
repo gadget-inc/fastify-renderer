@@ -88,19 +88,21 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         routeOptions.handler = wrap('fastify-renderer.handler', async function (this: FastifyInstance, request, reply) {
           const props = await oldHandler.call(this, request, reply)
 
-          void reply.header('Vary', 'Accept')
-          switch (request.accepts().type(['html', 'json'])) {
-            case 'json':
-              await reply.type('application/json').send({ props })
-              break
-            case 'html':
-              void reply.type('text/html')
-              const render: Render<typeof props> = { ...renderableRoute, request, reply, props, renderable }
-              await plugin.renderer.render(render)
-              break
-            default:
-              await reply.type('text/plain').send('Content type not supported')
-              break
+          if (!reply.sent) {
+            void reply.header('Vary', 'Accept')
+            switch (request.accepts().type(['html', 'json'])) {
+              case 'json':
+                await reply.type('application/json').send({ props })
+                break
+              case 'html':
+                void reply.type('text/html')
+                const render: Render<typeof props> = { ...renderableRoute, request, reply, props, renderable }
+                await plugin.renderer.render(render)
+                break
+              default:
+                await reply.type('text/plain').send('Content type not supported')
+                break
+            }
           }
         })
       }
