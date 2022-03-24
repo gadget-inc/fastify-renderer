@@ -221,8 +221,8 @@ export class ReactRenderer implements Renderer {
     ReactDOMServer: any,
     render: Render<Props>
   ) {
-    this.runHeadHooks(bus)
     const content = ReactDOMServer.renderToString(app)
+    this.runHeadHooks(bus)
     this.runTailHooks(bus)
 
     return render.document({
