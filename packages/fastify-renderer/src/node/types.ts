@@ -25,6 +25,7 @@ export interface FastifyRendererHook {
   tails?: () => string
   heads?: () => string
   transform?: (app: ReactElement) => ReactElement
+  postRenderHeads?: () => string
 }
 
 export interface ViteClientManifest {

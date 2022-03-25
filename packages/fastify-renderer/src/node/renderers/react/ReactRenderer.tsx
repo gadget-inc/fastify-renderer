@@ -204,14 +204,19 @@ export class ReactRenderer implements Renderer {
 
   private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, ReactDOMServer: any, render: Render<Props>) {
     this.runHeadHooks(bus)
+    // Do nothing for now when using streaming template
+    bus.push('postRenderHead', null)
     const contentStream = ReactDOMServer.renderToNodeStream(app)
-    contentStream.on('end', () => this.runTailHooks(bus))
+    contentStream.on('end', () => {
+      this.runTailHooks(bus)
+    })
 
     return render.document({
       content: contentStream,
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
+      postRenderHead: bus.stack('postRenderHead'),
     })
   }
 
@@ -221,8 +226,9 @@ export class ReactRenderer implements Renderer {
     ReactDOMServer: any,
     render: Render<Props>
   ) {
-    const content = ReactDOMServer.renderToString(app)
     this.runHeadHooks(bus)
+    const content = ReactDOMServer.renderToString(app)
+    this.runPostRenderHeadHooks(bus)
     this.runTailHooks(bus)
 
     return render.document({
@@ -230,7 +236,18 @@ export class ReactRenderer implements Renderer {
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
+      postRenderHead: bus.stack('postRenderHead'),
     })
+  }
+
+  private runPostRenderHeadHooks(bus: RenderBus) {
+    // Run any heads hooks that might want to push something after the content
+    for (const hook of this.plugin.hooks) {
+      if (hook.postRenderHeads) {
+        bus.push('postRenderHead', hook.postRenderHeads())
+      }
+    }
+    bus.push('postRenderHead', null)
   }
 
   private runHeadHooks(bus: RenderBus) {
