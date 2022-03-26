@@ -4,7 +4,27 @@ import { newFastify } from './helpers'
 
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
-const options = { vite: { root: __dirname, logLevel: (process.env.LOG_LEVEL ?? 'info') as any } }
+const options = {
+  vite: { root: __dirname, logLevel: (process.env.LOG_LEVEL ?? 'info') as any },
+  devMode: true,
+  renderer: {
+    mode: 'sync' as const,
+    type: 'react' as const,
+  },
+  hooks: [
+    {
+      heads: () => {
+        return 'head'
+      },
+      transform: (app) => {
+        return app
+      },
+      postRenderHeads: () => {
+        return 'postRenderHead'
+      },
+    },
+  ],
+}
 
 describe('FastifyRenderer', () => {
   let server
@@ -72,5 +92,29 @@ describe('FastifyRenderer', () => {
 
     expect(response.statusCode).toEqual(201)
     expect(response.body).toEqual('hello')
+  })
+
+  test('should call hooks in correct order', async () => {
+    const callOrder: string[] = []
+    jest.spyOn(options.hooks[0], 'heads').mockImplementation(() => {
+      callOrder.push('heads')
+      return 'head'
+    })
+    jest.spyOn(options.hooks[0], 'transform').mockImplementation((app) => {
+      callOrder.push('transforms')
+      return app
+    })
+    jest.spyOn(options.hooks[0], 'postRenderHeads').mockImplementation(() => {
+      callOrder.push('postRenders')
+      return 'postRender'
+    })
+
+    await server.inject({
+      method: 'GET',
+      url: '/render-test',
+      headers: { Accept: 'text/html' },
+    })
+
+    expect(callOrder).toEqual(['transforms', 'heads', 'postRenders'])
   })
 })

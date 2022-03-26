@@ -82,6 +82,7 @@ export class ReactRenderer implements Renderer {
 
     try {
       const url = this.entrypointRequirePathForServer(render)
+
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
       const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (await this.loadModule(url))
         .default
@@ -204,8 +205,9 @@ export class ReactRenderer implements Renderer {
 
   private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, ReactDOMServer: any, render: Render<Props>) {
     this.runHeadHooks(bus)
-    // Do nothing for now when using streaming template
-    bus.push('postRenderHead', null)
+    // There are not postRenderHead hooks for streaming templates
+    // so let's end the head stack
+    bus.push('head', null)
     const contentStream = ReactDOMServer.renderToNodeStream(app)
     contentStream.on('end', () => {
       this.runTailHooks(bus)
@@ -216,7 +218,6 @@ export class ReactRenderer implements Renderer {
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
-      postRenderHead: bus.stack('postRenderHead'),
     })
   }
 
@@ -236,7 +237,6 @@ export class ReactRenderer implements Renderer {
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
-      postRenderHead: bus.stack('postRenderHead'),
     })
   }
 
@@ -244,10 +244,10 @@ export class ReactRenderer implements Renderer {
     // Run any heads hooks that might want to push something after the content
     for (const hook of this.plugin.hooks) {
       if (hook.postRenderHeads) {
-        bus.push('postRenderHead', hook.postRenderHeads())
+        bus.push('head', hook.postRenderHeads())
       }
     }
-    bus.push('postRenderHead', null)
+    bus.push('head', null)
   }
 
   private runHeadHooks(bus: RenderBus) {
@@ -257,7 +257,6 @@ export class ReactRenderer implements Renderer {
         bus.push('head', hook.heads())
       }
     }
-    bus.push('head', null)
   }
 
   private runTailHooks(bus: RenderBus) {
