@@ -9,7 +9,6 @@ import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRend
 import { RenderableRoute, Renderer } from './renderers/Renderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
-import { unthunk } from './utils'
 
 export interface FastifyRendererOptions {
   renderer?: ReactRendererOptions
@@ -31,7 +30,7 @@ export class FastifyRendererPlugin {
   clientOutDir: string
   serverOutDir: string
   assetsHost: string
-  hooks: FastifyRendererHook[]
+  hooks: (FastifyRendererHook | (() => FastifyRendererHook))[]
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
   routes: RenderableRoute[] = []
@@ -43,7 +42,7 @@ export class FastifyRendererPlugin {
     this.vite.base ??= '/.vite/'
     this.viteBase = this.vite.base
     this.assetsHost = incomingOptions.assetsHost || ''
-    this.hooks = (incomingOptions.hooks || []).map(unthunk)
+    this.hooks = incomingOptions.hooks || []
 
     const outDir = incomingOptions.outDir || path.join(process.cwd(), 'dist')
     this.clientOutDir = path.join(outDir, 'client', this.viteBase)

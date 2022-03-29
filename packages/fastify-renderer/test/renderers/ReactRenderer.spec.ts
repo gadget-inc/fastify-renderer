@@ -52,18 +52,6 @@ describe('ReactRenderer', () => {
     test('should call postRenderHooks after dom render', async () => {
       const renderer = newReactRenderer()
       const callOrder: string[] = []
-      renderer.plugin.hooks = [
-        {
-          heads: () => {
-            callOrder.push('heads')
-            return 'heads'
-          },
-          postRenderHeads: () => {
-            callOrder.push('postRenderHeads')
-            return 'postRenderHeads'
-          },
-        },
-      ]
 
       renderer['renderSynchronousTemplate'](
         React.createElement(testLayoutComponent, {}),
@@ -74,7 +62,19 @@ describe('ReactRenderer', () => {
             return 'test'
           },
         },
-        getMockRender({})
+        getMockRender({}),
+        [
+          {
+            heads: () => {
+              callOrder.push('heads')
+              return 'heads'
+            },
+            postRenderHeads: () => {
+              callOrder.push('postRenderHeads')
+              return 'postRenderHeads'
+            },
+          },
+        ]
       )
 
       expect(callOrder).toEqual(['heads', 'render', 'postRenderHeads'])
