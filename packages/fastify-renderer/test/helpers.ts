@@ -1,9 +1,12 @@
 import fastify, { FastifyServerOptions } from 'fastify'
 import fastifyAccepts from 'fastify-accepts'
 import Middie from 'middie'
+import path from 'path'
+import { Readable } from 'stream'
 import { FastifyRendererOptions, FastifyRendererPlugin } from '../src/node/Plugin'
 import { RenderBus } from '../src/node/RenderBus'
 import { ReactRenderer, ReactRendererOptions } from '../src/node/renderers/react/ReactRenderer'
+import { Render } from '../src/node/renderers/Renderer'
 
 const logLevel = process.env.LOG_LEVEL || 'error'
 
@@ -25,4 +28,23 @@ export const newFastifyRendererPlugin = (options: FastifyRendererOptions = {}) =
 export const newReactRenderer = (options?: ReactRendererOptions): ReactRenderer => {
   const plugin = newFastifyRendererPlugin({ renderer: options })
   return plugin.renderer as ReactRenderer
+}
+
+export const getMockRender = <T>(props: T): Render<T> => {
+  return {
+    props,
+    renderable: path.resolve(__dirname, 'fixtures', 'test-module.tsx'),
+    url: 'test-url',
+    layout: path.resolve(__dirname, 'fixtures', 'test-layout.tsx'),
+    base: '',
+    document: (data) => Readable.from(''),
+    request: {
+      url: 'test-url',
+    } as any,
+    reply: {
+      send: (payload: unknown) => {
+        throw new Error('Send is not implemented')
+      },
+    } as any,
+  }
 }

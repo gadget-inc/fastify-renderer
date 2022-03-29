@@ -7,7 +7,8 @@ import { normalizePath } from 'vite/dist/node'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
-import { mapFilepathToEntrypointName } from '../../utils'
+import { FastifyRendererHook } from '../../types'
+import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRoute, Renderer } from '../Renderer'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
@@ -79,9 +80,11 @@ export class ReactRenderer implements Renderer {
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
     const bus = this.startRenderBus(render)
+    const hooks = this.plugin.hooks.map(unthunk)
 
     try {
       const url = this.entrypointRequirePathForServer(render)
+
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
       const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (await this.loadModule(url))
         .default
@@ -96,16 +99,16 @@ export class ReactRenderer implements Renderer {
         </RenderBusContext.Provider>
       )
 
-      for (const hook of this.plugin.hooks) {
+      for (const hook of hooks) {
         if (hook.transform) {
           app = hook.transform(app)
         }
       }
 
       if (this.options.mode == 'streaming') {
-        await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render))
+        await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render, hooks))
       } else {
-        await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render))
+        await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render, hooks))
       }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
@@ -202,10 +205,21 @@ export class ReactRenderer implements Renderer {
     return bus
   }
 
-  private renderStreamingTemplate<Props>(app: JSX.Element, bus: RenderBus, ReactDOMServer: any, render: Render<Props>) {
-    this.runHeadHooks(bus)
+  private renderStreamingTemplate<Props>(
+    app: JSX.Element,
+    bus: RenderBus,
+    ReactDOMServer: any,
+    render: Render<Props>,
+    hooks: FastifyRendererHook[]
+  ) {
+    this.runHeadHooks(bus, hooks)
+    // There are not postRenderHead hooks for streaming templates
+    // so let's end the head stack
+    bus.push('head', null)
     const contentStream = ReactDOMServer.renderToNodeStream(app)
-    contentStream.on('end', () => this.runTailHooks(bus))
+    contentStream.on('end', () => {
+      this.runTailHooks(bus, hooks)
+    })
 
     return render.document({
       content: contentStream,
@@ -219,11 +233,13 @@ export class ReactRenderer implements Renderer {
     app: JSX.Element,
     bus: RenderBus,
     ReactDOMServer: any,
-    render: Render<Props>
+    render: Render<Props>,
+    hooks: FastifyRendererHook[]
   ) {
-    this.runHeadHooks(bus)
+    this.runHeadHooks(bus, hooks)
     const content = ReactDOMServer.renderToString(app)
-    this.runTailHooks(bus)
+    this.runPostRenderHeadHooks(bus, hooks)
+    this.runTailHooks(bus, hooks)
 
     return render.document({
       content,
@@ -233,19 +249,28 @@ export class ReactRenderer implements Renderer {
     })
   }
 
-  private runHeadHooks(bus: RenderBus) {
-    // Run any heads hooks that might want to push something before the content
-    for (const hook of this.plugin.hooks) {
-      if (hook.heads) {
-        bus.push('head', hook.heads())
+  private runPostRenderHeadHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
+    // Run any heads hooks that might want to push something after the content
+    for (const hook of hooks) {
+      if (hook.postRenderHeads) {
+        bus.push('head', hook.postRenderHeads())
       }
     }
     bus.push('head', null)
   }
 
-  private runTailHooks(bus: RenderBus) {
+  private runHeadHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
+    // Run any heads hooks that might want to push something before the content
+    for (const hook of hooks) {
+      if (hook.heads) {
+        bus.push('head', hook.heads())
+      }
+    }
+  }
+
+  private runTailHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
     // when we're done rendering the content, run any hooks that might want to push more stuff after the content
-    for (const hook of this.plugin.hooks) {
+    for (const hook of hooks) {
       if (hook.tails) {
         bus.push('tail', hook.tails())
       }

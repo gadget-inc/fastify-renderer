@@ -1,7 +1,10 @@
-// import { ReactRenderer } from "../../src/node/renderers/react/ReactRenderer";
+import path from 'path'
+import React from 'react'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRoute } from '../../src/node/renderers/Renderer'
-import { newReactRenderer } from '../helpers'
+import { getMockRender, newReactRenderer, newRenderBus } from '../helpers'
+
+const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
 
 describe('ReactRenderer', () => {
   test('should create an instance and initialize the client module path', async () => {
@@ -44,6 +47,37 @@ describe('ReactRenderer', () => {
 
     test.skip('should throw on rendering failure', async () => {
       return
+    })
+
+    test('should call postRenderHooks after dom render', async () => {
+      const renderer = newReactRenderer()
+      const callOrder: string[] = []
+
+      renderer['renderSynchronousTemplate'](
+        React.createElement(testLayoutComponent, {}),
+        newRenderBus(),
+        {
+          renderToString: () => {
+            callOrder.push('render')
+            return 'test'
+          },
+        },
+        getMockRender({}),
+        [
+          {
+            heads: () => {
+              callOrder.push('heads')
+              return 'heads'
+            },
+            postRenderHeads: () => {
+              callOrder.push('postRenderHeads')
+              return 'postRenderHeads'
+            },
+          },
+        ]
+      )
+
+      expect(callOrder).toEqual(['heads', 'render', 'postRenderHeads'])
     })
   })
 

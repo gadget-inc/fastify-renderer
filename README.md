@@ -49,6 +49,7 @@ You can optionally provide configuration options to the plugin:
   - `heads` - Function that will return html tags to be appended to the document head tag
   - `tails` - Function that will return html tags to be appended to the document body tag
   - `transform` - Function that will be run to transform the root react element
+  - `postRenderHeads` - Function (called after render) that will return html tags to be appended to the document head tag. Useful when injecting styles that rely on rendering first.
 
 
 ## Setting up a route
