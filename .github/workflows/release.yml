@@ -1,0 +1,25 @@
+name: Release
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/fastify-renderer/package.json'
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2.3.4
+      - uses: ./.github/actions/setup-test-env
+      - name: Build all packages
+        shell: nix develop -c bash -eo pipefail -l {0}
+        run: yarn build
+      - name: Publish fastify-renderer
+        uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          package: ./packages/fastify-renderer/package.json
+          access: public
