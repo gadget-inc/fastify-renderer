@@ -12,29 +12,12 @@ jobs:
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v1
-
-      - name: Use Node.js
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - uses: actions/cache@v2
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
-      - name: Install
-        run: yarn install --frozen-lockfile
-
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup-test-env
       - name: Build JS
         run: yarn build
-
       - name: Run Tests
         run: yarn run test
-
       - name: Run Lint
         run: yarn run lint
 

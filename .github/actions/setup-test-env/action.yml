@@ -1,0 +1,14 @@
+name: 'Setup test environment'
+description: ''
+inputs: {}
+outputs: {}
+runs:
+    using: "composite"
+    steps:
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'yarn'
+    - run: yarn install --frozen-lockfile
+      shell: "bash"
