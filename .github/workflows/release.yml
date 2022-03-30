@@ -17,9 +17,19 @@ jobs:
       - name: Build all packages
         shell: nix develop -c bash -eo pipefail -l {0}
         run: yarn build
-      - name: Publish fastify-renderer
+      - id: npm-publish
+        name: Publish fastify-renderer
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
           package: ./packages/fastify-renderer/package.json
           access: public
+      - name: Push version tag to github
+        uses: actions-ecosystem/action-push-tag@v1
+        with:
+          tag: ${{ steps.npm-publish.outputs.version }}
+      - name: Publish Release to github
+        uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false

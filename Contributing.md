@@ -1,4 +1,11 @@
-# Fastify is an OPEN Open Source Project
+# Contributing to fastify-renderer 
+
+See below for information on how fastify-renderer's community is governed.
+## Releases
+
+Bump the version with `npm version <minor|major|patch>` then commit the change to git. When your changes get pushed/merged to `main` on github, Github Actions will run the `release` workflow and automatically publish the release to NPM.
+
+## fastify-renderer is an OPEN Open Source Project
 
 ## What?
 
@@ -35,10 +42,6 @@ The contributors to the Fastify's plugins must attend the same rules of the Fast
 1. The new release must have the changelog information stored in the GitHub release.
    For this scope we suggest to adopt a tool like [`releasify`](https://github.com/fastify/releasify) to archive this.
 1. PR opened by bots (like Greenkeeper) can be merged if the CI is green and the Node.js versions supported are the same of the plugin.
-
-## Releases
-
-Bump the version with `npm version <minor|major|patch>` then run `npm publish`.
 
 ## Changes to this arrangement
 
