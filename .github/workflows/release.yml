@@ -17,7 +17,6 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup-test-env
       - name: Build all packages
-        shell: nix develop -c bash -eo pipefail -l {0}
         run: yarn build
       - id: npm-publish
         name: Publish fastify-renderer
@@ -26,14 +25,10 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           package: ./packages/fastify-renderer/package.json
           access: public
-      - name: Push version tag to github
-        uses: actions-ecosystem/action-push-tag@v1
-        if: ${{ steps.npm-publish.outputs.type != 'none' }}
-        with:
-          tag: ${{ steps.npm-publish.outputs.version }}
       - name: Publish Release to github
         uses: "marvinpinto/action-automatic-releases@latest"
         if: ${{ steps.npm-publish.outputs.type != 'none' }}
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
+          automatic_release_tag: ${{ steps.npm-publish.outputs.version }}
