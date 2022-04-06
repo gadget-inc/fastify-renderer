@@ -8,7 +8,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "fastify": "^3.27.4",
+    "fastify": "^3.28.0",
     "fastify-renderer": "*",
     "react": "*",
     "react-dom": "*"
