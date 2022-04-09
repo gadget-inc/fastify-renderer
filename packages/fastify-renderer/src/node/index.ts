@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
-import { FastifyInstance } from 'fastify'
+import { FastifyInstance, FastifyReply } from 'fastify'
 import 'fastify-accepts'
 import fp from 'fastify-plugin'
 import fastifyStatic from 'fastify-static'
@@ -67,6 +67,39 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         this.log.warn(`fastify-renderer base paths shouldn't end in a slash, got ${newOptions.base}`)
       }
       this[kRenderOptions] = newOptions
+    })
+
+    fastify.decorate('registerRenderable', function (this: FastifyInstance, renderable: string) {
+      const renderableRoute: RenderableRoute = { ...this[kRenderOptions], renderable }
+      plugin.registerRoute(renderableRoute)
+    })
+
+    fastify.decorateReply('render', async function (this: FastifyReply, renderable: string, props: any) {
+      const request = this.request
+      const renderableRoute: RenderableRoute = {
+        ...this.server[kRenderOptions],
+        url: request.url,
+        renderable,
+        isImperative: true,
+      }
+
+      // TODO(ayoub): refactor to reuse this code instead of duplicating it
+      if (!this.sent) {
+        void this.header('Vary', 'Accept')
+        switch (request.accepts().type(['html', 'json'])) {
+          case 'json':
+            await this.type('application/json').send({ props })
+            break
+          case 'html':
+            void this.type('text/html')
+            const render: Render<typeof props> = { ...renderableRoute, request, reply: this, props, renderable }
+            await plugin.renderer.render(render)
+            break
+          default:
+            await this.type('text/plain').send('Content type not supported')
+            break
+        }
+      }
     })
 
     fastify.setRenderConfig({
