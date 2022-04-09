@@ -18,8 +18,9 @@ export type PartialRenderOptions =
 
 /** One renderable route */
 export interface RenderableRoute extends RenderOptions {
-  url: string
+  url?: string
   renderable: string
+  isImperative?: true
 }
 
 /** A unit of renderable work */
