@@ -411,11 +411,13 @@ export class ReactRenderer implements Renderer {
           const url = new URL('fstr://' + id)
           const lazy = !!url.searchParams.get('lazy')!
           const base = url.searchParams.get('base')!
-          const applicableRoutes = this.routes.filter((route) => route.base == base)
-          applicableRoutes.sort((a, b) => routeSortScore(a.url) - routeSortScore(b.url))
+          // We filter out the routes the imperatively renderable routes, which don't have a url property
+          // There is no point in having them included in the route table
+          const applicableRoutes = this.routes.filter((route) => route.base == base && route.url !== undefined)
+          applicableRoutes.sort((a, b) => routeSortScore(a.url!) - routeSortScore(b.url!))
 
           const pathsToModules = applicableRoutes.map((route) => [
-            pathToRegexpify(this.stripBasePath(route.url, base)),
+            pathToRegexpify(this.stripBasePath(route.url!, base)),
             route.renderable,
           ])
 
