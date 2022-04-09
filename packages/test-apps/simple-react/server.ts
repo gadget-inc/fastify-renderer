@@ -1,3 +1,4 @@
+import type { FastifyRequest } from 'fastify'
 import os from 'os'
 import renderer from '../../fastify-renderer/src/node'
 import { newFastify } from '../../fastify-renderer/test/helpers'
@@ -28,6 +29,18 @@ export const server = async () => {
     },
   })
 
+  server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
+
+  server.get('/imperative/:bool', async (request: FastifyRequest<{ Params: { bool: string } }>, reply) => {
+    if (request.params.bool == 'true') {
+      return reply.render(require.resolve('./ImperativelyRenderablePage'), {
+        hostname: os.hostname(),
+        requestIP: request.ip,
+      })
+    } else {
+      return reply.redirect('/not-found')
+    }
+  })
   server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
     return { params: request.params }
   })
