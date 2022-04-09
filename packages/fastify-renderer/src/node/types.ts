@@ -46,13 +46,20 @@ export interface ServerEntrypointManifest {
 }
 
 declare module 'fastify' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface FastifyInstance {
+    registerRenderable: (renderable: string) => void
+  }
+
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
     render?: string
   }
 
   interface FastifyRequest {
     vite: ViteDevServer
+  }
+  interface FastifyReply {
+    render: <Props>(this: FastifyReply, renderable: string, props: Props) => Promise<void>
   }
 
   interface RouteShorthandMethod<
