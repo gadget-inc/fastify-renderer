@@ -41,6 +41,7 @@ export const server = async () => {
       return reply.redirect('/not-found')
     }
   })
+
   server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
     return { params: request.params }
   })
