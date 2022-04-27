@@ -16,7 +16,7 @@ import {
   ViteDevServer,
 } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
-import { FastifyRendererOptions, FastifyRendererPlugin } from './Plugin'
+import { FastifyRendererOptions, FastifyRendererPlugin, RegisteredRenderable } from './Plugin'
 import { PartialRenderOptions, Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
 import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'
 import { wrap } from './tracing'
@@ -71,15 +71,15 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
 
     fastify.decorate('registerRenderable', function (this: FastifyInstance, renderable: string) {
       const renderableRoute: RenderableRoute = { ...this[kRenderOptions], renderable }
-      plugin.registerRoute(renderableRoute)
+      return plugin.registerRoute(renderableRoute)
     })
 
-    fastify.decorateReply('render', async function (this: FastifyReply, renderable: string, props: any) {
+    fastify.decorateReply('render', async function (this: FastifyReply, token: RegisteredRenderable, props: any) {
       const request = this.request
       const renderableRoute: RenderableRoute = {
         ...this.server[kRenderOptions],
         url: request.url,
-        renderable,
+        renderable: plugin.registeredComponents[token].renderable,
         isImperative: true,
       }
 
