@@ -29,11 +29,11 @@ export const server = async () => {
     },
   })
 
-  server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
+  const ImperativeRoute = server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
 
   server.get('/imperative/:bool', async (request: FastifyRequest<{ Params: { bool: string } }>, reply) => {
     if (request.params.bool == 'true') {
-      return reply.render(require.resolve('./ImperativelyRenderablePage'), {
+      return reply.render(ImperativeRoute, {
         hostname: os.hostname(),
         requestIP: request.ip,
       })
