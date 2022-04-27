@@ -142,15 +142,27 @@ Note that the route which renders the component is a normal route that doesn't n
 To register a component, you can do the following:
 
 ```js
-server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
+// The return value needs to be passed down to the reply.render() function
+const Renderable = server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
 ```
 
 And then you can render it imperatively in your routes:
 
 ```js
+server.get('/imperative', async (request, reply) => {
+  return reply.render(Renderable, {
+    hostname: os.hostname(),
+    requestIP: request.ip,
+  })
+})
+```
+
+A big reason why you might want to imperatively render routes is for conditional rendering, where you only want to render if the user has permission or if some header is correctly passed. Imperative rendering works fine for routes that only sometimes use `reply.render`, and otherwise do normal `reply.send`s:
+
+```js
 server.get('/imperative/:bool', async (request: FastifyRequest<{ Params: { bool: string } }>, reply) => {
   if (request.params.bool == 'true') {
-    return reply.render(require.resolve('./ImperativelyRenderablePage'), {
+    return reply.render(Renderable, {
       hostname: os.hostname(),
       requestIP: request.ip,
     })
