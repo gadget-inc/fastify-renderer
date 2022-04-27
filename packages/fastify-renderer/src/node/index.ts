@@ -95,7 +95,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
             break
           case 'html':
             void this.type('text/html')
-            const render: Render<typeof props> = { ...renderableRoute, request, reply: this, props, renderable }
+            const render: Render<typeof props> = { ...renderableRoute, request, reply: this, props }
             await plugin.renderer.render(render)
             break
           default:
