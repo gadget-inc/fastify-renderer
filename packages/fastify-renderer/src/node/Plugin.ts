@@ -22,6 +22,8 @@ export interface FastifyRendererOptions {
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
 }
 
+export type RegisteredRenderable = symbol
+
 export class FastifyRendererPlugin {
   renderer: Renderer
   devMode: boolean
@@ -34,6 +36,7 @@ export class FastifyRendererPlugin {
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
   routes: RenderableRoute[] = []
+  registeredComponents: Record<RegisteredRenderable, RenderableRoute> = {}
 
   constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
@@ -105,7 +108,13 @@ export class FastifyRendererPlugin {
     }
   }
 
-  registerRoute(options: RenderableRoute) {
+  registerRoute(options: RenderableRoute): RegisteredRenderable {
+    // If the component is not already registered, we register it and return a unique symbol for it
+    const symbol = Symbol(options.renderable)
+    this.registeredComponents[symbol] = options
+
     this.routes.push(options)
+
+    return symbol
   }
 }
