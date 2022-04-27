@@ -75,6 +75,9 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     })
 
     fastify.decorateReply('render', async function (this: FastifyReply, token: RegisteredRenderable, props: any) {
+      if (!plugin.registeredComponents[token]) {
+        throw new Error(`No RegisteredRenderable component was found for the provided token= ${token.toString()}`)
+      }
       const request = this.request
       const renderableRoute: RenderableRoute = {
         ...this.server[kRenderOptions],
