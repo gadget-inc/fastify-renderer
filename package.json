@@ -47,6 +47,6 @@
   "devDependencies": {
     "cross-env": "^7.0.3",
     "fs-extra": "^10.0.1",
-    "playwright-chromium": "^1.21.0"
+    "playwright-chromium": "^1.23.0"
   }
 }
