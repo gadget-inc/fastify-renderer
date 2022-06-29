@@ -4,7 +4,7 @@ const Layout = (props: { children: React.ReactNode; bootProps: Record<string, an
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <pre id="bootprops">
-        <code>{JSON.stringify(props.bootProps)}</code>
+        <code>{props.bootProps.someValue}</code>
       </pre>
       {props.children}
     </Suspense>

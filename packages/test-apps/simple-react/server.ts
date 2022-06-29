@@ -75,7 +75,7 @@ export const server = async () => {
     instance.setRenderConfig({ base: '/bootprops', layout: require.resolve('./BootPropsLayout') })
 
     instance.get('/bootprops/test', { render: require.resolve('./About') }, async (request) => {
-      return { hostname: os.hostname(), requestIP: request.ip, bootProp: 'this is a boot prop' }
+      return { hostname: os.hostname(), requestIP: request.ip, someValue: 'this is a boot prop' }
     })
   })
 

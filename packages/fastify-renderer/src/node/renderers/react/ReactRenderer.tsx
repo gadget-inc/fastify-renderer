@@ -82,16 +82,19 @@ export class ReactRenderer implements Renderer {
     const hooks = this.plugin.hooks.map(unthunk)
 
     try {
-      const url = this.entrypointRequirePathForServer(render)
+      const requirePath = this.entrypointRequirePathForServer(render)
 
       // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (await this.loadModule(url))
-        .default
+      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
+        await this.loadModule(requirePath)
+      ).default
+
+      const destination = this.stripBasePath(render.request.url, render.base)
 
       let app = (
         <RenderBusContext.Provider value={bus}>
-          <Router base={render.base} hook={staticLocationHook(this.stripBasePath(render.request.url, render.base))}>
-            <Layout>
+          <Router base={render.base} hook={staticLocationHook(destination)}>
+            <Layout isNavigating={false} navigationDestination={destination} bootProps={render.props}>
               <Entrypoint {...render.props} />
             </Layout>
           </Router>
