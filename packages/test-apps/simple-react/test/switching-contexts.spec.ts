@@ -12,8 +12,9 @@ describe('navigation details', () => {
 
   test('navigating between pages of the same context doesnt trigger a server side render request', async () => {
     page.on('request', (request) => {
+      if (request.url().includes('/.vite/')) return
       if (request.headers().accept !== 'application/json') {
-        throw new Error(`Expecting request to only fetch props, request made: ${request.method()} ${request.url()}`)
+        throw new Error(`Expecting request to only fetch props, request made: ${request.method()} ${request.url()} $`)
       }
     })
 
@@ -22,6 +23,8 @@ describe('navigation details', () => {
 
   test('navigating between pages of different contexts triggers a server side render request', async () => {
     page.on('request', (request) => {
+      if (request.url().includes('/.vite/')) return
+
       if (request.headers().accept === 'application/json') {
         throw new Error(`Expecting request to trigger SSR, request made: ${request.method()} ${request.url()}`)
       }
