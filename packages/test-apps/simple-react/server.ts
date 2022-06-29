@@ -71,6 +71,14 @@ export const server = async () => {
     })
   })
 
+  await server.register(async (instance) => {
+    instance.setRenderConfig({ base: '/bootprops', layout: require.resolve('./BootPropsLayout') })
+
+    instance.get('/bootprops/test', { render: require.resolve('./About') }, async (request) => {
+      return { hostname: os.hostname(), requestIP: request.ip, bootProp: 'this is a boot prop' }
+    })
+  })
+
   await server.ready()
   return server
 }
@@ -78,6 +86,8 @@ export const server = async () => {
 if (require.main === module) {
   void server().then((server) => {
     console.warn(server.printRoutes())
-    return server.listen(3000)
+    return server.listen(3000).then((address) => {
+      console.warn(`Test server listening on ${address}`)
+    })
   })
 }

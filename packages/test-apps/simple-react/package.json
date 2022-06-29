@@ -14,6 +14,7 @@
     "react-dom": "*"
   },
   "devDependencies": {
+    "@playwright/test": "^1.23.0",
     "html-validator": "^5.1.18"
   }
 }

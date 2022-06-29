@@ -15,6 +15,8 @@ const Home = (props: { time: number }) => {
         Red About
       </Link>
       <br />
+      <Link href="~/bootprops/test">Boot props test</Link>
+      <br />
       <Link href="navigation-test"> Navigation Test </Link>
     </>
   )

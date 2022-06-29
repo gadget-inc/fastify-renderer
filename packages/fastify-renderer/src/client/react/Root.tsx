@@ -8,13 +8,18 @@ export interface LayoutProps {
   isNavigating: boolean
   navigationDestination: string
   children: React.ReactNode
+  bootProps: Record<string, any>
 }
 
-const RouteTable = (props: { Layout: React.FunctionComponent<LayoutProps>; routes: JSX.Element[] }) => {
+const RouteTable = (props: {
+  Layout: React.FunctionComponent<LayoutProps>
+  routes: JSX.Element[]
+  bootProps: Record<string, any>
+}) => {
   const [isNavigating, navigationDestination] = useNavigationDetails()
 
   return (
-    <props.Layout isNavigating={isNavigating} navigationDestination={navigationDestination}>
+    <props.Layout isNavigating={isNavigating} navigationDestination={navigationDestination} bootProps={props.bootProps}>
       <Switch>{props.routes}</Switch>
     </props.Layout>
   )
@@ -75,7 +80,7 @@ export function Root<BootProps>(props: {
 
   return (
     <Router base={props.basePath} hook={useTransitionLocation as any} matcher={matcher}>
-      <RouteTable routes={routes} Layout={props.Layout} />
+      <RouteTable routes={routes} Layout={props.Layout} bootProps={props.bootProps} />
     </Router>
   )
 }
