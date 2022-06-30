@@ -15,6 +15,9 @@
   "main": "node/index.js",
   "types": "node/index.d.ts",
   "scripts": {
+    "typecheck": "run-p typecheck:*",
+    "typecheck:client": "tsc --noEmit --incremental --project src/client",
+    "typecheck:node": "tsc --noEmit --incremental --project src/node",
     "watch": "run-p watch:*",
     "watch:client-es": "tsc --watch --incremental --project src/client",
     "watch:node-cjs": "tsc --watch --incremental --project src/node",

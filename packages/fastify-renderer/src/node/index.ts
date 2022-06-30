@@ -206,7 +206,6 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
 
 module.exports = exports = FastifyRenderer
 export default FastifyRenderer
-
 export const build = async (fastify: FastifyInstance) => {
   const plugin = fastify[kRendererPlugin]
   if (!plugin) {
@@ -267,3 +266,5 @@ export const build = async (fastify: FastifyInstance) => {
     JSON.stringify(virtualModulesToRenderedEntrypoints, null, 2)
   )
 }
+
+Object.assign(FastifyRenderer, { build })

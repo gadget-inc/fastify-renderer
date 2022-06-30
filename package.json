@@ -9,6 +9,7 @@
   "scripts": {
     "watch": "yarn workspace fastify-renderer watch",
     "build": "yarn workspaces run build",
+    "typecheck": "yarn workspaces run typecheck",
     "lint": "eslint \"packages/**/*.{js,ts,tsx}\"",
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "yarn workspace fastify-renderer publish",

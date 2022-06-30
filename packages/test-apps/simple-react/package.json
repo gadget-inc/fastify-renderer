@@ -4,7 +4,8 @@
   "description": "",
   "scripts": {
     "dev": "wds --watch --supervise server.ts",
-    "build": "wds build.ts"
+    "build": "wds build.ts",
+    "typecheck": "tsc --noEmit"
   },
   "license": "MIT",
   "dependencies": {
