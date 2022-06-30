@@ -34,15 +34,15 @@ export const getMockRender = <T>(props: T): Render<T> => {
   return {
     props,
     renderable: path.resolve(__dirname, 'fixtures', 'test-module.tsx'),
-    url: 'test-url',
+    pathPattern: 'test-url',
     layout: path.resolve(__dirname, 'fixtures', 'test-layout.tsx'),
     base: '',
-    document: (data) => Readable.from(''),
+    document: (_data) => Readable.from(''),
     request: {
       url: 'test-url',
     } as any,
     reply: {
-      send: (payload: unknown) => {
+      send: (_payload: unknown) => {
         throw new Error('Send is not implemented')
       },
     } as any,

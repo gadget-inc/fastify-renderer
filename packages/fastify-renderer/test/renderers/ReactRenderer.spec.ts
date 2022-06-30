@@ -1,7 +1,7 @@
 import path from 'path'
 import React from 'react'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
-import { RenderableRoute } from '../../src/node/renderers/Renderer'
+import { RenderableRegistration } from '../../src/node/renderers/Renderer'
 import { getMockRender, newReactRenderer, newRenderBus } from '../helpers'
 
 const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
@@ -84,30 +84,30 @@ describe('ReactRenderer', () => {
   describe('buildVirtualClientEntrypointModuleID()', () => {
     test('should return the path to hydrate the render', async () => {
       const renderer = newReactRenderer()
-      const route: RenderableRoute = {
-        url: 'test-url',
+      const registration: RenderableRegistration = {
+        pathPattern: 'test-url',
         renderable: 'rend',
         layout: './RedLayout',
         document: DefaultDocumentTemplate,
         base: '',
       }
 
-      expect(renderer.buildVirtualClientEntrypointModuleID(route)).not.toBeUndefined()
+      expect(renderer.buildVirtualClientEntrypointModuleID(registration)).not.toBeUndefined()
     })
   })
 
   describe('buildVirtualServerEntrypointModuleID()', () => {
     test('should return the path to run the render server side', async () => {
       const renderer = newReactRenderer()
-      const route: RenderableRoute = {
-        url: 'test-url',
+      const registration: RenderableRegistration = {
+        pathPattern: 'test-url',
         renderable: 'rend',
         layout: './RedLayout',
         document: DefaultDocumentTemplate,
         base: '',
       }
 
-      expect(renderer.buildVirtualServerEntrypointModuleID(route)).not.toBeUndefined()
+      expect(renderer.buildVirtualServerEntrypointModuleID(registration)).not.toBeUndefined()
     })
   })
 

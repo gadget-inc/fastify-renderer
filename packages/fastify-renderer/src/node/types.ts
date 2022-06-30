@@ -13,6 +13,7 @@ import {
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
 import { ViteDevServer } from 'vite'
+import { ImperativeRenderable } from './Plugin'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -46,13 +47,20 @@ export interface ServerEntrypointManifest {
 }
 
 declare module 'fastify' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface FastifyInstance {
+    registerRenderable: (renderable: string) => ImperativeRenderable
+  }
+
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
     render?: string
   }
 
   interface FastifyRequest {
     vite: ViteDevServer
+  }
+  interface FastifyReply {
+    render: <Props>(this: FastifyReply, renderable: ImperativeRenderable, props: Props) => Promise<void>
   }
 
   interface RouteShorthandMethod<

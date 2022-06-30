@@ -11,6 +11,14 @@ const Home = (props: { time: number }) => {
         About
       </Link>
       <br />
+      <Link id="imperative-redirect-link" href="~/imperative/false">
+        Imperative route (Redirect to non-existent route)
+      </Link>
+      <br />
+      <Link id="imperative-render-link" href="~/imperative/apple">
+        Imperative route
+      </Link>
+      <br />
       <Link id="red-about-link" href="~/red/about">
         Red About
       </Link>

@@ -7,8 +7,9 @@ const NavigationTest = () => {
 
   useEffect(() => {
     if (typeof window != 'undefined') {
-      ;(window as any).test || ((window as any).test = [])
-      ;(window as any).test.push({ isNavigating, navigationDestination })
+      const w = window as any
+      w.test || (w.test = [])
+      w.test.push({ isNavigating, navigationDestination })
     }
   }, [isNavigating, navigationDestination])
 

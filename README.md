@@ -133,6 +133,45 @@ export const DefaultDocumentTemplate: Template = (data: TemplateData<any>) => te
 `
 ```
 
+## Imperatively rendering a component
+
+Imperative rendering allows routes to dynamically render a component based on specific conditions, instead of always rendering the same component. To do so, we still require that the component is registered to allow Vite to bundle it.
+
+Note that the route which renders the component is a normal route that doesn't need any special route options configuration.
+
+To register a component, you can do the following:
+
+```js
+// The return value needs to be passed down to the reply.render() function
+const Renderable = server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
+```
+
+And then you can render it imperatively in your routes:
+
+```js
+server.get('/imperative', async (request, reply) => {
+  return reply.render(Renderable, {
+    hostname: os.hostname(),
+    requestIP: request.ip,
+  })
+})
+```
+
+A big reason why you might want to imperatively render routes is for conditional rendering, where you only want to render if the user has permission or if some header is correctly passed. Imperative rendering works fine for routes that only sometimes use `reply.render`, and otherwise do normal `reply.send`s:
+
+```js
+server.get('/imperative/:bool', async (request: FastifyRequest<{ Params: { bool: string } }>, reply) => {
+  if (request.params.bool == 'true') {
+    return reply.render(Renderable, {
+      hostname: os.hostname(),
+      requestIP: request.ip,
+    })
+  } else {
+    return reply.redirect('/not-found')
+  }
+})
+```
+
 ## How it works
 
 - mounts a `vite` server as a fastify plugin that knows how to transform code to be run server side.

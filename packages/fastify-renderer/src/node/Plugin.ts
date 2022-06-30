@@ -6,7 +6,7 @@ import { InlineConfig } from 'vite'
 import { Template } from './DocumentTemplate'
 import { RenderBus } from './RenderBus'
 import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
-import { RenderableRoute, Renderer } from './renderers/Renderer'
+import { RenderableRegistration, Renderer } from './renderers/Renderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 
@@ -22,6 +22,8 @@ export interface FastifyRendererOptions {
   hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
 }
 
+export type ImperativeRenderable = symbol
+
 export class FastifyRendererPlugin {
   renderer: Renderer
   devMode: boolean
@@ -33,7 +35,8 @@ export class FastifyRendererPlugin {
   hooks: (FastifyRendererHook | (() => FastifyRendererHook))[]
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
-  routes: RenderableRoute[] = []
+  renderables: RenderableRegistration[] = []
+  registeredComponents: Record<ImperativeRenderable, RenderableRegistration> = {}
 
   constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
@@ -105,7 +108,13 @@ export class FastifyRendererPlugin {
     }
   }
 
-  registerRoute(options: RenderableRoute) {
-    this.routes.push(options)
+  register(options: RenderableRegistration): ImperativeRenderable {
+    // If the component is not already registered, we register it and return a unique symbol for it
+    const symbol = Symbol(options.renderable)
+    this.registeredComponents[symbol] = options
+
+    this.renderables.push(options)
+
+    return symbol
   }
 }

@@ -15,6 +15,9 @@
   "main": "node/index.js",
   "types": "node/index.d.ts",
   "scripts": {
+    "typecheck": "run-p typecheck:*",
+    "typecheck:client": "tsc --noEmit --incremental --project src/client",
+    "typecheck:node": "tsc --noEmit --incremental --project src/node",
     "watch": "run-p watch:*",
     "watch:client-es": "tsc --watch --incremental --project src/client",
     "watch:node-cjs": "tsc --watch --incremental --project src/node",
@@ -99,7 +102,6 @@
     "react-dom": "0.0.0-experimental-4ead6b530",
     "rimraf": "^3.0.2",
     "ts-jest": "^27.1.4",
-    "ts-node": "^9.1.1",
     "typescript": "^4.6.3"
   },
   "files": [

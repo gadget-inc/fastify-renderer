@@ -4,7 +4,7 @@ import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
 import { RenderBus } from '../src/node/RenderBus'
 import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
-import { RenderableRoute } from '../src/node/renderers/Renderer'
+import { RenderableRegistration } from '../src/node/renderers/Renderer'
 import { newFastifyRendererPlugin } from './helpers'
 
 jest.mock('fs', () => ({
@@ -102,23 +102,23 @@ describe('FastifyRendererPlugin', () => {
     })
   })
 
-  describe('registerRoute()', () => {
+  describe('register()', () => {
     test('should add a registered route to the routes array', async () => {
       const plugin = newFastifyRendererPlugin({})
-      const route: RenderableRoute = {
-        url: 'route-url',
+      const registration: RenderableRegistration = {
+        pathPattern: 'route-url',
         renderable: 'renderable-component-path',
         layout: 'layout',
         base: 'base',
         document: DefaultDocumentTemplate,
       }
 
-      expect(plugin.routes.length).toEqual(0)
+      expect(plugin.renderables.length).toEqual(0)
 
-      plugin.registerRoute(route)
+      plugin.register(registration)
 
-      expect(plugin.routes.length).toEqual(1)
-      expect(plugin.routes[0]).toEqual(route)
+      expect(plugin.renderables.length).toEqual(1)
+      expect(plugin.renderables[0]).toEqual(registration)
     })
   })
 })

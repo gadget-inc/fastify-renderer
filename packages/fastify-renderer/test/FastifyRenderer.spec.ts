@@ -74,7 +74,7 @@ describe('FastifyRenderer', () => {
   })
 
   test('should do nothing if the registered route is not renderable', async () => {
-    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'registerRoute')
+    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'register')
 
     server.get('/', async (_request, reply) => reply.send('Hello'))
     await server.inject({ method: 'GET', url: '/' })
@@ -83,7 +83,7 @@ describe('FastifyRenderer', () => {
   })
 
   test("should register the route in the plugin if it's renderable", async () => {
-    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'registerRoute').mockImplementation(jest.fn())
+    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'register').mockImplementation(jest.fn())
 
     server.get('/', { render: testComponent }, async (request, reply) => reply.send('Hello'))
     await server.inject({ method: 'GET', url: '/' })
