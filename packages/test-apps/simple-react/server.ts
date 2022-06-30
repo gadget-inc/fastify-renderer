@@ -29,16 +29,22 @@ export const server = async () => {
     },
   })
 
-  const ImperativeRoute = server.registerRenderable(require.resolve('./ImperativelyRenderablePage'))
+  const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple'))
+  const ImperativeOrange = server.registerRenderable(require.resolve('./ImperativeOrange'))
 
-  server.get('/imperative/:bool', async (request: FastifyRequest<{ Params: { bool: string } }>, reply) => {
-    if (request.params.bool == 'true') {
-      return reply.render(ImperativeRoute, {
+  server.get('/imperative/:fruit', async (request: FastifyRequest<{ Params: { fruit: string } }>, reply) => {
+    if (request.params.fruit == 'apple') {
+      return reply.render(ImperativeApple, {
+        hostname: os.hostname(),
+        requestIP: request.ip,
+      })
+    } else if (request.params.fruit == 'orange') {
+      return reply.render(ImperativeOrange, {
         hostname: os.hostname(),
         requestIP: request.ip,
       })
     } else {
-      return reply.redirect('/not-found')
+      return reply.code(404).send('Not found')
     }
   })
 

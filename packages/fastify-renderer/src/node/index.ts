@@ -16,8 +16,8 @@ import {
   ViteDevServer,
 } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
-import { FastifyRendererOptions, FastifyRendererPlugin, RegisteredRenderable } from './Plugin'
-import { PartialRenderOptions, Render, RenderableRoute, RenderOptions } from './renderers/Renderer'
+import { FastifyRendererOptions, FastifyRendererPlugin, ImperativeRenderable } from './Plugin'
+import { PartialRenderOptions, Render, RenderableRegistration, RenderOptions } from './renderers/Renderer'
 import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'
 import { wrap } from './tracing'
 import './types' // necessary to make sure that the fastify types are augmented
@@ -69,46 +69,49 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       this[kRenderOptions] = newOptions
     })
 
-    fastify.decorate('registerRenderable', function (this: FastifyInstance, renderable: string) {
-      const renderableRoute: RenderableRoute = { ...this[kRenderOptions], renderable }
-      return plugin.registerRoute(renderableRoute)
-    })
-
-    fastify.decorateReply('render', async function (this: FastifyReply, token: RegisteredRenderable, props: any) {
-      if (!plugin.registeredComponents[token]) {
-        throw new Error(`No RegisteredRenderable component was found for the provided token= ${token.toString()}`)
-      }
-      const request = this.request
-      const renderableRoute: RenderableRoute = {
-        ...this.server[kRenderOptions],
-        url: request.url,
-        renderable: plugin.registeredComponents[token].renderable,
-        isImperative: true,
-      }
-
-      // TODO(ayoub): refactor to reuse this code instead of duplicating it
-      if (!this.sent) {
-        void this.header('Vary', 'Accept')
-        switch (request.accepts().type(['html', 'json'])) {
-          case 'json':
-            await this.type('application/json').send({ props })
-            break
-          case 'html':
-            void this.type('text/html')
-            const render: Render<typeof props> = { ...renderableRoute, request, reply: this, props }
-            await plugin.renderer.render(render)
-            break
-          default:
-            await this.type('text/plain').send('Content type not supported')
-            break
-        }
-      }
-    })
-
     fastify.setRenderConfig({
       base: incomingOptions.base || '',
       layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
       document: incomingOptions.document || DefaultDocumentTemplate,
+    })
+
+    fastify.decorate('registerRenderable', function (this: FastifyInstance, renderable: string) {
+      const renderableRoute: RenderableRegistration = { ...this[kRenderOptions], renderable }
+      return plugin.register(renderableRoute)
+    })
+
+    const render = async (reply: FastifyReply, renderableRoute: RenderableRegistration, props: any) => {
+      if (reply.sent) return
+
+      void reply.header('Vary', 'Accept')
+      switch (reply.request.accepts().type(['html', 'json'])) {
+        case 'json':
+          await reply.type('application/json').send({ props })
+          break
+        case 'html':
+          void reply.type('text/html')
+          const render: Render<typeof props> = { ...renderableRoute, request: reply.request, reply, props }
+          await plugin.renderer.render(render)
+          break
+        default:
+          await reply.type('text/plain').send('Content type not supported')
+          break
+      }
+    }
+
+    fastify.decorateReply('render', async function (this: FastifyReply, token: ImperativeRenderable, props: any) {
+      if (!plugin.registeredComponents[token]) {
+        throw new Error(`No registered renderable was found for the provided token= ${token.toString()}`)
+      }
+      const request = this.request
+      const renderableRoute: RenderableRegistration = {
+        ...this.server[kRenderOptions],
+        pathPattern: request.url,
+        renderable: plugin.registeredComponents[token].renderable,
+        isImperative: true,
+      }
+
+      await render(this, renderableRoute, props)
     })
 
     // Wrap routes that have the `render` option set to invoke the rendererer with the result of the route handler as the props
@@ -117,29 +120,18 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         const oldHandler = wrap('fastify-renderer.getProps', routeOptions.handler as ServerRenderer<any>)
         const renderable = routeOptions.render
         const plugin = this[kRendererPlugin]
-        const renderableRoute: RenderableRoute = { ...this[kRenderOptions], url: routeOptions.url, renderable }
+        const renderableRoute: RenderableRegistration = {
+          ...this[kRenderOptions],
+          pathPattern: routeOptions.url,
+          renderable,
+        }
 
-        plugin.registerRoute(renderableRoute)
+        plugin.register(renderableRoute)
 
         routeOptions.handler = wrap('fastify-renderer.handler', async function (this: FastifyInstance, request, reply) {
           const props = await oldHandler.call(this, request, reply)
 
-          if (!reply.sent) {
-            void reply.header('Vary', 'Accept')
-            switch (request.accepts().type(['html', 'json'])) {
-              case 'json':
-                await reply.type('application/json').send({ props })
-                break
-              case 'html':
-                void reply.type('text/html')
-                const render: Render<typeof props> = { ...renderableRoute, request, reply, props, renderable }
-                await plugin.renderer.render(render)
-                break
-              default:
-                await reply.type('text/plain').send('Content type not supported')
-                break
-            }
-          }
+          await render(reply, renderableRoute, props)
         })
       }
     })
@@ -198,7 +190,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
         config = await resolveConfig(fastify[kRendererViteOptions], 'serve')
       }
 
-      await plugin.renderer.prepare(plugin.routes, config, devServer)
+      await plugin.renderer.prepare(plugin.renderables, config, devServer)
     })
 
     fastify.addHook('onClose', async () => {
@@ -225,7 +217,7 @@ export const build = async (fastify: FastifyInstance) => {
 
   const clientEntrypoints: Record<string, string> = {}
   const serverEntrypoints: Record<string, string> = {}
-  for (const renderableRoute of plugin.routes) {
+  for (const renderableRoute of plugin.renderables) {
     const entrypointName = mapFilepathToEntrypointName(renderableRoute.renderable, renderableRoute.base)
     clientEntrypoints[entrypointName] = plugin.renderer.buildVirtualClientEntrypointModuleID(renderableRoute)
     serverEntrypoints[entrypointName] = plugin.renderer.buildVirtualServerEntrypointModuleID(renderableRoute)

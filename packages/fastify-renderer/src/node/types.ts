@@ -13,7 +13,7 @@ import {
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
 import { ViteDevServer } from 'vite'
-import { RegisteredRenderable } from './Plugin'
+import { ImperativeRenderable } from './Plugin'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -49,7 +49,7 @@ export interface ServerEntrypointManifest {
 declare module 'fastify' {
   // // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface FastifyInstance {
-    registerRenderable: (renderable: string) => RegisteredRenderable
+    registerRenderable: (renderable: string) => ImperativeRenderable
   }
 
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
@@ -60,7 +60,7 @@ declare module 'fastify' {
     vite: ViteDevServer
   }
   interface FastifyReply {
-    render: <Props>(this: FastifyReply, renderable: RegisteredRenderable, props: Props) => Promise<void>
+    render: <Props>(this: FastifyReply, renderable: ImperativeRenderable, props: Props) => Promise<void>
   }
 
   interface RouteShorthandMethod<
@@ -68,7 +68,7 @@ declare module 'fastify' {
     RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>,
     RawReply extends RawReplyDefaultExpression<RawServer> = RawReplyDefaultExpression<RawServer>,
     Props = any
-  > {
+    > {
     <RequestGeneric extends RequestGenericInterface = RequestGenericInterface, ContextConfig = ContextConfigDefault>(
       path: string,
       opts: RouteShorthandOptions<RawServer, RawRequest, RawReply, RequestGeneric, ContextConfig> & {

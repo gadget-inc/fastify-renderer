@@ -15,7 +15,7 @@ const Home = (props: { time: number }) => {
         Imperative route (Redirect to non-existent route)
       </Link>
       <br />
-      <Link id="imperative-render-link" href="~/imperative/true">
+      <Link id="imperative-render-link" href="~/imperative/apple">
         Imperative route
       </Link>
       <br />

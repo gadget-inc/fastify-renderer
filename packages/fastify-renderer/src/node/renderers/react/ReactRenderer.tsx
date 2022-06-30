@@ -1,6 +1,7 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import path from 'path'
 import querystring from 'querystring'
+import type { ReactElement } from 'react'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
@@ -9,7 +10,7 @@ import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
 import { FastifyRendererHook } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
-import { Render, RenderableRoute, Renderer } from '../Renderer'
+import { Render, RenderableRegistration, Renderer } from '../Renderer'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
@@ -40,7 +41,7 @@ export class ReactRenderer implements Renderer {
 
   viteConfig!: ResolvedConfig
   devServer?: ViteDevServer
-  routes!: RenderableRoute[]
+  renderables!: RenderableRegistration[]
   tmpdir!: string
   clientModulePath: string
 
@@ -57,16 +58,16 @@ export class ReactRenderer implements Renderer {
     ]
   }
 
-  async prepare(routes: RenderableRoute[], viteConfig: ResolvedConfig, devServer?: ViteDevServer) {
+  async prepare(renderables: RenderableRegistration[], viteConfig: ResolvedConfig, devServer?: ViteDevServer) {
     this.viteConfig = viteConfig
-    this.routes = routes
+    this.renderables = renderables
     this.devServer = devServer
 
     // in production mode, we eagerly require all the endpoints during server boot, so that the first request to the endpoint isn't slow
     // if the service running fastify-renderer is being gracefully restarted, this will block the fastify server from listening until all the code is required, keeping the old server in service a bit longer while this require is done, which is good for users
     if (!this.plugin.devMode) {
-      for (const route of routes) {
-        await this.loadModule(this.entrypointRequirePathForServer(route))
+      for (const renderable of renderables) {
+        await this.loadModule(this.entrypointRequirePathForServer(renderable))
       }
     }
   }
@@ -91,14 +92,25 @@ export class ReactRenderer implements Renderer {
 
       const destination = this.stripBasePath(render.request.url, render.base)
 
-      let app = (
-        <RenderBusContext.Provider value={bus}>
-          <Router base={render.base} hook={staticLocationHook(destination)}>
-            <Layout isNavigating={false} navigationDestination={destination} bootProps={render.props}>
-              <Entrypoint {...render.props} />
-            </Layout>
-          </Router>
-        </RenderBusContext.Provider>
+      let app: ReactElement = React.createElement(
+        RenderBusContext.Provider,
+        null,
+        React.createElement(
+          Router,
+          {
+            base: render.base,
+            hook: staticLocationHook(destination),
+          },
+          React.createElement(
+            Layout,
+            {
+              isNavigating: false,
+              navgiationDestination: destination,
+              bootProps: render.props,
+            },
+            React.createElement(Entrypoint, render.props)
+          )
+        )
       )
 
       for (const hook of hooks) {
@@ -120,11 +132,11 @@ export class ReactRenderer implements Renderer {
   })
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
-  public buildVirtualClientEntrypointModuleID(route: RenderableRoute) {
+  public buildVirtualClientEntrypointModuleID(route: RenderableRegistration) {
     const queryParams = {
       layout: route.layout,
       base: route.base,
-      ...(route.isImperative && { route: route.url, component: route.renderable }),
+      ...(route.isImperative && { imperativePathPattern: route.pathPattern, imperativeRenderable: route.renderable }),
     }
 
     return (
@@ -133,11 +145,11 @@ export class ReactRenderer implements Renderer {
   }
 
   /** Given a node-land module id (path), return the server run time path to a virtual module to run the server side render */
-  public buildVirtualServerEntrypointModuleID(route: RenderableRoute) {
+  public buildVirtualServerEntrypointModuleID(register: RenderableRegistration) {
     return (
-      path.join(SERVER_ENTRYPOINT_PREFIX, route.renderable, 'ssr.jsx') +
+      path.join(SERVER_ENTRYPOINT_PREFIX, register.renderable, 'ssr.jsx') +
       '?' +
-      querystring.stringify({ layout: route.layout, base: route.base })
+      querystring.stringify({ layout: register.layout, base: register.base })
     )
   }
 
@@ -167,15 +179,15 @@ export class ReactRenderer implements Renderer {
    * Because we're using vite, we have special server side entrypoints too such that we can't just `require()` an entrypoint, even on the server, we need to a require a file that vite has built where all the copies of React are the same within.
    * In dev mode, will return a virtual module url that will use use the server side render plugin to produce a script around the entrypoint
    */
-  public entrypointRequirePathForServer(route: RenderableRoute) {
-    const entrypointName = this.buildVirtualServerEntrypointModuleID(route)
+  public entrypointRequirePathForServer(register: RenderableRegistration) {
+    const entrypointName = this.buildVirtualServerEntrypointModuleID(register)
     if (this.plugin.devMode) {
       return entrypointName
     } else {
       const manifestEntry = this.plugin.serverEntrypointManifest![entrypointName]
       if (!manifestEntry) {
         throw new Error(
-          `Module id ${route.renderable} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
+          `Module id ${register.renderable} was not found in the built server entrypoints manifest. Looked for it at ${entrypointName} in virtual-manifest.json. Was it included in the build?`
         )
       }
       return manifestEntry
@@ -313,9 +325,13 @@ export class ReactRenderer implements Renderer {
           const entrypoint = id.replace(CLIENT_ENTRYPOINT_PREFIX, '/@fs/').replace(/\/hydrate\.jsx\?.+$/, '')
           const layout = url.searchParams.get('layout')!
           const base = url.searchParams.get('base')!
-          const route = url.searchParams.get('route')!
-          const component = url.searchParams.get('component')!
-          const queryParams = { base, lazy: true, ...(component && { route, component }) }
+          const imperativePathPattern = url.searchParams.get('imperativePathPattern')!
+          const imperativeRenderable = url.searchParams.get('imperativeRenderable')!
+          const queryParams = {
+            base,
+            lazy: true,
+            ...(imperativeRenderable && { imperativePathPattern, imperativeRenderable }),
+          }
 
           return `
           // client side hydration entrypoint for a particular route generated by fastify-renderer
@@ -418,23 +434,28 @@ export class ReactRenderer implements Renderer {
           const url = new URL('fstr://' + id)
           const lazy = !!url.searchParams.get('lazy')!
           const base = url.searchParams.get('base')!
-          const route = url.searchParams.get('route')!
-          const component = url.searchParams.get('component')!
+          const imperativePathPattern = url.searchParams.get('imperativePathPattern')
+          const imperativeRenderable = url.searchParams.get('imperativeRenderable')
+
           // We filter out the routes the imperatively renderable routes, which don't have a url property
           // There is no point in having them included in the route table
-          const applicableRoutes = this.routes.filter((route) => route.base == base && route.url !== undefined)
-          if (route) {
-            const imperativeRoute = Object.assign(
-              {},
-              this.routes.find((route) => (route.renderable = component)),
-              { url: route }
-            )
-            applicableRoutes.push(imperativeRoute)
-          }
-          applicableRoutes.sort((a, b) => routeSortScore(a.url!) - routeSortScore(b.url!))
+          const routeableRenderables = this.renderables.filter(
+            (route) => route.base == base && route.pathPattern !== undefined
+          ) as (RenderableRegistration & { pathPattern: string })[]
 
-          const pathsToModules = applicableRoutes.map((route) => [
-            pathToRegexpify(this.stripBasePath(route.url!, base)),
+          if (imperativePathPattern && imperativeRenderable) {
+            const routeObject = Object.assign(
+              {},
+              this.renderables.find((route) => route.renderable == imperativeRenderable),
+              { pathPattern: imperativePathPattern }
+            )
+            routeableRenderables.push(routeObject)
+          }
+
+          routeableRenderables.sort((a, b) => routeSortScore(a.pathPattern) - routeSortScore(b.pathPattern))
+
+          const pathsToModules = routeableRenderables.map((route) => [
+            pathToRegexpify(this.stripBasePath(route.pathPattern, base)),
             route.renderable,
           ])
 
