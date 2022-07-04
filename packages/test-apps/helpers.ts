@@ -38,7 +38,7 @@ beforeAll(async () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { server: fastifyServer } = require(serverEntrypoint)
     server = await fastifyServer()
-    await server.listen(port)
+    await server.listen({ port })
   }
 })
 

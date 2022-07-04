@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/require-await */
+import '@fastify/accepts'
+import '@fastify/middie'
+import fastifyStatic from '@fastify/static'
 import { FastifyInstance, FastifyReply } from 'fastify'
-import 'fastify-accepts'
 import fp from 'fastify-plugin'
-import fastifyStatic from 'fastify-static'
 import { promises as fs } from 'fs'
-import 'middie'
 import path from 'path'
 import {
   build as viteBuild,
@@ -198,9 +198,9 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
     })
   },
   {
-    fastify: '3.x',
+    fastify: '4.x',
     name: 'fastify-renderer',
-    dependencies: ['fastify-accepts', 'middie'],
+    dependencies: ['@fastify/accepts', 'middie'],
   }
 )
 
