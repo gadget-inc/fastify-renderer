@@ -1,4 +1,4 @@
-import { unstable_useTransition as useTransition, useCallback, useEffect, useRef, useState } from 'react'
+import { useTransition, useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'wouter'
 
 /**
@@ -19,7 +19,7 @@ export const events = [eventPopstate, eventPushState, eventReplaceState]
 export const useTransitionLocation = ({ base = '' } = {}) => {
   const [path, update] = useState(() => currentPathname(base)) // @see https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
   const prevLocation = useRef(path + location.search + location.hash)
-  const [startTransition, isPending] = useTransition()
+  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     // this function checks if the location has been changed since the
@@ -86,7 +86,7 @@ if (typeof history !== 'undefined') {
     history[type] = function (...args: any[]) {
       const result = original.apply(this, args)
       const event = new Event(type)
-      ;(event as any).arguments = args
+        ; (event as any).arguments = args
 
       dispatchEvent(event)
       return result
