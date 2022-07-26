@@ -54,10 +54,10 @@ module.exports = {
   // forceCoverageMatch: [],
 
   // A path to a module which exports an async function that is triggered once before all test suites
-  // globalSetup: undefined,
+  // globalSetup: '../../../scripts/jestGlobalSetup.js',
 
   // A path to a module which exports an async function that is triggered once after all test suites
-  // globalTeardown: undefined,
+  // globalTeardown: '../../../scripts/jestGlobalTeardown.js',
 
   // A set of global variables that need to be available in all test environments
   // globals: {},
@@ -93,7 +93,7 @@ module.exports = {
   // notifyMode: "failure-change",
 
   // A preset that is used as a base for Jest's configuration
-  preset: 'ts-jest',
+  preset: 'jest-playwright-preset',
 
   // Run tests from one or more projects
   // projects: undefined,
@@ -137,7 +137,7 @@ module.exports = {
   // snapshotSerializers: [],
 
   // The test environment that will be used for testing
-  testEnvironment: 'node',
+  // testEnvironment: '../../../scripts/jestEnv.js',
 
   // Options that will be passed to the testEnvironment
   // testEnvironmentOptions: {},
@@ -172,7 +172,9 @@ module.exports = {
   // timers: "real",
 
   // A map from regular expressions to paths to transformers
-  // transform: undefined,
+  transform: {
+    '^.+\\.(t|j)sx?$': '@swc/jest',
+  },
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
   // transformIgnorePatterns: [
