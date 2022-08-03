@@ -1,5 +1,5 @@
 import { unstable_useTransition as useTransition, useCallback, useEffect, useRef, useState } from 'react'
-import { useLocation } from 'wouter'
+import { NavigationHistory, useLocation, useRouter } from 'wouter'
 
 /**
  * History API docs @see https://developer.mozilla.org/en-US/docs/Web/API/History
@@ -20,6 +20,7 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
   const [path, update] = useState(() => currentPathname(base)) // @see https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
   const prevLocation = useRef(path + location.search + location.hash)
   const [startTransition, isPending] = useTransition()
+  const router = useRouter()
 
   useEffect(() => {
     // this function checks if the location has been changed since the
@@ -31,9 +32,13 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
 
       if (prevLocation.current !== destination) {
         prevLocation.current = destination
-        startTransition(() => {
+        if (shouldScrollToHash(router.navigationHistory)) {
+          startTransition(() => {
+            update(destination)
+          })
+        } else {
           update(destination)
-        })
+        }
       }
     }
 
@@ -61,11 +66,23 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
         return
       }
 
+      const path = base + to
+
+      if (!router.navigationHistory) router.navigationHistory = {}
+      if (router.navigationHistory?.current) {
+        router.navigationHistory.previous = { ...router.navigationHistory.current }
+      }
+
+      router.navigationHistory.current = {
+        path,
+        replace,
+      }
+
       history[replace ? eventReplaceState : eventPushState](
         null,
         '',
         // handle nested routers and absolute paths
-        base + to
+        path
       )
     },
     [base]
@@ -105,3 +122,16 @@ export const useNavigationDetails = (): [boolean, string] => {
 
 const currentPathname = (base, path = location.pathname + location.search + location.hash) =>
   !path.toLowerCase().indexOf(base.toLowerCase()) ? path.slice(base.length) || '/' : '~' + path
+
+export const navigatingOnSamePage = (history?: NavigationHistory): boolean => {
+  const { current, previous } = history || {}
+
+  if (!history) return false
+  if (!current || !previous) return false
+
+  return current.path.split('#')[0] == previous.path.split('#')[0]
+}
+
+export const shouldScrollToHash = (history?: NavigationHistory): boolean => {
+  return !(navigatingOnSamePage(history) && history?.current?.replace)
+}
