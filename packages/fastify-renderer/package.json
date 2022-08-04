@@ -77,7 +77,7 @@
     "react-dom": "experimental"
   },
   "devDependencies": {
-    "@swc/core": "^1.2.220",
+    "@swc/core": "^1.2.223",
     "@swc/jest": "^0.2.22",
     "@types/connect": "^3.4.35",
     "@types/jest": "^26.0.24",
