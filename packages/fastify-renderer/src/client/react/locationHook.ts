@@ -21,6 +21,15 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
   const prevLocation = useRef(path + location.search + location.hash)
   const [startTransition, isPending] = useTransition()
   const router = useRouter()
+  useEffect(() => {
+    if (!router.navigationHistory)
+      router.navigationHistory = {
+        current: {
+          path,
+          replace: false,
+        },
+      }
+  }, [])
 
   useEffect(() => {
     // this function checks if the location has been changed since the
