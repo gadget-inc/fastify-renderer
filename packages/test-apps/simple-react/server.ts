@@ -64,6 +64,10 @@ export const server = async () => {
     return {}
   })
 
+  server.get('/navigation-history-test', { render: require.resolve('./NavigationHistoryTest') }, async (_request) => {
+    return {}
+  })
+
   await server.register(async (instance) => {
     instance.setRenderConfig({ document: CustomDocumentTemplate })
 
