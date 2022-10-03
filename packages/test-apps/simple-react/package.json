@@ -9,13 +9,15 @@
   },
   "license": "MIT",
   "dependencies": {
-    "fastify": "^3.29.0",
+    "fastify": "^4.2.0",
     "fastify-renderer": "*",
     "react": "*",
     "react-dom": "*"
   },
   "devDependencies": {
     "@playwright/test": "^1.25.0",
+    "@swc/core": "^1.2.208",
+    "@swc/jest": "^0.2.21",
     "html-validator": "^5.1.18"
   }
 }

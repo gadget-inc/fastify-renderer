@@ -2,14 +2,19 @@
 import {
   ContextConfigDefault,
   FastifyInstance,
+  FastifyLoggerInstance,
   FastifyReply,
   FastifyRequest,
+  FastifySchema,
+  FastifyTypeProvider,
+  FastifyTypeProviderDefault,
   RawReplyDefaultExpression,
   RawRequestDefaultExpression,
   RawServerBase,
   RawServerDefault,
-  RequestGenericInterface,
 } from 'fastify'
+import { RouteGenericInterface } from 'fastify/types/route'
+import { FastifyRequestType, ResolveFastifyRequestType } from 'fastify/types/type-provider'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
 import { ViteDevServer } from 'vite'
@@ -67,14 +72,31 @@ declare module 'fastify' {
     RawServer extends RawServerBase = RawServerDefault,
     RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>,
     RawReply extends RawReplyDefaultExpression<RawServer> = RawReplyDefaultExpression<RawServer>,
+    TypeProvider extends FastifyTypeProvider = FastifyTypeProviderDefault,
     Props = any
   > {
-    <RequestGeneric extends RequestGenericInterface = RequestGenericInterface, ContextConfig = ContextConfigDefault>(
+    <
+      RouteGeneric extends RouteGenericInterface = RouteGenericInterface,
+      ContextConfig = ContextConfigDefault,
+      SchemaCompiler = FastifySchema,
+      RequestType extends FastifyRequestType = ResolveFastifyRequestType<TypeProvider, SchemaCompiler, RouteGeneric>,
+      Logger extends FastifyLoggerInstance = FastifyLoggerInstance
+    >(
       path: string,
-      opts: RouteShorthandOptions<RawServer, RawRequest, RawReply, RequestGeneric, ContextConfig> & {
+      opts: RouteShorthandOptions<
+        RawServer,
+        RawRequest,
+        RawReply,
+        RouteGeneric,
+        ContextConfig,
+        SchemaCompiler,
+        TypeProvider,
+        RequestType,
+        Logger
+      > & {
         render: string
       }, // this creates an overload that only applies these different types if the handler is for rendering
       handler: ServerRenderer<Props>
-    ): FastifyInstance<RawServer, RawRequest, RawReply>
+    ): FastifyInstance<RawServer, RawRequest, RawReply, Logger, TypeProvider>
   }
 }
