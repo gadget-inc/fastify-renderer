@@ -105,7 +105,7 @@ export class ReactRenderer implements Renderer {
             Layout,
             {
               isNavigating: false,
-              navgiationDestination: destination,
+              navigationDestination: destination,
               bootProps: render.props,
             },
             React.createElement(Entrypoint, render.props)
