@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Route, Router, Switch, useLocation } from 'wouter'
+import { Route, Router, Switch, useLocation, useRouter } from 'wouter'
 import { usePromise } from './fetcher'
-import { useNavigationDetails, useTransitionLocation } from './locationHook'
+import { shouldScrollToHash, useNavigationDetails, useTransitionLocation } from './locationHook'
 import { matcher } from './matcher'
 
 export interface LayoutProps {
@@ -47,6 +47,7 @@ export function Root<BootProps>(props: {
       <Route path={route} key={route}>
         {(params) => {
           const [location] = useLocation()
+          const router = useRouter()
           const backendPath = location.split('#')[0] // remove current anchor for fetching data from the server side
 
           const payload = usePromise<{ props: Record<string, any> }>(props.basePath + backendPath, async () => {
@@ -65,9 +66,11 @@ export function Root<BootProps>(props: {
             }
           })
 
-          // navigate to the anchor in the url after rendering
+          // Navigate to the anchor in the url after rendering, unless we're using replaceState and
+          // the destination page and previous page have the same base route (i.e. before '#')
+          // We would do this for example to update the url to the correct anchor as the user scrolls.
           useEffect(() => {
-            if (window.location.hash) {
+            if (window.location.hash && shouldScrollToHash(router.navigationHistory)) {
               document.getElementById(window.location.hash.slice(1))?.scrollIntoView()
             }
           }, [location])

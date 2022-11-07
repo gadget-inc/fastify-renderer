@@ -1,17 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import fs from 'fs-extra'
 import { resolve } from 'path'
-import { Browser, ConsoleMessage, Page } from 'playwright-chromium'
-
-// injected by the test env
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS {
-    interface Global {
-      browser?: Browser
-    }
-  }
-}
+import { ConsoleMessage, Page } from 'playwright-chromium'
 
 export function slash(p: string): string {
   return p.replace(/\\/g, '/')
@@ -48,7 +38,7 @@ beforeAll(async () => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { server: fastifyServer } = require(serverEntrypoint)
     server = await fastifyServer()
-    await server.listen(port)
+    await server.listen({ port })
   }
 })
 
@@ -72,7 +62,7 @@ afterEach(async () => {
 
 /** Create a new playwright page for testing against */
 export const newTestPage = async (): Promise<Page> => {
-  const page: Page = await (global as any).browser.newPage()
+  const page: Page = await browser.newPage()
   page.on('console', onConsole)
   pages.push(page)
 
