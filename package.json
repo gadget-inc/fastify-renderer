@@ -50,5 +50,6 @@
     "fs-extra": "^10.1.0",
     "playwright-chromium": "^1.21.0",
     "wds": "^0.12.0"
-  }
+  },
+  "version": "0.0.1"
 }
