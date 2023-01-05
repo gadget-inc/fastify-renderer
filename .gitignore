@@ -46,3 +46,4 @@ BUILD_SHA
 tsconfig.tsbuildinfo
 
 dist/
+.direnv
