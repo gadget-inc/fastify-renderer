@@ -8,9 +8,7 @@ export const server = async () => {
   const server = await newFastify({
     logger: {
       level: process.env.LOG_LEVEL ?? process.env.NODE_ENV == 'test' ? 'warn' : 'info',
-      transport: {
-        target: 'pino-pretty',
-      },
+      prettyPrint: true,
     },
   })
 
@@ -112,7 +110,7 @@ export const server = async () => {
 if (require.main === module) {
   void server().then((server) => {
     console.warn(server.printRoutes())
-    return server.listen({ port: 3000 }).then((address) => {
+    return server.listen(3000).then((address) => {
       console.warn(`Test server listening on ${address}`)
     })
   })

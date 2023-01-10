@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/require-await */
-import '@fastify/middie'
 import fs from 'fs'
+import 'middie'
 import path from 'path'
 import { InlineConfig } from 'vite'
 import { Template } from './DocumentTemplate'

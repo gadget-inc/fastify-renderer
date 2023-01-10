@@ -1,6 +1,6 @@
-import fastifyAccepts from '@fastify/accepts'
-import fastifyMiddie from '@fastify/middie'
 import fastify, { FastifyServerOptions } from 'fastify'
+import fastifyAccepts from 'fastify-accepts'
+import Middie from 'middie'
 import path from 'path'
 import { Readable } from 'stream'
 import { FastifyRendererOptions, FastifyRendererPlugin } from '../src/node/Plugin'
@@ -11,17 +11,9 @@ import { Render } from '../src/node/renderers/Renderer'
 const logLevel = process.env.LOG_LEVEL || 'error'
 
 export const newFastify = async (options?: FastifyServerOptions) => {
-  const server = fastify({
-    ...options,
-    logger: {
-      level: logLevel,
-      transport: {
-        target: 'pino-pretty',
-      },
-    },
-  })
+  const server = fastify({ ...options, logger: { level: logLevel, prettyPrint: true } })
   await server.register(fastifyAccepts)
-  await server.register(fastifyMiddie)
+  await server.register(Middie)
   return server
 }
 
