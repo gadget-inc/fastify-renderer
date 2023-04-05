@@ -1228,13 +1228,15 @@
   resolved "https://registry.yarnpkg.com/@opentelemetry/api/-/api-1.4.0.tgz#2c91791a9ba6ca0a0f4aaac5e45d58df13639ac8"
   integrity sha512-IgMK9i3sFGNUqPMbjABm0G26g0QCKCUBfglhQ7rQq6WcxbKfEHRcmwsoER4hZcuYqJgkYn2OeuoJIv7Jsftp7g==
 
-"@playwright/test@^1.25.0":
-  version "1.25.0"
-  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.25.0.tgz#e0de134651e78e45e986c5f16578188dd5937331"
-  integrity sha512-j4EZhTTQI3dBeWblE21EV//swwmBtOpIrLdOIJIRv4uqsLdHgBg1z+JtTg+AeC5o2bAXIE26kDNW5A0TimG8Bg==
+"@playwright/test@^1.32.2":
+  version "1.32.2"
+  resolved "https://registry.yarnpkg.com/@playwright/test/-/test-1.32.2.tgz#3cbd76b3f94d0f7f50bf054dbd02e504e85e3865"
+  integrity sha512-nhaTSDpEdTTttdkDE8Z6K3icuG1DVRxrl98Qq0Lfc63SS9a2sjc9+x8ezysh7MzCKz6Y+nArml3/mmt+gqRmQQ==
   dependencies:
     "@types/node" "*"
-    playwright-core "1.25.0"
+    playwright-core "1.32.2"
+  optionalDependencies:
+    fsevents "2.3.2"
 
 "@rollup/pluginutils@^4.1.1":
   version "4.1.1"
@@ -3910,7 +3912,7 @@ fs.realpath@^1.0.0:
   resolved "https://registry.yarnpkg.com/fs.realpath/-/fs.realpath-1.0.0.tgz#1504ad2523158caa40db4a2787cb01411994ea4f"
   integrity sha1-FQStJSMVjKpA20onh8sBQRmU6k8=
 
-fsevents@^2.3.2, fsevents@~2.3.2:
+fsevents@2.3.2, fsevents@^2.3.2, fsevents@~2.3.2:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/fsevents/-/fsevents-2.3.2.tgz#8a526f78b8fdf4623b709e0b975c52c24c02fd1a"
   integrity sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==
@@ -6111,6 +6113,11 @@ playwright-core@1.25.0:
   version "1.25.0"
   resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.25.0.tgz#54dc867c6c2cc5e4233905e249206a02914d14f1"
   integrity sha512-kZ3Jwaf3wlu0GgU0nB8UMQ+mXFTqBIFz9h1svTlNduNKjnbPXFxw7mJanLVjqxHJRn62uBfmgBj93YHidk2N5Q==
+
+playwright-core@1.32.2:
+  version "1.32.2"
+  resolved "https://registry.yarnpkg.com/playwright-core/-/playwright-core-1.32.2.tgz#608810c3c4486fb86a224732ac0d3560a96ded8b"
+  integrity sha512-zD7aonO+07kOTthsrCR3YCVnDcqSHIJpdFUtZEMOb6//1Rc7/6mZDRdw+nlzcQiQltOOsiqI3rrSyn/SlyjnJQ==
 
 playwright-core@>=1.2.0:
   version "1.24.1"
