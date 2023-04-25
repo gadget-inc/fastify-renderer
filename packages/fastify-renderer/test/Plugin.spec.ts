@@ -2,10 +2,9 @@ import fs from 'fs'
 import path from 'path'
 import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
-import { RenderBus } from '../src/node/RenderBus'
 import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
 import { RenderableRegistration } from '../src/node/renderers/Renderer'
-import { newFastifyRendererPlugin } from './helpers'
+import { newFastifyRendererPlugin, newRenderBus } from './helpers'
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'), // import and retain the original functionalities
@@ -76,7 +75,7 @@ describe('FastifyRendererPlugin', () => {
   describe('pushImportTagsFromManifest()', () => {
     test('should throw when an entry is not found in the manifest', async () => {
       const plugin = newFastifyRendererPlugin({} as FastifyRendererOptions)
-      const bus = new RenderBus()
+      const bus = newRenderBus()
       expect(() => plugin.pushImportTagsFromManifest(bus, 'entry-name')).toThrow()
     })
 

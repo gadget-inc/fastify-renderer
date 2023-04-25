@@ -10,7 +10,7 @@ import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
 import { FastifyRendererHook } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
-import { Render, RenderableRegistration, Renderer } from '../Renderer'
+import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
@@ -195,24 +195,23 @@ export class ReactRenderer implements Renderer {
   }
 
   private startRenderBus(render: Render<any>) {
-    const bus = new RenderBus()
+    const bus = new RenderBus(render)
 
     // push the script for the react-refresh runtime that vite's plugin normally would
     if (this.plugin.devMode) {
-      bus.push('tail', this.reactRefreshScriptTag())
+      bus.push('tail', this.reactRefreshScriptTag(render))
     }
 
     // push the props for the entrypoint to use when hydrating client side
-    bus.push('tail', `<script type="module">window.__FSTR_PROPS=${JSON.stringify(render.props)};</script>`)
+    bus.push('tail', scriptTag(render, `window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
 
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
     if (this.plugin.devMode) {
       bus.push(
         'tail',
-        `<script type="module" src="${path.join(
-          this.plugin.assetsHost,
-          this.entrypointScriptTagSrcForClient(render)
-        )}"></script>`
+        scriptTag(render, ``, {
+          src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
+        })
       )
     } else {
       const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
@@ -500,13 +499,15 @@ export const routes = [
     }
   }
 
-  private reactRefreshScriptTag() {
-    return `<script type="module">
+  private reactRefreshScriptTag(render: Render) {
+    return scriptTag(
+      render,
+      `
       import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
       RefreshRuntime.injectIntoGlobalHook(window)
       window.$RefreshReg$ = () => {}
       window.$RefreshSig$ = () => (type) => type
-      window.__vite_plugin_react_preamble_installed__ = true
-    </script>`
+      window.__vite_plugin_react_preamble_installed__ = true`
+    )
   }
 }

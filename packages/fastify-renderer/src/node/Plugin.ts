@@ -99,7 +99,7 @@ export class FastifyRendererPlugin {
 
     if (file.endsWith('.js')) {
       if (root) {
-        bus.push('tail', `<script type="module" src="${file}"></script>`)
+        bus.loadScript(file)
       } else {
         bus.preloadModule(file)
       }

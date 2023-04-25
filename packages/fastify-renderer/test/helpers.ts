@@ -18,7 +18,7 @@ export const newFastify = async (options?: FastifyServerOptions) => {
 }
 
 export const newRenderBus = () => {
-  return new RenderBus()
+  return new RenderBus(getMockRender({}))
 }
 
 export const newFastifyRendererPlugin = (options: FastifyRendererOptions = {}) => {

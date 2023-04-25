@@ -1,4 +1,5 @@
 import { Readable } from 'stream'
+import { Render, scriptTag, stylesheetLinkTag } from './renderers/Renderer'
 
 export interface Stack {
   content: string[]
@@ -11,6 +12,8 @@ export interface Stack {
 export class RenderBus {
   stacks: Record<string, Stack> = {}
   included = new Set<string>()
+
+  constructor(readonly render: Render) {}
 
   private createStack(key) {
     const stack: Stack = (this.stacks[key] = {
@@ -57,6 +60,10 @@ export class RenderBus {
   linkStylesheet(path: string) {
     if (this.included.has(path)) return
     this.included.add(path)
-    this.push('head', `<link rel="stylesheet" href="${path}">`)
+    this.push('head', stylesheetLinkTag(this.render, path))
+  }
+
+  loadScript(src: string) {
+    this.push('tail', scriptTag(this.render, ``, { src }))
   }
 }

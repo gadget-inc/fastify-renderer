@@ -41,3 +41,21 @@ export interface Renderer {
   buildVirtualServerEntrypointModuleID(renderable: RenderableRegistration): string
   vitePlugins(): Plugin[]
 }
+
+export function scriptTag(render: Render, content: string, attrs: Record<string, string> = {}) {
+  if ('cspNonce' in render.reply) {
+    attrs.nonce ??= (render.reply as any).cspNonce.script
+  }
+
+  const attrsString = Object.entries(attrs)
+    .map(([key, value]) => `${key}="${value}"`)
+    .join(' ')
+
+  return `<script type="module" ${attrsString}>${content}</script>`
+}
+
+export function stylesheetLinkTag(render: Render, href: string) {
+  const nonceString = 'cspNonce' in render.reply ? `nonce="${(render.reply as any).cspNonce.style}"` : ''
+
+  return `<link rel="stylesheet" href="${href}" ${nonceString}>`
+}
