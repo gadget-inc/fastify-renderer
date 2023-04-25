@@ -244,6 +244,8 @@ export class ReactRenderer implements Renderer {
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
+      request: render.request,
+      reply: render.reply,
     })
   }
 
@@ -264,6 +266,8 @@ export class ReactRenderer implements Renderer {
       head: bus.stack('head'),
       tail: bus.stack('tail'),
       props: render.props,
+      request: render.request,
+      reply: render.reply,
     })
   }
 
