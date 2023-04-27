@@ -4,11 +4,11 @@ import { parentPort, workerData } from 'worker_threads'
 
 // if (!isMainThread) throw new Error('Worker spawned in Main thread')
 
-const { modulePath, renderBase, destination, renderProps, mode } = workerData as {
+const { modulePath, renderBase, destination, bootProps, mode } = workerData as {
   modulePath: string
   renderBase: string
   destination: string
-  renderProps: Record<string, any>
+  bootProps: Record<string, any>
   mode: string
 }
 
@@ -45,9 +45,9 @@ const app: ReactElement = React.createElement(
       {
         isNavigating: false,
         navigationDestination: destination,
-        bootProps: renderProps,
+        bootProps: bootProps,
       },
-      React.createElement(Entrypoint, renderProps)
+      React.createElement(Entrypoint, bootProps)
     )
   )
 )

@@ -2,7 +2,7 @@
 exports.__esModule = true;
 var worker_threads_1 = require("worker_threads");
 // if (!isMainThread) throw new Error('Worker spawned in Main thread')
-var _a = worker_threads_1.workerData, modulePath = _a.modulePath, renderBase = _a.renderBase, destination = _a.destination, renderProps = _a.renderProps, mode = _a.mode;
+var _a = worker_threads_1.workerData, modulePath = _a.modulePath, renderBase = _a.renderBase, destination = _a.destination, bootProps = _a.bootProps, mode = _a.mode;
 var staticLocationHook = function (path, _a) {
     if (path === void 0) { path = '/'; }
     var _b = _a === void 0 ? {} : _a, _c = _b.record, record = _c === void 0 ? false : _c;
@@ -29,8 +29,8 @@ var app = React.createElement(RenderBusContext.Provider, null, React.createEleme
 }, React.createElement(Layout, {
     isNavigating: false,
     navigationDestination: destination,
-    bootProps: renderProps
-}, React.createElement(Entrypoint, renderProps))));
+    bootProps: bootProps
+}, React.createElement(Entrypoint, bootProps))));
 // Transofmr hook cannot work
 // for (const hook of hooks) {
 //   if (hook.transform) {
