@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import {
+import type {
   ContextConfigDefault,
   FastifyInstance,
   FastifyReply,
@@ -10,10 +9,9 @@ import {
   RawServerDefault,
   RequestGenericInterface,
 } from 'fastify'
-import { IncomingMessage, Server, ServerResponse } from 'http'
-import { ReactElement } from 'react'
-import { ViteDevServer } from 'vite'
-import { ImperativeRenderable } from './Plugin'
+import type { IncomingMessage, Server, ServerResponse } from 'http'
+import type { ViteDevServer } from 'vite'
+import type { ImperativeRenderable } from './Plugin'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -25,7 +23,9 @@ export interface FastifyRendererHook {
   name?: string
   tails?: () => string
   heads?: () => string
-  transform?: (app: ReactElement) => ReactElement
+  transform?: {
+    absolutePath: string
+  }
   postRenderHeads?: () => string
 }
 
@@ -77,4 +77,20 @@ declare module 'fastify' {
       handler: ServerRenderer<Props>
     ): FastifyInstance<RawServer, RawRequest, RawReply>
   }
+}
+
+export interface RenderInput {
+  renderBase: string
+  destination: string
+  bootProps: any
+  hooks: string[]
+}
+
+export interface WorkerRenderInput extends RenderInput {
+  modulePath: string
+}
+
+export interface StreamWorkerEvent {
+  type: 'close' | 'data' | 'end' | 'error' | 'pause' | 'readable' | 'resume'
+  content?: any
 }

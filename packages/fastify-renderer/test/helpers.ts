@@ -5,8 +5,8 @@ import path from 'path'
 import { Readable } from 'stream'
 import { FastifyRendererOptions, FastifyRendererPlugin } from '../src/node/Plugin'
 import { RenderBus } from '../src/node/RenderBus'
-import { ReactRenderer, ReactRendererOptions } from '../src/node/renderers/react/ReactRenderer'
 import { Render } from '../src/node/renderers/Renderer'
+import { ReactRenderer, ReactRendererOptions } from '../src/node/renderers/react/ReactRenderer'
 
 const logLevel = process.env.LOG_LEVEL || 'error'
 

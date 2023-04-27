@@ -1,39 +1,25 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
+import os from 'os'
 import path from 'path'
 import querystring from 'querystring'
-import type { ReactElement } from 'react'
+import { createPool, ResourcePooler } from 'resource-pooler'
+import { PassThrough } from 'stream'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
+import { Worker } from 'worker_threads'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
-import { FastifyRendererHook } from '../../types'
+import type { FastifyRendererHook, StreamWorkerEvent, WorkerRenderInput } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
-
+import { staticRender, streamingRender } from './ssr'
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
-
 export interface ReactRendererOptions {
   type: 'react'
   mode: 'sync' | 'streaming'
-}
-
-const staticLocationHook = (path = '/', { record = false } = {}) => {
-  // eslint-disable-next-line prefer-const
-  let hook
-  const navigate = (to, { replace }: { replace?: boolean } = {}) => {
-    if (record) {
-      if (replace) {
-        hook.history.pop()
-      }
-      hook.history.push(to)
-    }
-  }
-  hook = () => [path, navigate]
-  hook.history = [path]
-  return hook
 }
 
 export class ReactRenderer implements Renderer {
@@ -44,6 +30,8 @@ export class ReactRenderer implements Renderer {
   renderables!: RenderableRegistration[]
   tmpdir!: string
   clientModulePath: string
+  workerPool: ResourcePooler<Worker, Worker> | null = null
+  transformHooks: string[] = []
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.clientModulePath = require.resolve('../../../client/react')
@@ -63,12 +51,50 @@ export class ReactRenderer implements Renderer {
     this.renderables = renderables
     this.devServer = devServer
 
+    this.transformHooks = this.plugin.hooks
+      .map(unthunk)
+      .map((hook) => hook.transform?.absolutePath)
+      .flatMap((hook) => (hook ? [hook] : []))
+
     // in production mode, we eagerly require all the endpoints during server boot, so that the first request to the endpoint isn't slow
     // if the service running fastify-renderer is being gracefully restarted, this will block the fastify server from listening until all the code is required, keeping the old server in service a bit longer while this require is done, which is good for users
     if (!this.plugin.devMode) {
       for (const renderable of renderables) {
         await this.loadModule(this.entrypointRequirePathForServer(renderable))
       }
+
+      const mode = this.options.mode
+
+      const modulePaths = await this.getPreloadPaths()
+      const paths = [...modulePaths, ...this.transformHooks]
+
+      this.workerPool = await createPool(
+        {
+          create() {
+            const workerData = {
+              paths,
+            }
+
+            let worker: Worker
+            switch (mode) {
+              case 'streaming':
+                worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
+                  workerData,
+                })
+              case 'sync':
+                worker = new Worker(require.resolve('./StaticWorker.import.js'), {
+                  workerData,
+                })
+            }
+
+            return worker
+          },
+          async dispose(worker) {
+            await worker.terminate()
+          },
+        },
+        os.cpus().length
+      )
     }
   }
 
@@ -76,7 +102,66 @@ export class ReactRenderer implements Renderer {
   async render<Props>(render: Render<Props>): Promise<void> {
     return this.wrappedRender(render)
   }
+  private workerStreamRender<Props>(render: Render<Props>): NodeJS.ReadableStream {
+    const requirePath = this.entrypointRequirePathForServer(render)
 
+    const destination = this.stripBasePath(render.request.url, render.base)
+    if (!this.workerPool) throw new Error('WorkerPool not setup')
+    const passthrough = new PassThrough()
+
+    // Do not `await` or else it will not return
+    // until the whole stream is completed
+    void this.workerPool.use(
+      (worker) =>
+        new Promise<void>((resolve) => {
+          worker.postMessage({
+            modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+            renderBase: render.base,
+            bootProps: render.props,
+            destination,
+            hooks: this.transformHooks,
+          } satisfies WorkerRenderInput)
+          worker.on('message', ({ type, content }: StreamWorkerEvent) => {
+            passthrough.emit(type, content)
+            passthrough.on('close', () => {
+              resolve()
+            })
+          })
+          worker.on('error', (error) => passthrough.destroy(error))
+        })
+    )
+
+    return passthrough
+  }
+  private async getPreloadPaths() {
+    return this.renderables.map((renderable) =>
+      path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(this.entrypointRequirePathForServer(renderable)))
+    )
+  }
+  private async workerRender<Props>(render: Render<Props>) {
+    const requirePath = this.entrypointRequirePathForServer(render)
+
+    const destination = this.stripBasePath(render.request.url, render.base)
+
+    if (!this.workerPool) throw new Error('WorkerPool is not setup')
+
+    return this.workerPool.use((worker) => {
+      worker.postMessage({
+        modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+        renderBase: render.base,
+        bootProps: render.props,
+        destination,
+        hooks: this.transformHooks,
+      } satisfies WorkerRenderInput)
+      return new Promise<string>((resolve, reject) => {
+        worker
+          .once('message', (content) => {
+            resolve(content as string)
+          })
+          .once('error', (error) => reject(error))
+      })
+    })
+  }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
     const bus = this.startRenderBus(render)
@@ -85,44 +170,39 @@ export class ReactRenderer implements Renderer {
     try {
       const requirePath = this.entrypointRequirePathForServer(render)
 
-      // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
-        await this.loadModule(requirePath)
-      ).default
-
       const destination = this.stripBasePath(render.request.url, render.base)
 
-      let app: ReactElement = React.createElement(
-        RenderBusContext.Provider,
-        null,
-        React.createElement(
-          Router,
-          {
-            base: render.base,
-            hook: staticLocationHook(destination),
-          },
-          React.createElement(
-            Layout,
-            {
-              isNavigating: false,
-              navigationDestination: destination,
+      switch (this.options.mode) {
+        case 'streaming': {
+          const devRender = async () =>
+            streamingRender({
+              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+              renderBase: render.base,
               bootProps: render.props,
-            },
-            React.createElement(Entrypoint, render.props)
-          )
-        )
-      )
+              destination,
+              hooks: this.transformHooks,
+            })
 
-      for (const hook of hooks) {
-        if (hook.transform) {
-          app = hook.transform(app)
+          const prodRender = () => this.workerStreamRender(render)
+          const stream = await (this.plugin.devMode ? devRender() : prodRender())
+
+          await render.reply.send(this.renderStreamingTemplate(stream, bus, render, hooks))
+          break
         }
-      }
+        case 'sync': {
+          const devRender = async () =>
+            staticRender({
+              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+              renderBase: render.base,
+              bootProps: render.props,
+              destination,
+              hooks: this.transformHooks,
+            })
 
-      if (this.options.mode == 'streaming') {
-        await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render, hooks))
-      } else {
-        await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render, hooks))
+          const prodRender = () => this.workerRender(render)
+          const content = await (this.plugin.devMode ? devRender() : prodRender())
+          await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
+        }
       }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
@@ -223,9 +303,8 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderStreamingTemplate<Props>(
-    app: JSX.Element,
+    contentStream: NodeJS.ReadableStream,
     bus: RenderBus,
-    ReactDOMServer: any,
     render: Render<Props>,
     hooks: FastifyRendererHook[]
   ) {
@@ -233,7 +312,7 @@ export class ReactRenderer implements Renderer {
     // There are not postRenderHead hooks for streaming templates
     // so let's end the head stack
     bus.push('head', null)
-    const contentStream = ReactDOMServer.renderToNodeStream(app)
+
     contentStream.on('end', () => {
       this.runTailHooks(bus, hooks)
     })
@@ -249,14 +328,12 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderSynchronousTemplate<Props>(
-    app: JSX.Element,
+    content: string,
     bus: RenderBus,
-    ReactDOMServer: any,
     render: Render<Props>,
     hooks: FastifyRendererHook[]
   ) {
     this.runHeadHooks(bus, hooks)
-    const content = ReactDOMServer.renderToString(app)
     this.runPostRenderHeadHooks(bus, hooks)
     this.runTailHooks(bus, hooks)
 

@@ -5,8 +5,8 @@ import path from 'path'
 import { InlineConfig } from 'vite'
 import { Template } from './DocumentTemplate'
 import { RenderBus } from './RenderBus'
-import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import { RenderableRegistration, Renderer } from './renderers/Renderer'
+import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 
@@ -77,7 +77,14 @@ export class FastifyRendererPlugin {
    * Implements the backend integration logic for vite -- pulls out the chain of imported modules from the vite manifest and generates <script/> or <link/> tags to source the assets in the browser.
    **/
   pushImportTagsFromManifest = (bus: RenderBus, entryName: string, root = true) => {
-    const manifestEntry = this.clientManifest![entryName]
+    let manifestEntry = this.clientManifest![entryName]
+    if (!manifestEntry) {
+      // TODO: Refactor this away
+      // Imperative mode is broken in prod
+      // this makes it load in prod, but still incorrectly
+      const closestName = Object.keys(this.clientManifest!).find((k) => entryName.startsWith(k))
+      if (closestName) manifestEntry = this.clientManifest![closestName]
+    }
     if (!manifestEntry) {
       throw new Error(
         `Module id ${entryName} was not found in the built assets manifest. Was it included in the build?`

@@ -7,18 +7,18 @@ import { promises as fs } from 'fs'
 import 'middie'
 import path from 'path'
 import {
-  build as viteBuild,
-  createServer,
   InlineConfig,
-  resolveConfig,
   ResolvedConfig,
   SSROptions,
   ViteDevServer,
+  createServer,
+  resolveConfig,
+  build as viteBuild,
 } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { FastifyRendererOptions, FastifyRendererPlugin, ImperativeRenderable } from './Plugin'
-import { PartialRenderOptions, Render, RenderableRegistration, RenderOptions } from './renderers/Renderer'
-import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'
+import { PartialRenderOptions, Render, RenderOptions, RenderableRegistration } from './renderers/Renderer'
+import { kRenderOptions, kRendererPlugin, kRendererViteOptions } from './symbols'
 import { wrap } from './tracing'
 import './types' // necessary to make sure that the fastify types are augmented
 import { ServerRenderer } from './types'
