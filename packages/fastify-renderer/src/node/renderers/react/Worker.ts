@@ -29,45 +29,41 @@ const staticLocationHook = (path = '/', { record = false } = {}) => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-require(modulePath).then(async (module) => {
-  // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
+const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = require(modulePath).default
 
-  const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module.default
-
-  const app: ReactElement = React.createElement(
-    RenderBusContext.Provider,
-    null,
+const app: ReactElement = React.createElement(
+  RenderBusContext.Provider,
+  null,
+  React.createElement(
+    Router,
+    {
+      base: renderBase,
+      hook: staticLocationHook(destination),
+    },
     React.createElement(
-      Router,
+      Layout,
       {
-        base: renderBase,
-        hook: staticLocationHook(destination),
+        isNavigating: false,
+        navigationDestination: destination,
+        bootProps: renderProps,
       },
-      React.createElement(
-        Layout,
-        {
-          isNavigating: false,
-          navigationDestination: destination,
-          bootProps: renderProps,
-        },
-        React.createElement(Entrypoint, renderProps)
-      )
+      React.createElement(Entrypoint, renderProps)
     )
   )
+)
 
-  // Transofmr hook cannot work
-  // for (const hook of hooks) {
-  //   if (hook.transform) {
-  //     app = hook.transform(app)
-  //   }
-  // }
+// Transofmr hook cannot work
+// for (const hook of hooks) {
+//   if (hook.transform) {
+//     app = hook.transform(app)
+//   }
+// }
 
-  if (mode == 'streaming') {
-    //return this.renderStreamingTemplate(app, bus, ReactDOMServer, render, hooks)
-  } else {
-    const content = ReactDOMServer.renderToString(app)
-    if (!parentPort) throw new Error('Missing parentPort')
+if (mode == 'streaming') {
+  //return this.renderStreamingTemplate(app, bus, ReactDOMServer, render, hooks)
+} else {
+  const content = ReactDOMServer.renderToString(app)
+  if (!parentPort) throw new Error('Missing parentPort')
 
-    parentPort.postMessage(content)
-  }
-})
+  parentPort.postMessage(content)
+}

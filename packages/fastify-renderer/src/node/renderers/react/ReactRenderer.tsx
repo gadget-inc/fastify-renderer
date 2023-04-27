@@ -69,11 +69,6 @@ export class ReactRenderer implements Renderer {
     try {
       const requirePath = this.entrypointRequirePathForServer(render)
 
-      // we load all the context needed for this render from one `loadModule` call, which is really important for keeping the same copy of React around in all of the different bits that touch it.
-      const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = (
-        await this.loadModule(requirePath)
-      ).default
-
       const destination = this.stripBasePath(render.request.url, render.base)
       const worker = new Worker(require.resolve('./Worker.js'), {
         workerData: {
@@ -105,7 +100,7 @@ export class ReactRenderer implements Renderer {
         // TODO setup streaming
         // await render.reply.send(this.renderStreamingTemplate(content, bus, ReactDOMServer, render, hooks))
       } else {
-        await render.reply.send(this.renderSynchronousTemplate(content, bus, ReactDOMServer, render, hooks))
+        await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
       }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
@@ -205,36 +200,35 @@ export class ReactRenderer implements Renderer {
     return bus
   }
 
-  private renderStreamingTemplate<Props>(
-    contentStream: NodeJS.ReadableStream,
-    bus: RenderBus,
-    ReactDOMServer: any,
-    render: Render<Props>,
-    hooks: FastifyRendererHook[]
-  ) {
-    this.runHeadHooks(bus, hooks)
-    // There are not postRenderHead hooks for streaming templates
-    // so let's end the head stack
-    bus.push('head', null)
+  // private renderStreamingTemplate<Props>(
+  //   contentStream: NodeJS.ReadableStream,
+  //   bus: RenderBus,
+  //   ReactDOMServer: any,
+  //   render: Render<Props>,
+  //   hooks: FastifyRendererHook[]
+  // ) {
+  //   this.runHeadHooks(bus, hooks);
+  //   // There are not postRenderHead hooks for streaming templates
+  //   // so let's end the head stack
+  //   bus.push('head', null);
 
-    contentStream.on('end', () => {
-      this.runTailHooks(bus, hooks)
-    })
+  //   contentStream.on('end', () => {
+  //     this.runTailHooks(bus, hooks);
+  //   });
 
-    return render.document({
-      content: contentStream,
-      head: bus.stack('head'),
-      tail: bus.stack('tail'),
-      props: render.props,
-      request: render.request,
-      reply: render.reply,
-    })
-  }
+  //   return render.document({
+  //     content: contentStream,
+  //     head: bus.stack('head'),
+  //     tail: bus.stack('tail'),
+  //     props: render.props,
+  //     request: render.request,
+  //     reply: render.reply,
+  //   });
+  // }
 
   private renderSynchronousTemplate<Props>(
     content: string,
     bus: RenderBus,
-    ReactDOMServer: any,
     render: Render<Props>,
     hooks: FastifyRendererHook[]
   ) {
