@@ -1,10 +1,10 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import path from 'path'
 import querystring from 'querystring'
-import type { ReactElement } from 'react'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
+import { Worker } from 'worker_threads'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
@@ -18,22 +18,6 @@ const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
 export interface ReactRendererOptions {
   type: 'react'
   mode: 'sync' | 'streaming'
-}
-
-const staticLocationHook = (path = '/', { record = false } = {}) => {
-  // eslint-disable-next-line prefer-const
-  let hook
-  const navigate = (to, { replace }: { replace?: boolean } = {}) => {
-    if (record) {
-      if (replace) {
-        hook.history.pop()
-      }
-      hook.history.push(to)
-    }
-  }
-  hook = () => [path, navigate]
-  hook.history = [path]
-  return hook
 }
 
 export class ReactRenderer implements Renderer {
@@ -91,38 +75,37 @@ export class ReactRenderer implements Renderer {
       ).default
 
       const destination = this.stripBasePath(render.request.url, render.base)
+      const worker = new Worker(require.resolve('./Worker.js'), {
+        workerData: {
+          modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+          baseRender: render.base,
+          bootProps: render.props,
+          destination,
+          mode: this.options.mode,
+        },
+      })
+      const content = await new Promise<string>((resolve, reject) => {
+        worker
+          .once('message', (content) => {
+            resolve(content as string)
+          })
+          .once('error', (error) => reject(error))
+      })
 
-      let app: ReactElement = React.createElement(
-        RenderBusContext.Provider,
-        null,
-        React.createElement(
-          Router,
-          {
-            base: render.base,
-            hook: staticLocationHook(destination),
-          },
-          React.createElement(
-            Layout,
-            {
-              isNavigating: false,
-              navigationDestination: destination,
-              bootProps: render.props,
-            },
-            React.createElement(Entrypoint, render.props)
-          )
-        )
-      )
-
-      for (const hook of hooks) {
-        if (hook.transform) {
-          app = hook.transform(app)
-        }
-      }
+      // Transform hooks will have to work different from what they do now.
+      // Multithreading them is impossible unless if they are declared in their own file.
+      // for (const hook of hooks) {
+      //   if (hook.transform) {
+      //     app = hook.transform(app)
+      //   }
+      // }
 
       if (this.options.mode == 'streaming') {
-        await render.reply.send(this.renderStreamingTemplate(app, bus, ReactDOMServer, render, hooks))
+        throw new Error('Streaming mode not ready')
+        // TODO setup streaming
+        // await render.reply.send(this.renderStreamingTemplate(content, bus, ReactDOMServer, render, hooks))
       } else {
-        await render.reply.send(this.renderSynchronousTemplate(app, bus, ReactDOMServer, render, hooks))
+        await render.reply.send(this.renderSynchronousTemplate(content, bus, ReactDOMServer, render, hooks))
       }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
@@ -223,7 +206,7 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderStreamingTemplate<Props>(
-    app: JSX.Element,
+    contentStream: NodeJS.ReadableStream,
     bus: RenderBus,
     ReactDOMServer: any,
     render: Render<Props>,
@@ -233,7 +216,7 @@ export class ReactRenderer implements Renderer {
     // There are not postRenderHead hooks for streaming templates
     // so let's end the head stack
     bus.push('head', null)
-    const contentStream = ReactDOMServer.renderToNodeStream(app)
+
     contentStream.on('end', () => {
       this.runTailHooks(bus, hooks)
     })
@@ -249,14 +232,13 @@ export class ReactRenderer implements Renderer {
   }
 
   private renderSynchronousTemplate<Props>(
-    app: JSX.Element,
+    content: string,
     bus: RenderBus,
     ReactDOMServer: any,
     render: Render<Props>,
     hooks: FastifyRendererHook[]
   ) {
     this.runHeadHooks(bus, hooks)
-    const content = ReactDOMServer.renderToString(app)
     this.runPostRenderHeadHooks(bus, hooks)
     this.runTailHooks(bus, hooks)
 

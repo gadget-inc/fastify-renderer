@@ -68,6 +68,7 @@
     "path-to-regexp": "^6.2.1",
     "sanitize-filename": "^1.6.3",
     "stream-template": "^0.0.10",
+    "ts-node": "^10.9.1",
     "vite": "^2.9.15",
     "wouter": "^2.7.5"
   },
