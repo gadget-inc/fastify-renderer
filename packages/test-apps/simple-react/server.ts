@@ -27,7 +27,7 @@ export const server = async () => {
         include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp'],
       },
     },
-    devMode: false,
+    devMode: true,
   })
 
   const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple'))
@@ -111,7 +111,7 @@ export const server = async () => {
 if (require.main === module) {
   void server().then((server) => {
     console.warn(server.printRoutes())
-    return server.listen({ port: 3000, host: "0.0.0.0"}).then((address) => {
+    return server.listen({ port: 3000, host: '0.0.0.0' }).then((address) => {
       console.warn(`Test server listening on ${address}`)
     })
   })

@@ -77,7 +77,12 @@ export class FastifyRendererPlugin {
    * Implements the backend integration logic for vite -- pulls out the chain of imported modules from the vite manifest and generates <script/> or <link/> tags to source the assets in the browser.
    **/
   pushImportTagsFromManifest = (bus: RenderBus, entryName: string, root = true) => {
-    const manifestEntry = this.clientManifest![entryName]
+    let manifestEntry = this.clientManifest![entryName]
+    if (!manifestEntry) {
+      // TODO: Refactor this away
+      const closestName = Object.keys(this.clientManifest!).find((k) => entryName.startsWith(k))
+      if (closestName) manifestEntry = this.clientManifest![closestName]
+    }
     if (!manifestEntry) {
       throw new Error(
         `Module id ${entryName} was not found in the built assets manifest. Was it included in the build?`
