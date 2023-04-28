@@ -27,7 +27,7 @@ export const server = async () => {
         include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp'],
       },
     },
-    devMode: true,
+    devMode: false,
   })
 
   const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple'))

@@ -11,6 +11,7 @@ import { wrap } from '../../tracing'
 import { FastifyRendererHook } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
+import { staticRender } from './ssr'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
@@ -61,6 +62,27 @@ export class ReactRenderer implements Renderer {
     return this.wrappedRender(render)
   }
 
+  private async workerRender<Props>(render: Render<Props>) {
+    const requirePath = this.entrypointRequirePathForServer(render)
+
+    const destination = this.stripBasePath(render.request.url, render.base)
+    const worker = new Worker(require.resolve('./Worker.import.js'), {
+      workerData: {
+        modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+        renderBase: render.base,
+        bootProps: render.props,
+        destination,
+        mode: this.options.mode,
+      },
+    })
+    return new Promise<string>((resolve, reject) => {
+      worker
+        .once('message', (content) => {
+          resolve(content as string)
+        })
+        .once('error', (error) => reject(error))
+    })
+  }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
     const bus = this.startRenderBus(render)
@@ -70,23 +92,18 @@ export class ReactRenderer implements Renderer {
       const requirePath = this.entrypointRequirePathForServer(render)
 
       const destination = this.stripBasePath(render.request.url, render.base)
-      const worker = new Worker(require.resolve('./Worker.js'), {
-        workerData: {
-          modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
-          baseRender: render.base,
+
+      const devRender = async () =>
+        staticRender({
+          module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+          renderBase: render.base,
           bootProps: render.props,
           destination,
-          mode: this.options.mode,
-        },
-      })
-      const content = await new Promise<string>((resolve, reject) => {
-        worker
-          .once('message', (content) => {
-            resolve(content as string)
-          })
-          .once('error', (error) => reject(error))
-      })
+        })
 
+      const prodRender = () => this.workerRender(render)
+
+      const content = await (this.plugin.devMode ? devRender() : prodRender())
       // Transform hooks will have to work different from what they do now.
       // Multithreading them is impossible unless if they are declared in their own file.
       // for (const hook of hooks) {
