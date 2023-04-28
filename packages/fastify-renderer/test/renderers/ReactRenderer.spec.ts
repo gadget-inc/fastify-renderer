@@ -1,5 +1,4 @@
 import path from 'path'
-import React from 'react'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRegistration } from '../../src/node/renderers/Renderer'
 import { getMockRender, newReactRenderer, newRenderBus } from '../helpers'
@@ -53,31 +52,20 @@ describe('ReactRenderer', () => {
       const renderer = newReactRenderer()
       const callOrder: string[] = []
 
-      renderer['renderSynchronousTemplate'](
-        React.createElement(testLayoutComponent, {}),
-        newRenderBus(),
+      renderer['renderSynchronousTemplate']('test', newRenderBus(), getMockRender({}), [
         {
-          renderToString: () => {
-            callOrder.push('render')
-            return 'test'
+          heads: () => {
+            callOrder.push('heads')
+            return 'heads'
+          },
+          postRenderHeads: () => {
+            callOrder.push('postRenderHeads')
+            return 'postRenderHeads'
           },
         },
-        getMockRender({}),
-        [
-          {
-            heads: () => {
-              callOrder.push('heads')
-              return 'heads'
-            },
-            postRenderHeads: () => {
-              callOrder.push('postRenderHeads')
-              return 'postRenderHeads'
-            },
-          },
-        ]
-      )
+      ])
 
-      expect(callOrder).toEqual(['heads', 'render', 'postRenderHeads'])
+      expect(callOrder).toEqual(['heads', 'postRenderHeads'])
     })
   })
 

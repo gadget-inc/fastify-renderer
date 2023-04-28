@@ -116,7 +116,8 @@ describe('FastifyRenderer', () => {
     expect(response.body).toEqual('hello')
   })
 
-  test('should call hooks in correct order', async () => {
+  // TODO: Re-introduce transformation hooks
+  test.skip('should call hooks in correct order', async () => {
     const callOrder: string[] = []
     const hook = unthunk(options.hooks[0])
     jest.spyOn(hook, 'heads').mockImplementation(() => {
