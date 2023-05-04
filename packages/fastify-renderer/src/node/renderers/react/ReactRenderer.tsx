@@ -1,6 +1,7 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import path from 'path'
 import querystring from 'querystring'
+import { PassThrough } from 'stream'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
@@ -11,7 +12,7 @@ import { wrap } from '../../tracing'
 import { FastifyRendererHook } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
-import { staticRender } from './ssr'
+import { staticRender, streamingRender } from './ssr'
 
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
@@ -61,12 +62,32 @@ export class ReactRenderer implements Renderer {
   async render<Props>(render: Render<Props>): Promise<void> {
     return this.wrappedRender(render)
   }
+  private workerStreamRender<Props>(render: Render<Props>): NodeJS.ReadableStream {
+    const requirePath = this.entrypointRequirePathForServer(render)
 
+    const destination = this.stripBasePath(render.request.url, render.base)
+    const worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
+      workerData: {
+        modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+        renderBase: render.base,
+        bootProps: render.props,
+        destination,
+        mode: this.options.mode,
+      },
+    })
+
+    const passthrough = new PassThrough()
+    worker.on('message', (content) => passthrough.write(content))
+    worker.on('exit', () => passthrough.end())
+    worker.on('error', (error) => passthrough.destroy(error))
+
+    return passthrough
+  }
   private async workerRender<Props>(render: Render<Props>) {
     const requirePath = this.entrypointRequirePathForServer(render)
 
     const destination = this.stripBasePath(render.request.url, render.base)
-    const worker = new Worker(require.resolve('./Worker.import.js'), {
+    const worker = new Worker(require.resolve('./StaticWorker.import.js'), {
       workerData: {
         modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
         renderBase: render.base,
@@ -93,17 +114,6 @@ export class ReactRenderer implements Renderer {
 
       const destination = this.stripBasePath(render.request.url, render.base)
 
-      const devRender = async () =>
-        staticRender({
-          module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-          renderBase: render.base,
-          bootProps: render.props,
-          destination,
-        })
-
-      const prodRender = () => this.workerRender(render)
-
-      const content = await (this.plugin.devMode ? devRender() : prodRender())
       // Transform hooks will have to work different from what they do now.
       // Multithreading them is impossible unless if they are declared in their own file.
       // for (const hook of hooks) {
@@ -113,10 +123,29 @@ export class ReactRenderer implements Renderer {
       // }
 
       if (this.options.mode == 'streaming') {
-        throw new Error('Streaming mode not ready')
-        // TODO setup streaming
-        // await render.reply.send(this.renderStreamingTemplate(content, bus, ReactDOMServer, render, hooks))
+        const devRender = async () =>
+          streamingRender({
+            module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+            renderBase: render.base,
+            bootProps: render.props,
+            destination,
+          })
+
+        const prodRender = () => this.workerStreamRender(render)
+        const stream = await (this.plugin.devMode ? devRender() : prodRender())
+
+        await render.reply.send(this.renderStreamingTemplate(stream, bus, render, hooks))
       } else {
+        const devRender = async () =>
+          staticRender({
+            module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+            renderBase: render.base,
+            bootProps: render.props,
+            destination,
+          })
+
+        const prodRender = () => this.workerRender(render)
+        const content = await (this.plugin.devMode ? devRender() : prodRender())
         await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
       }
     } catch (error: unknown) {
@@ -217,31 +246,30 @@ export class ReactRenderer implements Renderer {
     return bus
   }
 
-  // private renderStreamingTemplate<Props>(
-  //   contentStream: NodeJS.ReadableStream,
-  //   bus: RenderBus,
-  //   ReactDOMServer: any,
-  //   render: Render<Props>,
-  //   hooks: FastifyRendererHook[]
-  // ) {
-  //   this.runHeadHooks(bus, hooks);
-  //   // There are not postRenderHead hooks for streaming templates
-  //   // so let's end the head stack
-  //   bus.push('head', null);
+  private renderStreamingTemplate<Props>(
+    contentStream: NodeJS.ReadableStream,
+    bus: RenderBus,
+    render: Render<Props>,
+    hooks: FastifyRendererHook[]
+  ) {
+    this.runHeadHooks(bus, hooks)
+    // There are not postRenderHead hooks for streaming templates
+    // so let's end the head stack
+    bus.push('head', null)
 
-  //   contentStream.on('end', () => {
-  //     this.runTailHooks(bus, hooks);
-  //   });
+    contentStream.on('end', () => {
+      this.runTailHooks(bus, hooks)
+    })
 
-  //   return render.document({
-  //     content: contentStream,
-  //     head: bus.stack('head'),
-  //     tail: bus.stack('tail'),
-  //     props: render.props,
-  //     request: render.request,
-  //     reply: render.reply,
-  //   });
-  // }
+    return render.document({
+      content: contentStream,
+      head: bus.stack('head'),
+      tail: bus.stack('tail'),
+      props: render.props,
+      request: render.request,
+      reply: render.reply,
+    })
+  }
 
   private renderSynchronousTemplate<Props>(
     content: string,

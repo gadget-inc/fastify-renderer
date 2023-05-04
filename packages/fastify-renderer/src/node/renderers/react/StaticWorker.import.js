@@ -3,4 +3,4 @@ require('ts-node').register({
     // Disable type-checking
     transpileOnly: true
 });
-require(require.resolve('./Worker.ts'));
+require(require.resolve('./StaticWorker.ts'));
