@@ -6644,6 +6644,11 @@ resolve@^2.0.0-next.3:
     is-core-module "^2.2.0"
     path-parse "^1.0.6"
 
+resource-pooler@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/resource-pooler/-/resource-pooler-0.1.0.tgz#1a80a374a64be9bb0df2426049b414bdd87e98c4"
+  integrity sha512-Yl1EAYP2xMx/gev4nGC7xXjcR0z5kf+P3hIoUApYOtQVRIHwTBzXX1TmS2f3kjL2XKww7fJm8EXAtyAiVuJs1A==
+
 restore-cursor@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/restore-cursor/-/restore-cursor-3.1.0.tgz#39f67c54b3a7a58cea5236d95cf0034239631f7e"

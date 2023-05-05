@@ -1,9 +1,7 @@
-import { parentPort, workerData } from 'worker_threads'
+import { parentPort } from 'worker_threads'
 import { staticRender } from './ssr'
 
-// if (!isMainThread) throw new Error('Worker spawned in Main thread')
-
-const args = workerData as {
+interface Input {
   modulePath: string
   renderBase: string
   destination: string
@@ -11,7 +9,10 @@ const args = workerData as {
   mode: string
 }
 
-const content = staticRender({ ...args, module: require(args.modulePath).default })
 if (!parentPort) throw new Error('Missing parentPort')
+const port = parentPort
 
-parentPort.postMessage(content)
+port.on('message', (args: Input) => {
+  const content = staticRender({ ...args, module: require(args.modulePath).default })
+  port.postMessage(content)
+})

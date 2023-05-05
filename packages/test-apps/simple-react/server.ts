@@ -15,7 +15,7 @@ export const server = async () => {
   await server.register(renderer, {
     renderer: {
       type: 'react',
-      mode: 'streaming',
+      mode: 'sync',
     },
     vite: {
       server: {

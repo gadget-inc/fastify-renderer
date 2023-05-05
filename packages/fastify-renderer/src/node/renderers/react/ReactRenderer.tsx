@@ -1,6 +1,7 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
 import path from 'path'
 import querystring from 'querystring'
+import { createPool, ResourcePooler } from 'resource-pooler'
 import { PassThrough } from 'stream'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
@@ -30,6 +31,7 @@ export class ReactRenderer implements Renderer {
   renderables!: RenderableRegistration[]
   tmpdir!: string
   clientModulePath: string
+  workerPool: ResourcePooler<Worker, Worker> | null = null
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.clientModulePath = require.resolve('../../../client/react')
@@ -55,6 +57,21 @@ export class ReactRenderer implements Renderer {
       for (const renderable of renderables) {
         await this.loadModule(this.entrypointRequirePathForServer(renderable))
       }
+
+      const mode = this.options.mode
+      this.workerPool = await createPool({
+        create() {
+          switch (mode) {
+            case 'streaming':
+              return new Worker(require.resolve('./StreamingWorker.import.js'))
+            case 'sync':
+              return new Worker(require.resolve('./StaticWorker.import.js'))
+          }
+        },
+        async dispose(worker) {
+          await worker.terminate()
+        },
+      })
     }
   }
 
@@ -66,20 +83,32 @@ export class ReactRenderer implements Renderer {
     const requirePath = this.entrypointRequirePathForServer(render)
 
     const destination = this.stripBasePath(render.request.url, render.base)
-    const worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
-      workerData: {
-        modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
-        renderBase: render.base,
-        bootProps: render.props,
-        destination,
-        mode: this.options.mode,
-      },
-    })
-
+    if (!this.workerPool) throw new Error('WorkerPool not setup')
     const passthrough = new PassThrough()
-    worker.on('message', (content) => passthrough.write(content))
-    worker.on('exit', () => passthrough.end())
-    worker.on('error', (error) => passthrough.destroy(error))
+
+    // Do not `await` or else it will not return
+    // until the whole stream is completed
+    this.workerPool.use(
+      (worker) =>
+        new Promise<void>((resolve) => {
+          worker.postMessage({
+            modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
+            renderBase: render.base,
+            bootProps: render.props,
+            destination,
+            mode: this.options.mode,
+          })
+          worker.on('message', (content) => {
+            if (content) {
+              passthrough.write(content)
+            } else {
+              passthrough.end()
+              resolve()
+            }
+          })
+          worker.on('error', (error) => passthrough.destroy(error))
+        })
+    )
 
     return passthrough
   }
@@ -87,21 +116,24 @@ export class ReactRenderer implements Renderer {
     const requirePath = this.entrypointRequirePathForServer(render)
 
     const destination = this.stripBasePath(render.request.url, render.base)
-    const worker = new Worker(require.resolve('./StaticWorker.import.js'), {
-      workerData: {
+
+    if (!this.workerPool) throw new Error('WorkerPool is not setup')
+
+    return this.workerPool.use((worker) => {
+      worker.postMessage({
         modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
         renderBase: render.base,
         bootProps: render.props,
         destination,
         mode: this.options.mode,
-      },
-    })
-    return new Promise<string>((resolve, reject) => {
-      worker
-        .once('message', (content) => {
-          resolve(content as string)
-        })
-        .once('error', (error) => reject(error))
+      })
+      return new Promise<string>((resolve, reject) => {
+        worker
+          .once('message', (content) => {
+            resolve(content as string)
+          })
+          .once('error', (error) => reject(error))
+      })
     })
   }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
@@ -122,31 +154,35 @@ export class ReactRenderer implements Renderer {
       //   }
       // }
 
-      if (this.options.mode == 'streaming') {
-        const devRender = async () =>
-          streamingRender({
-            module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-            renderBase: render.base,
-            bootProps: render.props,
-            destination,
-          })
+      switch (this.options.mode) {
+        case 'streaming': {
+          const devRender = async () =>
+            streamingRender({
+              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+              renderBase: render.base,
+              bootProps: render.props,
+              destination,
+            })
 
-        const prodRender = () => this.workerStreamRender(render)
-        const stream = await (this.plugin.devMode ? devRender() : prodRender())
+          const prodRender = () => this.workerStreamRender(render)
+          const stream = await (this.plugin.devMode ? devRender() : prodRender())
 
-        await render.reply.send(this.renderStreamingTemplate(stream, bus, render, hooks))
-      } else {
-        const devRender = async () =>
-          staticRender({
-            module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-            renderBase: render.base,
-            bootProps: render.props,
-            destination,
-          })
+          await render.reply.send(this.renderStreamingTemplate(stream, bus, render, hooks))
+          break
+        }
+        case 'sync': {
+          const devRender = async () =>
+            staticRender({
+              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+              renderBase: render.base,
+              bootProps: render.props,
+              destination,
+            })
 
-        const prodRender = () => this.workerRender(render)
-        const content = await (this.plugin.devMode ? devRender() : prodRender())
-        await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
+          const prodRender = () => this.workerRender(render)
+          const content = await (this.plugin.devMode ? devRender() : prodRender())
+          await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
+        }
       }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)

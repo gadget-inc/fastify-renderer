@@ -1,9 +1,9 @@
-import { parentPort, workerData } from 'worker_threads'
+import { parentPort } from 'worker_threads'
 import { streamingRender } from './ssr'
 
 // if (!isMainThread) throw new Error('Worker spawned in Main thread')
 
-const args = workerData as {
+interface Input {
   modulePath: string
   renderBase: string
   destination: string
@@ -11,13 +11,15 @@ const args = workerData as {
   mode: string
 }
 
-const stream = streamingRender({ ...args, module: require(args.modulePath).default })
+if (!parentPort) throw new Error('Missing parentPort')
+const port = parentPort
 
-async function main() {
+port.on('message', (args: Input) => {
+  const stream = streamingRender({ ...args, module: require(args.modulePath).default })
+
   stream.on('data', (content) => {
-    if (!parentPort) throw new Error('Missing parentPort')
-    parentPort.postMessage(content)
+    port.postMessage(content)
   })
-}
 
-main()
+  stream.on('end', () => port.postMessage(null))
+})

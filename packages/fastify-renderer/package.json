@@ -70,7 +70,8 @@
     "stream-template": "^0.0.10",
     "ts-node": "^10.9.1",
     "vite": "^2.9.15",
-    "wouter": "^2.7.5"
+    "wouter": "^2.7.5",
+    "resource-pooler": "^0.1.0"
   },
   "peerDependencies": {
     "fastify": "^3.13.0",
