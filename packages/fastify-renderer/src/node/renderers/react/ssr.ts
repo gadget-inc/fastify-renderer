@@ -23,6 +23,7 @@ interface RenderArgs {
   destination: string
   bootProps: any
   module: any
+  hooks: string[]
 }
 
 // Presence of `parentPort` suggests
@@ -37,11 +38,11 @@ if (parentPort) {
   }
 }
 
-export function staticRender({ bootProps, destination, renderBase, module }: RenderArgs) {
+export function staticRender({ bootProps, destination, renderBase, module, hooks }: RenderArgs) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
 
-  const app: ReactElement = React.createElement(
+  let app: ReactElement = React.createElement(
     RenderBusContext.Provider,
     null,
     React.createElement(
@@ -61,12 +62,12 @@ export function staticRender({ bootProps, destination, renderBase, module }: Ren
       )
     )
   )
-  // Transofmr hook cannot work
-  // for (const hook of hooks) {
-  //   if (hook.transform) {
-  //     app = hook.transform(app)
-  //   }
-  // }
+
+  const transformers = hooks.map((hook) => require(hook))
+
+  for (const hook of transformers) {
+    app = hook.transform(app)
+  }
 
   return (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
 }

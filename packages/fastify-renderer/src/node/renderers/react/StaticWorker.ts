@@ -7,6 +7,7 @@ interface Input {
   destination: string
   bootProps: Record<string, any>
   mode: string
+  hooks: string[]
 }
 
 if (!parentPort) throw new Error('Missing parentPort')

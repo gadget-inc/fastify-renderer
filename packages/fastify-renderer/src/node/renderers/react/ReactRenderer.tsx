@@ -59,7 +59,14 @@ export class ReactRenderer implements Renderer {
       }
 
       const mode = this.options.mode
-      const paths = await this.getPreloadPaths()
+      const hooks = this.plugin.hooks
+        .map(unthunk)
+        .map((hook) => hook.transform?.absolutePath)
+        .flatMap((hook) => (hook ? [hook] : []))
+
+      const modulePaths = await this.getPreloadPaths()
+      const paths = [...modulePaths, ...hooks]
+
       this.workerPool = await createPool({
         create() {
           const workerData = {
@@ -98,6 +105,11 @@ export class ReactRenderer implements Renderer {
     if (!this.workerPool) throw new Error('WorkerPool not setup')
     const passthrough = new PassThrough()
 
+    const hooks = this.plugin.hooks
+      .map(unthunk)
+      .map((hook) => hook.transform?.absolutePath)
+      .flatMap((hook) => (hook ? [hook] : []))
+
     // Do not `await` or else it will not return
     // until the whole stream is completed
     this.workerPool.use(
@@ -109,6 +121,7 @@ export class ReactRenderer implements Renderer {
             bootProps: render.props,
             destination,
             mode: this.options.mode,
+            hooks,
           })
           worker.on('message', (content) => {
             if (content) {
@@ -136,6 +149,11 @@ export class ReactRenderer implements Renderer {
 
     if (!this.workerPool) throw new Error('WorkerPool is not setup')
 
+    const hooks = this.plugin.hooks
+      .map(unthunk)
+      .map((hook) => hook.transform)
+      .flatMap((hook) => (hook ? [hook] : []))
+
     return this.workerPool.use((worker) => {
       worker.postMessage({
         modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
@@ -143,6 +161,7 @@ export class ReactRenderer implements Renderer {
         bootProps: render.props,
         destination,
         mode: this.options.mode,
+        hooks,
       })
       return new Promise<string>((resolve, reject) => {
         worker
@@ -163,13 +182,10 @@ export class ReactRenderer implements Renderer {
 
       const destination = this.stripBasePath(render.request.url, render.base)
 
-      // Transform hooks will have to work different from what they do now.
-      // Multithreading them is impossible unless if they are declared in their own file.
-      // for (const hook of hooks) {
-      //   if (hook.transform) {
-      //     app = hook.transform(app)
-      //   }
-      // }
+      const transformHooks = this.plugin.hooks
+        .map(unthunk)
+        .map((hook) => hook.transform?.absolutePath)
+        .flatMap((hook) => (hook ? [hook] : []))
 
       switch (this.options.mode) {
         case 'streaming': {
@@ -179,6 +195,7 @@ export class ReactRenderer implements Renderer {
               renderBase: render.base,
               bootProps: render.props,
               destination,
+              hooks: transformHooks,
             })
 
           const prodRender = () => this.workerStreamRender(render)
@@ -194,6 +211,7 @@ export class ReactRenderer implements Renderer {
               renderBase: render.base,
               bootProps: render.props,
               destination,
+              hooks: transformHooks,
             })
 
           const prodRender = () => this.workerRender(render)

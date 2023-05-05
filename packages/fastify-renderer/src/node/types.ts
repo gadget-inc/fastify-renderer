@@ -11,7 +11,6 @@ import {
   RequestGenericInterface,
 } from 'fastify'
 import { IncomingMessage, Server, ServerResponse } from 'http'
-import { ReactElement } from 'react'
 import { ViteDevServer } from 'vite'
 import { ImperativeRenderable } from './Plugin'
 
@@ -25,7 +24,9 @@ export interface FastifyRendererHook {
   name?: string
   tails?: () => string
   heads?: () => string
-  transform?: (app: ReactElement) => ReactElement
+  transform?: {
+    absolutePath: string
+  }
   postRenderHeads?: () => string
 }
 
