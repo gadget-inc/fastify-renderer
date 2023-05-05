@@ -59,14 +59,26 @@ export class ReactRenderer implements Renderer {
       }
 
       const mode = this.options.mode
+      const paths = await this.getPreloadPaths()
       this.workerPool = await createPool({
         create() {
+          const workerData = {
+            paths,
+          }
+
+          let worker: Worker
           switch (mode) {
             case 'streaming':
-              return new Worker(require.resolve('./StreamingWorker.import.js'))
+              worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
+                workerData,
+              })
             case 'sync':
-              return new Worker(require.resolve('./StaticWorker.import.js'))
+              worker = new Worker(require.resolve('./StaticWorker.import.js'), {
+                workerData,
+              })
           }
+
+          return worker
         },
         async dispose(worker) {
           await worker.terminate()
@@ -111,6 +123,11 @@ export class ReactRenderer implements Renderer {
     )
 
     return passthrough
+  }
+  private async getPreloadPaths() {
+    return this.renderables.map((renderable) =>
+      path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(this.entrypointRequirePathForServer(renderable)))
+    )
   }
   private async workerRender<Props>(render: Render<Props>) {
     const requirePath = this.entrypointRequirePathForServer(render)

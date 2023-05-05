@@ -1,5 +1,6 @@
 import { ReactElement } from 'react'
 import * as _ReactDOMServer from 'react-dom/server'
+import { parentPort, workerData } from 'worker_threads'
 
 const staticLocationHook = (path = '/', { record = false } = {}) => {
   // eslint-disable-next-line prefer-const
@@ -22,6 +23,18 @@ interface RenderArgs {
   destination: string
   bootProps: any
   module: any
+}
+
+// Presence of `parentPort` suggests
+// that this code is running in a Worker
+if (parentPort) {
+  // Preload each path from `workerData`
+  if (!workerData) throw new Error('No Worker Data')
+  const { paths } = workerData
+
+  for (const path of paths) {
+    require(path)
+  }
 }
 
 export function staticRender({ bootProps, destination, renderBase, module }: RenderArgs) {
