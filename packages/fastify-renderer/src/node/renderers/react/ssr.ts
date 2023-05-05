@@ -1,6 +1,7 @@
 import { ReactElement } from 'react'
 import * as _ReactDOMServer from 'react-dom/server'
 import { parentPort, workerData } from 'worker_threads'
+import { RenderInput } from '../../types'
 
 const staticLocationHook = (path = '/', { record = false } = {}) => {
   // eslint-disable-next-line prefer-const
@@ -18,12 +19,8 @@ const staticLocationHook = (path = '/', { record = false } = {}) => {
   return hook
 }
 
-interface RenderArgs {
-  renderBase: string
-  destination: string
-  bootProps: any
+interface RenderArgs extends RenderInput {
   module: any
-  hooks: string[]
 }
 
 // Presence of `parentPort` suggests
@@ -34,7 +31,7 @@ if (parentPort) {
   const { paths } = workerData
 
   for (const path of paths) {
-    require(path)
+    require(path as string)
   }
 }
 
@@ -96,12 +93,6 @@ export function streamingRender({ bootProps, destination, renderBase, module }: 
       )
     )
   )
-  // Transofmr hook cannot work
-  // for (const hook of hooks) {
-  //   if (hook.transform) {
-  //     app = hook.transform(app)
-  //   }
-  // }
 
   return (ReactDOMServer as typeof _ReactDOMServer).renderToStaticNodeStream(app)
 }

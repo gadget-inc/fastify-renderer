@@ -32,6 +32,7 @@ export class ReactRenderer implements Renderer {
   tmpdir!: string
   clientModulePath: string
   workerPool: ResourcePooler<Worker, Worker> | null = null
+  transformHooks: string[] = []
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.clientModulePath = require.resolve('../../../client/react')
@@ -59,13 +60,13 @@ export class ReactRenderer implements Renderer {
       }
 
       const mode = this.options.mode
-      const hooks = this.plugin.hooks
+      this.transformHooks = this.plugin.hooks
         .map(unthunk)
         .map((hook) => hook.transform?.absolutePath)
         .flatMap((hook) => (hook ? [hook] : []))
 
       const modulePaths = await this.getPreloadPaths()
-      const paths = [...modulePaths, ...hooks]
+      const paths = [...modulePaths, ...this.transformHooks]
 
       this.workerPool = await createPool({
         create() {
@@ -105,14 +106,9 @@ export class ReactRenderer implements Renderer {
     if (!this.workerPool) throw new Error('WorkerPool not setup')
     const passthrough = new PassThrough()
 
-    const hooks = this.plugin.hooks
-      .map(unthunk)
-      .map((hook) => hook.transform?.absolutePath)
-      .flatMap((hook) => (hook ? [hook] : []))
-
     // Do not `await` or else it will not return
     // until the whole stream is completed
-    this.workerPool.use(
+    void this.workerPool.use(
       (worker) =>
         new Promise<void>((resolve) => {
           worker.postMessage({
@@ -121,7 +117,7 @@ export class ReactRenderer implements Renderer {
             bootProps: render.props,
             destination,
             mode: this.options.mode,
-            hooks,
+            hooks: this.transformHooks,
           })
           worker.on('message', (content) => {
             if (content) {
@@ -149,11 +145,6 @@ export class ReactRenderer implements Renderer {
 
     if (!this.workerPool) throw new Error('WorkerPool is not setup')
 
-    const hooks = this.plugin.hooks
-      .map(unthunk)
-      .map((hook) => hook.transform)
-      .flatMap((hook) => (hook ? [hook] : []))
-
     return this.workerPool.use((worker) => {
       worker.postMessage({
         modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
@@ -161,7 +152,7 @@ export class ReactRenderer implements Renderer {
         bootProps: render.props,
         destination,
         mode: this.options.mode,
-        hooks,
+        hooks: this.transformHooks,
       })
       return new Promise<string>((resolve, reject) => {
         worker
@@ -182,11 +173,6 @@ export class ReactRenderer implements Renderer {
 
       const destination = this.stripBasePath(render.request.url, render.base)
 
-      const transformHooks = this.plugin.hooks
-        .map(unthunk)
-        .map((hook) => hook.transform?.absolutePath)
-        .flatMap((hook) => (hook ? [hook] : []))
-
       switch (this.options.mode) {
         case 'streaming': {
           const devRender = async () =>
@@ -195,7 +181,7 @@ export class ReactRenderer implements Renderer {
               renderBase: render.base,
               bootProps: render.props,
               destination,
-              hooks: transformHooks,
+              hooks: this.transformHooks,
             })
 
           const prodRender = () => this.workerStreamRender(render)
@@ -211,7 +197,7 @@ export class ReactRenderer implements Renderer {
               renderBase: render.base,
               bootProps: render.props,
               destination,
-              hooks: transformHooks,
+              hooks: this.transformHooks,
             })
 
           const prodRender = () => this.workerRender(render)

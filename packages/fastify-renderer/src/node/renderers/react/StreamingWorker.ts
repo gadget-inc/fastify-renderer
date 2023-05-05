@@ -1,21 +1,12 @@
 import { parentPort } from 'worker_threads'
+import { WorkerRenderInput } from '../../types'
 import { streamingRender } from './ssr'
-
-// if (!isMainThread) throw new Error('Worker spawned in Main thread')
-
-interface Input {
-  modulePath: string
-  renderBase: string
-  destination: string
-  bootProps: Record<string, any>
-  mode: string
-  hooks: string[]
-}
 
 if (!parentPort) throw new Error('Missing parentPort')
 const port = parentPort
 
-port.on('message', (args: Input) => {
+port.on('message', (args: WorkerRenderInput) => {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const stream = streamingRender({ ...args, module: require(args.modulePath).default })
 
   stream.on('data', (content) => {
