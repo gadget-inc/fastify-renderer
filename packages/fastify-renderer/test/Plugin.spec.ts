@@ -2,8 +2,8 @@ import fs from 'fs'
 import path from 'path'
 import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
-import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
 import { RenderableRegistration } from '../src/node/renderers/Renderer'
+import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
 import { newFastifyRendererPlugin, newRenderBus } from './helpers'
 
 jest.mock('fs', () => ({

@@ -150,9 +150,8 @@ export class ReactRenderer implements Renderer {
         renderBase: render.base,
         bootProps: render.props,
         destination,
-        mode: this.options.mode,
         hooks: this.transformHooks,
-      })
+      } satisfies WorkerRenderInput)
       return new Promise<string>((resolve, reject) => {
         worker
           .once('message', (content) => {

@@ -8,5 +8,5 @@ const port = parentPort
 port.on('message', (args: WorkerRenderInput) => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const content = staticRender({ ...args, module: require(args.modulePath).default })
-  port.postMessage(content)
+  port.postMessage(content satisfies string)
 })
