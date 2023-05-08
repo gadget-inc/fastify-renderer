@@ -5,8 +5,8 @@ import path from 'path'
 import { InlineConfig } from 'vite'
 import { Template } from './DocumentTemplate'
 import { RenderBus } from './RenderBus'
-import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import { RenderableRegistration, Renderer } from './renderers/Renderer'
+import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 
