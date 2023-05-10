@@ -14,6 +14,7 @@ import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
 import { ViteDevServer } from 'vite'
 import { ImperativeRenderable } from './Plugin'
+import { RenderableRouteOptions } from './renderers/Renderer'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -54,6 +55,7 @@ declare module 'fastify' {
 
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
     render?: string
+    renderableRouteOptions?: RenderableRouteOptions
   }
 
   interface FastifyRequest {

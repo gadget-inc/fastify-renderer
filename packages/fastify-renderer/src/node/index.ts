@@ -124,6 +124,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
           ...this[kRenderOptions],
           pathPattern: routeOptions.url,
           renderable,
+          options: routeOptions.renderableRouteOptions,
         }
 
         plugin.register(renderableRoute)

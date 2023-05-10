@@ -25,12 +25,12 @@ const RouteTable = (props: {
   )
 }
 
-export function Root<BootProps>(props: {
+export function Root<BootProps extends Record<string, any>>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
   Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps
   basePath: string
-  routes: [string, React.FunctionComponent<any>][]
+  routes: [string, React.FunctionComponent<any>, any][]
 }) {
   const [firstRenderComplete, setFirstRenderComplete] = useState(false)
   useEffect(() => {
@@ -43,28 +43,32 @@ export function Root<BootProps>(props: {
   }, [])
 
   const routes: JSX.Element[] = [
-    ...props.routes.map(([route, Component]) => (
+    ...props.routes.map(([route, Component, options]) => (
       <Route path={route} key={route}>
         {(params) => {
           const [location] = useLocation()
           const router = useRouter()
           const backendPath = location.split('#')[0] // remove current anchor for fetching data from the server side
 
-          const payload = usePromise<{ props: Record<string, any> }>(props.basePath + backendPath, async () => {
-            if (!firstRenderComplete) {
-              return { props: props.bootProps }
-            } else {
-              return (
-                await fetch(props.basePath + backendPath, {
-                  method: 'GET',
-                  headers: {
-                    Accept: 'application/json',
-                  },
-                  credentials: 'same-origin',
-                })
-              ).json()
-            }
-          })
+          const payload = usePromise<{ props: Record<string, any> }>(
+            props.basePath + backendPath,
+            async () => {
+              if (!firstRenderComplete) {
+                return { props: props.bootProps }
+              } else {
+                return (
+                  await fetch(props.basePath + backendPath, {
+                    method: 'GET',
+                    headers: {
+                      Accept: 'application/json',
+                    },
+                    credentials: 'same-origin',
+                  })
+                ).json()
+              }
+            },
+            { refetch: options?.refetch }
+          )
 
           // Navigate to the anchor in the url after rendering, unless we're using replaceState and
           // the destination page and previous page have the same base route (i.e. before '#')
