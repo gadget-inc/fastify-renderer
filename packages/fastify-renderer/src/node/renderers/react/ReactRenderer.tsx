@@ -1,4 +1,5 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
+import os from 'os'
 import path from 'path'
 import querystring from 'querystring'
 import { createPool, ResourcePooler } from 'resource-pooler'
@@ -14,10 +15,8 @@ import type { FastifyRendererHook, WorkerRenderInput } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
 import { staticRender, streamingRender } from './ssr'
-
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
-
 export interface ReactRendererOptions {
   type: 'react'
   mode: 'sync' | 'streaming'
@@ -68,30 +67,33 @@ export class ReactRenderer implements Renderer {
       const modulePaths = await this.getPreloadPaths()
       const paths = [...modulePaths, ...this.transformHooks]
 
-      this.workerPool = await createPool({
-        create() {
-          const workerData = {
-            paths,
-          }
+      this.workerPool = await createPool(
+        {
+          create() {
+            const workerData = {
+              paths,
+            }
 
-          let worker: Worker
-          switch (mode) {
-            case 'streaming':
-              worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
-                workerData,
-              })
-            case 'sync':
-              worker = new Worker(require.resolve('./StaticWorker.import.js'), {
-                workerData,
-              })
-          }
+            let worker: Worker
+            switch (mode) {
+              case 'streaming':
+                worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
+                  workerData,
+                })
+              case 'sync':
+                worker = new Worker(require.resolve('./StaticWorker.import.js'), {
+                  workerData,
+                })
+            }
 
-          return worker
+            return worker
+          },
+          async dispose(worker) {
+            await worker.terminate()
+          },
         },
-        async dispose(worker) {
-          await worker.terminate()
-        },
-      })
+        os.cpus().length
+      )
     }
   }
 
