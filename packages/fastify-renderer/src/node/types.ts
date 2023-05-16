@@ -89,3 +89,8 @@ export interface RenderInput {
 export interface WorkerRenderInput extends RenderInput {
   modulePath: string
 }
+
+export interface StreamWorkerEvent {
+  type: 'close' | 'data' | 'end' | 'error' | 'pause' | 'readable' | 'resume'
+  content?: any
+}

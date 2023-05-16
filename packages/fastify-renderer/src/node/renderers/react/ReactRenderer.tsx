@@ -11,7 +11,7 @@ import { Worker } from 'worker_threads'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
-import type { FastifyRendererHook, WorkerRenderInput } from '../../types'
+import type { FastifyRendererHook, StreamWorkerEvent, WorkerRenderInput } from '../../types'
 import { mapFilepathToEntrypointName, unthunk } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
 import { staticRender, streamingRender } from './ssr'
@@ -120,13 +120,11 @@ export class ReactRenderer implements Renderer {
             destination,
             hooks: this.transformHooks,
           } satisfies WorkerRenderInput)
-          worker.on('message', (content: any) => {
-            if (content) {
-              passthrough.write(content)
-            } else {
-              passthrough.end()
+          worker.on('message', ({ type, content }: StreamWorkerEvent) => {
+            passthrough.emit(type, content)
+            passthrough.on('close', () => {
               resolve()
-            }
+            })
           })
           worker.on('error', (error) => passthrough.destroy(error))
         })

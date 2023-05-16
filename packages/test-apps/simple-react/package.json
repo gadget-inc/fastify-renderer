@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "wds --watch --supervise server.ts",
+    "dev": "wds --watch server.ts",
     "build": "wds build.ts",
     "typecheck": "tsc --noEmit"
   },
