@@ -80,6 +80,8 @@ export class FastifyRendererPlugin {
     let manifestEntry = this.clientManifest![entryName]
     if (!manifestEntry) {
       // TODO: Refactor this away
+      // Imperative mode is broken in prod
+      // this makes it load in prod, but still incorrectly
       const closestName = Object.keys(this.clientManifest!).find((k) => entryName.startsWith(k))
       if (closestName) manifestEntry = this.clientManifest![closestName]
     }
