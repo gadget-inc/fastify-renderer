@@ -51,6 +51,11 @@ export class ReactRenderer implements Renderer {
     this.renderables = renderables
     this.devServer = devServer
 
+    this.transformHooks = this.plugin.hooks
+      .map(unthunk)
+      .map((hook) => hook.transform?.absolutePath)
+      .flatMap((hook) => (hook ? [hook] : []))
+
     // in production mode, we eagerly require all the endpoints during server boot, so that the first request to the endpoint isn't slow
     // if the service running fastify-renderer is being gracefully restarted, this will block the fastify server from listening until all the code is required, keeping the old server in service a bit longer while this require is done, which is good for users
     if (!this.plugin.devMode) {
@@ -59,10 +64,6 @@ export class ReactRenderer implements Renderer {
       }
 
       const mode = this.options.mode
-      this.transformHooks = this.plugin.hooks
-        .map(unthunk)
-        .map((hook) => hook.transform?.absolutePath)
-        .flatMap((hook) => (hook ? [hook] : []))
 
       const modulePaths = await this.getPreloadPaths()
       const paths = [...modulePaths, ...this.transformHooks]

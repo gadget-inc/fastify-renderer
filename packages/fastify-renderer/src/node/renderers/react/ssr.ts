@@ -60,10 +60,10 @@ export function staticRender({ bootProps, destination, renderBase, module, hooks
     )
   )
 
-  const transformers = hooks.map((hook) => require(hook))
+  const transformers = hooks.map((hook) => require(hook)!.default)
 
   for (const hook of transformers) {
-    app = hook.transform(app)
+    app = hook(app)
   }
 
   return (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)

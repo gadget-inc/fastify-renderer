@@ -1,4 +1,5 @@
 import path from 'path'
+import { FastifyRendererOptions } from '../node/Plugin'
 import FastifyRenderer from '../src/node'
 import { unthunk } from '../src/node/utils'
 import { newFastify } from './helpers'
@@ -7,7 +8,7 @@ const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-mod
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
 let thunkId = 0
 
-const options = {
+const options: FastifyRendererOptions = {
   vite: { root: __dirname, logLevel: (process.env.LOG_LEVEL ?? 'info') as any },
   devMode: true,
   renderer: {
@@ -18,9 +19,6 @@ const options = {
     {
       heads: () => {
         return 'head'
-      },
-      transform: (app) => {
-        return app
       },
       postRenderHeads: () => {
         return 'postRenderHead'
@@ -33,19 +31,22 @@ const options = {
         heads: () => {
           return `<style>#${id} {}</style>`
         },
-        transform: (app) => {
-          return app
-        },
         postRenderHeads: () => {
           return ''
         },
       }
     },
+    {
+      name: 'Test transform hook',
+      transform: {
+        absolutePath: require.resolve('./fixtures/transformer.jsx'),
+      },
+    },
   ],
 }
 
 describe('FastifyRenderer', () => {
-  let server
+  let server: Awaited<ReturnType<typeof newFastify>>
   beforeAll(async () => {
     server = await newFastify()
     await server.register(FastifyRenderer, options)
@@ -59,6 +60,9 @@ describe('FastifyRenderer', () => {
     server.get(
       '/early-hook-reply',
       {
+        // TODO: Investigate linter error
+        // https://typescript-eslint.io/rules/no-misused-promises/#checksvoidreturn
+        // eslint-disable-next-line @typescript-eslint/no-misused-promises
         preValidation: async (_request, reply) => {
           await reply.code(201).send('hello')
         },
@@ -116,17 +120,13 @@ describe('FastifyRenderer', () => {
     expect(response.body).toEqual('hello')
   })
 
-  // TODO: Re-introduce transformation hooks
-  test.skip('should call hooks in correct order', async () => {
+  test('should call hooks in correct order', async () => {
     const callOrder: string[] = []
+    if (!options.hooks) throw new Error('Test options are not setup correctly')
     const hook = unthunk(options.hooks[0])
     jest.spyOn(hook, 'heads').mockImplementation(() => {
       callOrder.push('heads')
       return 'head'
-    })
-    jest.spyOn(hook, 'transform').mockImplementation((app) => {
-      callOrder.push('transforms')
-      return app
     })
     jest.spyOn(hook, 'postRenderHeads').mockImplementation(() => {
       callOrder.push('postRenders')
@@ -139,7 +139,7 @@ describe('FastifyRenderer', () => {
       headers: { Accept: 'text/html' },
     })
 
-    expect(callOrder).toEqual(['transforms', 'heads', 'postRenders'])
+    expect(callOrder).toEqual(['heads', 'postRenders'])
   })
 
   test('should unthunk hooks on every render', async () => {
@@ -157,5 +157,15 @@ describe('FastifyRenderer', () => {
 
     expect(firstResponse.body).toMatch('<style>#0 {}</style>')
     expect(secondResponse.body).toMatch('<style>#1 {}</style>')
+  })
+
+  test('should run transform hooks', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/render-test',
+      headers: { Accept: 'text/html' },
+    })
+
+    expect(response.body).toContain('Transform Hook')
   })
 })
