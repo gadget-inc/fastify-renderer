@@ -18,6 +18,7 @@ export const server = async () => {
       mode: 'sync',
     },
     vite: {
+      root: __dirname,
       server: {
         hmr: {
           port: 27123,

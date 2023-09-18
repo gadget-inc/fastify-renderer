@@ -25,7 +25,7 @@ const RouteTable = (props: {
   )
 }
 
-export function Root<BootProps>(props: {
+export function Root<BootProps extends Record<string, any>>(props: {
   Entrypoint: React.FunctionComponent<BootProps>
   Layout: React.FunctionComponent<LayoutProps>
   bootProps: BootProps

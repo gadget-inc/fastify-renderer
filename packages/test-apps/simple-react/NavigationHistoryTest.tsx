@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link, useLocation } from 'wouter'
+import { Link, useLocation } from 'fastify-renderer/client/react'
 
 const NavigationHistoryTest = () => {
   const [path, navigate] = useLocation()

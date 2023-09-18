@@ -1,0 +1,3 @@
+packages:
+  - "packages/fastify-renderer"
+  - "packages/test-apps/*"
