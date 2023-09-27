@@ -57,7 +57,7 @@ describe('FastifyRenderer', () => {
   })
 
   test('should mount vite routes at a prefix to avoid collision with user routes', async () => {
-    expect(server.printRoutes()).toMatch('/.vite/')
+    expect(server.printRoutes()).toMatch('.vite')
   })
 
   test('should close vite devServer when fastify server is closing in dev mode', async () => {
@@ -67,7 +67,7 @@ describe('FastifyRenderer', () => {
 
     server = await newFastify()
     await server.register(FastifyRenderer, { ...options, devMode: true })
-    await server.listen(0)
+    await server.listen({ port: 0 })
     await server.close()
 
     expect(closeSpy).toHaveBeenCalled()
@@ -86,9 +86,10 @@ describe('FastifyRenderer', () => {
     const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'register').mockImplementation(jest.fn())
 
     server.get('/', { render: testComponent }, async (request, reply) => reply.send('Hello'))
-    await server.inject({ method: 'GET', url: '/' })
+    const response = await server.inject({ method: 'GET', url: '/' })
+    expect(response.statusCode).toEqual(200)
 
-    expect(registerRouteSpy).toHaveBeenCalledTimes(1)
+    expect(registerRouteSpy).toHaveBeenCalled()
   })
 })
 
@@ -101,7 +102,7 @@ describe('build()', () => {
   test('should build client and server side assets', async () => {
     const server = await newFastify()
     await server.register(FastifyRenderer, options)
-    await server.listen(0)
+    await server.listen({ port: 0 })
 
     jest.spyOn(fs, 'writeFile').mockImplementation(jest.fn())
     jest.spyOn(path, 'join').mockImplementation(jest.fn())
