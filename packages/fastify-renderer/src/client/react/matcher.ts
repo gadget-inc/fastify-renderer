@@ -9,7 +9,7 @@ import { MatcherFn } from 'wouter'
  */
 const convertPathToRegexp = (path: string) => {
   const keys: Key[] = []
-  const regexp = pathToRegexp(path, keys, { strict: true })
+  const regexp = pathToRegexp(path, keys)
   return { keys, regexp }
 }
 
