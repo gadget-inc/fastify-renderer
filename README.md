@@ -22,6 +22,8 @@ Features:
 npm install fastify-renderer --save
 # Using yarn
 yarn install fastify-renderer
+# Using pnpm
+pnpm install fastify-renderer
 ```
 
 ## Registering the plugin

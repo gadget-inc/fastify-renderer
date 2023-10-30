@@ -20,12 +20,12 @@ export const port = 3000 + parseInt(process.env.JEST_WORKER_ID!) - 1
 export const rootURL = `http://localhost:${port}`
 
 beforeAll(async () => {
-  const testPath = expect.getState().testPath
+  const testPath = expect.getState().testPath as string
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
   const testName = slash(testPath).match(/test-apps\/([\w-]+)\//)?.[1]
 
   // if this is a test placed under test-apps/xxx/test/
-  // start a vite server in that directory.
+  // start a fastify server in that directory.
   if (testName) {
     const testAppsRoot = resolve(__dirname, './')
     const srcDir = resolve(testAppsRoot, testName)

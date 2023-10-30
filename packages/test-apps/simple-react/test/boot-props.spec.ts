@@ -12,6 +12,6 @@ describe('boot props', () => {
   test('should make the boot props available to the layout', async () => {
     await page.goto(`${rootURL}/bootprops/test`)
     await reactReady(page)
-    await (expect(page.locator('#bootprops')) as any).toContainText('this is a boot prop')
+    await expect(page).toMatchText('#bootprops', 'this is a boot prop')
   })
 })

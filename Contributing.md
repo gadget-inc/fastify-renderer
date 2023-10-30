@@ -1,6 +1,47 @@
-# Contributing to fastify-renderer 
+# Contributing to fastify-renderer
 
 See below for information on how fastify-renderer's community is governed.
+
+## Development
+
+### Running a development server for a test app
+
+To run a local dev server that mounts the monorepo version of `fastify-render` in a test app, run
+
+```shell
+pnpm -F=simple-react dev
+```
+
+### Running tests
+
+You can run all the tests with:
+
+```shell
+pnpm test
+```
+
+You can run a specific test file with:
+
+```shell
+pnpm test packages/test-apps/simple-react/test/some-test-file.spec.ts
+```
+
+You can run a specific test case with:
+
+```shell
+pnpm test packages/test-apps/simple-react/test/some-test-file.spec.ts -- -t "the case name"
+```
+
+#### Debugging Playwright tests
+
+Playwright supports a handy debug environment variable:
+
+```shell
+PWDEBUG=1 pnpm test packages/test-apps/simple-react/test/some-test-file.spec.ts
+```
+
+This pops open a headful browser for running tests, and a UI for stepping through each execution element as it happens.
+
 ## Releases
 
 Bump the version with `npm version <minor|major|patch>` then commit the change to git. When your changes get pushed/merged to `main` on github, Github Actions will run the `release` workflow and automatically publish the release to NPM.

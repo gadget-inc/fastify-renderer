@@ -1,6 +1,5 @@
-import { useNavigationDetails } from 'fastify-renderer/client/react'
+import { useNavigationDetails, Link } from 'fastify-renderer/client/react'
 import React, { useEffect } from 'react'
-import { Link } from 'wouter'
 
 const NavigationTest = () => {
   const [isNavigating, navigationDestination] = useNavigationDetails()

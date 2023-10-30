@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup-test-env
       - name: Build all packages
-        run: yarn build
+        run: pnpm build
       - id: npm-publish
         name: Publish fastify-renderer
         uses: JS-DevTools/npm-publish@v1
