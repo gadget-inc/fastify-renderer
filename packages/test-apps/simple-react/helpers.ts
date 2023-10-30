@@ -20,17 +20,14 @@ export const port = 3000 + parseInt(process.env.JEST_WORKER_ID!) - 1
 export const rootURL = `http://localhost:${port}`
 
 beforeAll(async () => {
-  const testPath = expect.getState().testPath as string
+  const testPath = expect.getState().testPath
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
   const testName = slash(testPath).match(/test-apps\/([\w-]+)\//)?.[1]
 
   // if this is a test placed under test-apps/xxx/test/
   // start a fastify server in that directory.
   if (testName) {
-    const testAppsRoot = resolve(__dirname, './')
-    const srcDir = resolve(testAppsRoot, testName)
-
-    const serverEntrypoint = resolve(srcDir, 'server.ts')
+    const serverEntrypoint = resolve(__dirname, 'server.ts')
     if (!fs.existsSync(serverEntrypoint)) {
       throw Error(`Missing server entrypoint file at: ${serverEntrypoint}`)
     }
