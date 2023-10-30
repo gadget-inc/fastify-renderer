@@ -20,7 +20,7 @@ export const port = 3000 + parseInt(process.env.JEST_WORKER_ID!) - 1
 export const rootURL = `http://localhost:${port}`
 
 beforeAll(async () => {
-  const testPath = expect.getState().testPath
+  const testPath = expect.getState().testPath!
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
   const testName = slash(testPath).match(/test-apps\/([\w-]+)\//)?.[1]
 
