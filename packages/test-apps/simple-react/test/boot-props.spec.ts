@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test'
 import { Page } from 'playwright-chromium'
-import { newTestPage, reactReady, rootURL } from '../../helpers'
+import { newTestPage, reactReady, rootURL } from '../helpers'
 
 describe('boot props', () => {
   let page: Page

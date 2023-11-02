@@ -1,6 +1,6 @@
 import validator from 'html-validator'
 import { Page } from 'playwright-chromium'
-import { newTestPage, reactReady, rootURL } from '../../helpers'
+import { newTestPage, reactReady, rootURL } from '../helpers'
 
 describe('simple-react', () => {
   let page: Page
