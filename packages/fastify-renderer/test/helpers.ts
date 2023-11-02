@@ -1,5 +1,5 @@
 import fastify, { FastifyServerOptions } from 'fastify'
-import fastifyAccepts from 'fastify-accepts'
+import fastifyAccepts from '@fastify/accepts'
 import Middie from 'middie'
 import path from 'path'
 import { Readable } from 'stream'

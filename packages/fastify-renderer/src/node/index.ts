@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/require-await */
 import { FastifyInstance, FastifyReply } from 'fastify'
-import 'fastify-accepts'
+import '@fastify/accepts'
 import fp from 'fastify-plugin'
-import fastifyStatic from 'fastify-static'
+import fastifyStatic from '@fastify/static'
 import { promises as fs } from 'fs'
 import 'middie'
 import path from 'path'
@@ -146,7 +146,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
       async (instance) => {
         viteMountInstance = instance
 
-        // we need to register a wildcard route for all the files that vite might serve, which we use fastify-static to do
+        // we need to register a wildcard route for all the files that vite might serve, which we use @fastify/static to do
         // in dev mode, this is needed so the fastify router will recognize the route and dispatch it, which will then run the middleware chain, letting vite take over and serve the file
         // in production, this will actually serve the files that vite has built for the client
         void instance.register(fastifyStatic, {

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'wouter'
+import { Link } from 'fastify-renderer/client/react'
 
 const ImperativeOrange = (props: { hostname: string; requestIP: string }) => {
   return (
