@@ -18,11 +18,17 @@ jobs:
         run: pnpm build
       - name: Run Tests
         run: pnpm run test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup-test-env
       - name: Run Lint
         run: pnpm run lint
 
   automerge:
-    needs: build
+    needs: [build, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: fastify/github-action-merge-dependabot@v1
