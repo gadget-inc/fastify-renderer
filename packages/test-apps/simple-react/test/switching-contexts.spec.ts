@@ -8,6 +8,7 @@ describe('navigation details', () => {
     page = await newTestPage()
     await page.goto(`${rootURL}`)
     await reactReady(page)
+    await page.waitForLoadState('networkidle')
   })
 
   test('navigating between pages of the same context doesnt trigger a server side render request', async () => {
