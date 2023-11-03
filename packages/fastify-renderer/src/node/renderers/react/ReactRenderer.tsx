@@ -85,7 +85,7 @@ export class ReactRenderer implements Renderer {
 
   /** The purpose of adding this function is to allow us to spy on this method, otherwise it isn't available in the class prototype */
   async render<Props>(render: Render<Props>): Promise<void> {
-    return this.wrappedRender(render)
+    return await this.wrappedRender(render)
   }
   private workerStreamRender<Props>(bus: RenderBus, render: Render<Props>) {
     const requirePath = this.entrypointRequirePathForServer(render)
@@ -133,40 +133,47 @@ export class ReactRenderer implements Renderer {
   }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = <Props,>(render: Render<Props>) => {
+    // Prepare render bus
     const bus = this.startRenderBus(render)
+    // Send response with pending bus stacks
+    // do not wait for response to complete (it is completed below)
+    const response = render.reply.send(
+      render.document({
+        content: bus.stack('content'),
+        head: bus.stack('head'),
+        tail: bus.stack('tail'),
+        reply: render.reply,
+        props: render.props,
+        request: render.request,
+      })
+    )
 
     try {
-      const requirePath = this.entrypointRequirePathForServer(render)
-
       const destination = this.stripBasePath(render.request.url, render.base)
-      console.log('Rendering mode', this.options.mode, this.plugin.devMode ? 'dev' : 'prod')
-      const devRender = async () => {
-        staticRender({
-          module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-          renderBase: render.base,
-          bootProps: render.props,
-          destination,
-          hooks: this.hookPaths,
-          mode: this.options.mode,
-          bus,
-        })
+
+      // A dev render calls the React renderer directly in-thread
+      // the method writes directly to the bus
+      const devRender = () => {
+        const requirePath = this.entrypointRequirePathForServer(render)
+        void this.devServer!.ssrLoadModule(requirePath).then((module) =>
+          staticRender({
+            module: module.default,
+            renderBase: render.base,
+            bootProps: render.props,
+            destination,
+            hooks: this.hookPaths,
+            mode: this.options.mode,
+            bus,
+          })
+        )
       }
 
+      // A prod render processes the rendering off-thread and sends values to push into the bus
+      // over postMessage in a way that re-constructs the stream
       const prodRender = () => this.workerStreamRender(bus, render)
 
-      void render.reply.send(
-        render.document({
-          content: bus.stack('content'),
-          head: bus.stack('head'),
-          tail: bus.stack('tail'),
-          reply: render.reply,
-          props: render.props,
-          request: render.request,
-        })
-      )
-
       if (this.plugin.devMode) {
-        void devRender()
+        devRender()
       } else {
         prodRender()
       }
@@ -175,6 +182,8 @@ export class ReactRenderer implements Renderer {
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
       throw error
     }
+
+    return response
   }
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
