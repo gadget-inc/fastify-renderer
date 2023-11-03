@@ -1,7 +1,9 @@
 import { ReactElement } from 'react'
 import * as _ReactDOMServer from 'react-dom/server'
 import { parentPort, workerData } from 'worker_threads'
-import { RenderInput } from '../../types'
+import { RenderBus } from '../../RenderBus'
+import { FastifyRendererHook, RenderInput } from '../../types'
+import { unthunk } from '../../utils'
 
 const staticLocationHook = (path = '/', { record = false } = {}) => {
   // eslint-disable-next-line prefer-const
@@ -21,6 +23,8 @@ const staticLocationHook = (path = '/', { record = false } = {}) => {
 
 interface RenderArgs extends RenderInput {
   module: any
+  bus: RenderBus
+  mode: 'sync' | 'streaming'
 }
 
 // Presence of `parentPort` suggests
@@ -35,10 +39,16 @@ if (parentPort) {
   }
 }
 
-export function staticRender({ bootProps, destination, renderBase, module, hooks }: RenderArgs) {
+export function staticRender({ mode, bus, bootProps, destination, renderBase, module, hooks }: RenderArgs) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
+  const thunkHooks = hooks.map((hook) => require(hook)!.default).map(unthunk) as FastifyRendererHook[]
 
+  for (const { heads } of thunkHooks) {
+    if (heads) {
+      bus.push('head', heads())
+    }
+  }
   let app: ReactElement = React.createElement(
     RenderBusContext.Provider,
     null,
@@ -60,39 +70,32 @@ export function staticRender({ bootProps, destination, renderBase, module, hooks
     )
   )
 
-  const transformers = hooks.map((hook) => require(hook)!.default)
-
-  for (const hook of transformers) {
-    app = hook(app)
+  for (const { transform } of thunkHooks) {
+    if (transform) {
+      app = transform(app)
+    }
   }
 
-  return (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
-}
+  for (const { tails } of thunkHooks) {
+    if (tails) {
+      bus.push('tail', tails())
+    }
+  }
+  bus.push('tail', null)
 
-export function streamingRender({ bootProps, destination, renderBase, module }: RenderArgs) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
+  if (mode === 'streaming') {
+    ;(ReactDOMServer as typeof _ReactDOMServer).renderToStaticNodeStream(app).pipe(bus.stack('content'))
+  } else {
+    const content = (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
+    bus.push('content', content)
+    bus.push('content', null)
 
-  const app: ReactElement = React.createElement(
-    RenderBusContext.Provider,
-    null,
-    React.createElement(
-      Router,
-      {
-        base: renderBase,
-        hook: staticLocationHook(destination),
-      },
-      React.createElement(
-        Layout,
-        {
-          isNavigating: false,
-          navigationDestination: destination,
-          bootProps: bootProps,
-        },
-        React.createElement(Entrypoint, bootProps)
-      )
-    )
-  )
+    for (const { postRenderHeads } of thunkHooks) {
+      if (postRenderHeads) {
+        bus.push('head', postRenderHeads())
+      }
+    }
+  }
 
-  return (ReactDOMServer as typeof _ReactDOMServer).renderToStaticNodeStream(app)
+  bus.push('head', null)
 }

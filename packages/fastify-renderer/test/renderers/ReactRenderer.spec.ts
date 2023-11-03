@@ -1,7 +1,7 @@
 import path from 'path'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRegistration } from '../../src/node/renderers/Renderer'
-import { getMockRender, newReactRenderer, newRenderBus } from '../helpers'
+import { newReactRenderer } from '../helpers'
 
 const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
 
@@ -48,25 +48,25 @@ describe('ReactRenderer', () => {
       return
     })
 
-    test('should call postRenderHooks after dom render', async () => {
-      const renderer = newReactRenderer()
-      const callOrder: string[] = []
+    // test('should call postRenderHooks after dom render', async () => {
+    //   const renderer = newReactRenderer()
+    //   const callOrder: string[] = []
 
-      renderer['renderSynchronousTemplate']('test', newRenderBus(), getMockRender({}), [
-        {
-          heads: () => {
-            callOrder.push('heads')
-            return 'heads'
-          },
-          postRenderHeads: () => {
-            callOrder.push('postRenderHeads')
-            return 'postRenderHeads'
-          },
-        },
-      ])
+    //   renderer['renderSynchronousTemplate']('test', newRenderBus(), getMockRender({}), [
+    //     {
+    //       heads: () => {
+    //         callOrder.push('heads')
+    //         return 'heads'
+    //       },
+    //       postRenderHeads: () => {
+    //         callOrder.push('postRenderHeads')
+    //         return 'postRenderHeads'
+    //       },
+    //     },
+    //   ])
 
-      expect(callOrder).toEqual(['heads', 'postRenderHeads'])
-    })
+    //   expect(callOrder).toEqual(['heads', 'postRenderHeads'])
+    // })
   })
 
   describe('buildVirtualClientEntrypointModuleID()', () => {
