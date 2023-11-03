@@ -123,11 +123,10 @@ export class ReactRenderer implements Renderer {
             bootProps: render.props,
             destination,
             hooks: this.hookPaths,
+            mode: this.options.mode
           } satisfies WorkerRenderInput)
         })
     )
-
-    return { head: bus.stack('head'), content: bus.stack('content'), tail: bus.stack('tail') }
   }
   private async getPreloadPaths() {
     return this.renderables.map((renderable) =>
@@ -135,7 +134,7 @@ export class ReactRenderer implements Renderer {
     )
   }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
-  private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
+  private wrappedRender = <Props,>(render: Render<Props>) => {
     const bus = this.startRenderBus(render)
 
     try {
@@ -158,17 +157,14 @@ export class ReactRenderer implements Renderer {
       const prodRender = () => this.workerStreamRender(bus, render)
 
       void render.reply.send(
-        this.renderStreamingTemplate(
-          {
-            content: bus.stack('content'),
-            head: bus.stack('head'),
-            tail: bus.stack('tail'),
-            reply: render.reply,
-            props: render.props,
-            request: render.request,
-          },
-          render
-        )
+        render.document({
+          content: bus.stack('content'),
+          head: bus.stack('head'),
+          tail: bus.stack('tail'),
+          reply: render.reply,
+          props: render.props,
+          request: render.request,
+        })
       )
 
       if (this.plugin.devMode) {
@@ -181,7 +177,7 @@ export class ReactRenderer implements Renderer {
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
       throw error
     }
-  })
+  }
 
   /** Given a node-land module id (path), return the build time path to the virtual script to hydrate the render client side */
   public buildVirtualClientEntrypointModuleID(route: RenderableRegistration) {
@@ -273,23 +269,6 @@ export class ReactRenderer implements Renderer {
 
     return bus
   }
-
-  private renderStreamingTemplate<Props>(template: TemplateData<any>, render: Render<Props>) {
-    // this.runHeadHooks(bus, hooks)
-    // There are not postRenderHead hooks for streaming templates
-    // so let's end the head stack
-    // bus.push('head', null)
-
-    // contentStream.on('end', () => {
-    //   this.runTailHooks(bus, hooks)
-    // })
-
-    return render.document(template)
-  }
-
-  // private renderSynchronousTemplate<Props>(template: TemplateData<any>, render: Render<Props>) {
-  //   return render.document(template)
-  // }
 
   /** Given a module ID, load it for use within this node process on the server */
   private async loadModule(id: string) {

@@ -26,5 +26,5 @@ port.on('message', (args: WorkerRenderInput) => {
   stackStream('content')
   stackStream('tail')
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  staticRender({ bus, ...args, module: require(args.modulePath).default, mode: 'streaming' })
+  staticRender({ bus, ...args, module: require(args.modulePath).default })
 })

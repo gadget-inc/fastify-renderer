@@ -83,6 +83,7 @@ export interface RenderInput {
   destination: string
   bootProps: any
   hooks: string[]
+  mode: 'sync' | 'streaming'
 }
 
 export interface WorkerRenderInput extends RenderInput {
