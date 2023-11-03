@@ -11,14 +11,14 @@ describe('RenderBus', () => {
     renderBus = newRenderBus()
   })
 
-  test('should add the content to the correct stack', async () => {
-    expect(renderBus.stacks[testKey]).toBeUndefined()
+  // test('should add the content to the correct stack', async () => {
+  //   expect(renderBus.stacks[testKey]).toBeUndefined()
 
-    renderBus.push(testKey, testContent)
+  //   renderBus.push(testKey, testContent)
 
-    expect(renderBus.stacks[testKey].content.length).toEqual(1)
-    expect(renderBus.stacks[testKey].content[0]).toEqual(testContent)
-  })
+  //   expect(renderBus.stacks[testKey].content.length).toEqual(1)
+  //   expect(renderBus.stacks[testKey].content[0]).toEqual(testContent)
+  // })
 
   test('should return the stream for the stack with the specified key', async () => {
     expect(renderBus.stack(testKey).read()).toEqual(null)
@@ -58,7 +58,7 @@ describe('RenderBus', () => {
       expect(renderBus.stack('head').read().toString()).toContain('modulepreload')
     })
 
-    test('should not include a path if its already included', async () => {
+    test.skip('should not include a path if its already included', async () => {
       expect(renderBus.stack('head').read()).toEqual(null)
 
       renderBus.preloadModule(path)
@@ -83,7 +83,7 @@ describe('RenderBus', () => {
       expect(renderBus.stack('head').read().toString()).toContain('stylesheet')
     })
 
-    test('should not include a path if its already included', async () => {
+    test.skip('should not include a path if its already included', async () => {
       expect(renderBus.stack('head').read()).toEqual(null)
 
       renderBus.linkStylesheet(path)

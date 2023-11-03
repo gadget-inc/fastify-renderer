@@ -7,10 +7,8 @@ import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
 import { Worker } from 'worker_threads'
-import { TemplateData } from '../../DocumentTemplate'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
-import { wrap } from '../../tracing'
 import type { StreamWorkerEvent, WorkerRenderInput } from '../../types'
 import { mapFilepathToEntrypointName } from '../../utils'
 import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
@@ -123,7 +121,7 @@ export class ReactRenderer implements Renderer {
             bootProps: render.props,
             destination,
             hooks: this.hookPaths,
-            mode: this.options.mode
+            mode: this.options.mode,
           } satisfies WorkerRenderInput)
         })
     )
