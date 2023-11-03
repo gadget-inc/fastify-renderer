@@ -13,8 +13,8 @@ import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
 import type { StreamWorkerEvent, WorkerRenderInput } from '../../types'
 import { mapFilepathToEntrypointName } from '../../utils'
-import { Render, RenderableRegistration, Renderer } from '../Renderer'
-import { streamingRender } from './ssr'
+import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
+import { staticRender } from './ssr'
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
 export interface ReactRendererOptions {
@@ -60,8 +60,6 @@ export class ReactRenderer implements Renderer {
         await this.loadModule(this.entrypointRequirePathForServer(renderable))
       }
 
-      const mode = this.options.mode
-
       const modulePaths = await this.getPreloadPaths()
       const paths = [...modulePaths, ...this.hookPaths]
 
@@ -72,17 +70,9 @@ export class ReactRenderer implements Renderer {
               paths,
             }
 
-            let worker: Worker
-            switch (mode) {
-              case 'streaming':
-                worker = new Worker(require.resolve('./StreamingWorker.import.js'), {
-                  workerData,
-                })
-              case 'sync':
-                worker = new Worker(require.resolve('./StaticWorker.import.js'), {
-                  workerData,
-                })
-            }
+            const worker = new Worker(require.resolve('./StaticWorker.import.js'), {
+              workerData,
+            })
 
             return worker
           },
@@ -99,30 +89,34 @@ export class ReactRenderer implements Renderer {
   async render<Props>(render: Render<Props>): Promise<void> {
     return this.wrappedRender(render)
   }
-  private workerStreamRender<Props>(render: Render<Props>) {
+  private workerStreamRender<Props>(bus: RenderBus, render: Render<Props>) {
     const requirePath = this.entrypointRequirePathForServer(render)
 
     const destination = this.stripBasePath(render.request.url, render.base)
     if (!this.workerPool) throw new Error('WorkerPool not setup')
 
-    const bus = new RenderBus()
-    let streamCount = 3
+    const expectedStreamEnds = new Set(['head', 'tail', 'content'] as const)
+
     // Do not `await` or else it will not return
     // until the whole stream is completed
     void this.workerPool.use(
       (worker) =>
         new Promise<void>((resolve) => {
-          worker.on('message', ({ stack, content }: StreamWorkerEvent) => {
-            console.log('Got message', stack, content)
+          const messageHandler = ({ stack, content }: StreamWorkerEvent) => {
+            // console.log('Got message', stack, content)
             bus.push(stack, content)
-            if (content === null) streamCount--
-            if (streamCount === 0) {
-              resolve()
+            if (content === null) {
+              expectedStreamEnds.delete(stack)
+              if (expectedStreamEnds.size === 0) {
+                worker.off('message', messageHandler)
+                resolve()
+              }
             }
-          })
-          worker.on('error', (error) => {
-            console.error(error)
-          })
+          }
+          worker.on('message', messageHandler)
+          // worker.on('error', (error) => {
+          //   console.error(error)
+          // })
           worker.postMessage({
             modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
             renderBase: render.base,
@@ -142,32 +136,46 @@ export class ReactRenderer implements Renderer {
   }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
-    // const bus = this.startRenderBus(render)
-    // const hooks = this.plugin.hooks.map(unthunk)
+    const bus = this.startRenderBus(render)
 
     try {
       const requirePath = this.entrypointRequirePathForServer(render)
 
       const destination = this.stripBasePath(render.request.url, render.base)
       console.log('Rendering mode', this.options.mode, this.plugin.devMode ? 'dev' : 'prod')
-      const devRender = async () =>
-        streamingRender({
+      const devRender = async () => {
+        staticRender({
           module: (await this.devServer!.ssrLoadModule(requirePath)).default,
           renderBase: render.base,
           bootProps: render.props,
           destination,
           hooks: this.hookPaths,
+          mode: this.options.mode,
+          bus,
         })
+      }
 
-      const prodRender = () => this.workerStreamRender(render)
-      const streams = await (this.plugin.devMode ? devRender() : prodRender())
+      const prodRender = () => this.workerStreamRender(bus, render)
 
-      await render.reply.send(
+      void render.reply.send(
         this.renderStreamingTemplate(
-          { ...streams, reply: render.reply, props: render.props, request: render.request },
+          {
+            content: bus.stack('content'),
+            head: bus.stack('head'),
+            tail: bus.stack('tail'),
+            reply: render.reply,
+            props: render.props,
+            request: render.request,
+          },
           render
         )
       )
+
+      if (this.plugin.devMode) {
+        void devRender()
+      } else {
+        prodRender()
+      }
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
@@ -238,33 +246,33 @@ export class ReactRenderer implements Renderer {
     }
   }
 
-  // private startRenderBus(render: Render<any>) {
-  //   const bus = new RenderBus()
+  private startRenderBus(render: Render<any>) {
+    const bus = new RenderBus()
 
-  //   // push the script for the react-refresh runtime that vite's plugin normally would
-  //   if (this.plugin.devMode) {
-  //     bus.push('tail', this.reactRefreshScriptTag())
-  //   }
+    // push the script for the react-refresh runtime that vite's plugin normally would
+    if (this.plugin.devMode) {
+      bus.push('tail', this.reactRefreshScriptTag())
+    }
 
-  //   // push the props for the entrypoint to use when hydrating client side
-  //   bus.push('tail', scriptTag(`window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
+    // push the props for the entrypoint to use when hydrating client side
+    bus.push('tail', scriptTag(`window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
 
-  //   // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
-  //   if (this.plugin.devMode) {
-  //     bus.push(
-  //       'tail',
-  //       scriptTag(``, {
-  //         src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
-  //       })
-  //     )
-  //   } else {
-  //     const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
-  //     const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-  //     this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
-  //   }
+    // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
+    if (this.plugin.devMode) {
+      bus.push(
+        'tail',
+        scriptTag(``, {
+          src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
+        })
+      )
+    } else {
+      const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
+      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
+      this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
+    }
 
-  //   return bus
-  // }
+    return bus
+  }
 
   private renderStreamingTemplate<Props>(template: TemplateData<any>, render: Render<Props>) {
     // this.runHeadHooks(bus, hooks)
@@ -483,14 +491,14 @@ export const routes = [
     }
   }
 
-  // private reactRefreshScriptTag() {
-  //   return scriptTag(
-  //     `
-  //     import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
-  //     RefreshRuntime.injectIntoGlobalHook(window)
-  //     window.$RefreshReg$ = () => {}
-  //     window.$RefreshSig$ = () => (type) => type
-  //     window.__vite_plugin_react_preamble_installed__ = true`
-  //   )
-  // }
+  private reactRefreshScriptTag() {
+    return scriptTag(
+      `
+      import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
+      RefreshRuntime.injectIntoGlobalHook(window)
+      window.$RefreshReg$ = () => {}
+      window.$RefreshSig$ = () => (type) => type
+      window.__vite_plugin_react_preamble_installed__ = true`
+    )
+  }
 }

@@ -1,4 +1,4 @@
-import { Readable } from 'stream'
+import { PassThrough, Readable } from 'stream'
 import { scriptTag, stylesheetLinkTag } from './renderers/Renderer'
 
 export interface Stack {
@@ -10,43 +10,30 @@ export interface Stack {
 
 /** Holds groups of content during a render that eventually get pushed into the template. */
 export class RenderBus {
-  stacks: Record<string, Stack> = {}
+  streams: Record<string, PassThrough> = {}
   included = new Set<string>()
 
-  private createStack(key) {
-    const stack: Stack = (this.stacks[key] = {
-      content: [],
-      hasEnded: false,
-      contentStreamed: false,
-      stream: new Readable(),
-    })
+  private createStack(key: string) {
+    const stream = (this.streams[key] = new PassThrough())
 
-    stack.stream._read = function () {
-      if (stack.hasEnded && stack.contentStreamed) {
-        this.push(null)
-      } else {
-        this.push(stack.content.join('\n'))
-        stack.contentStreamed = true
-      }
-    }
-
-    return stack
+    return stream
   }
 
   push(key: string, content: string | null) {
-    if (!this.stacks[key]) this.createStack(key)
-    if (this.stacks[key].hasEnded) throw new Error(`Stack with key=${key} has ended, no more content can be added`)
+    if (!this.streams[key]) this.createStack(key)
+    if (this.streams[key].writableEnded)
+      throw new Error(`Stack with key=${key} has ended, no more content can be added`)
 
     if (content === null) {
-      this.stacks[key].hasEnded = true
-    } else if (!this.stacks[key].hasEnded) {
-      this.stacks[key].content.push(content)
+      this.streams[key].end()
+    } else {
+      this.streams[key].write(content)
     }
   }
 
-  stack(key) {
-    if (!this.stacks[key]) this.createStack(key)
-    return this.stacks[key].stream
+  stack(key: string) {
+    if (!this.streams[key]) this.createStack(key)
+    return this.streams[key]
   }
 
   preloadModule(path: string) {
