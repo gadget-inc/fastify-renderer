@@ -8,7 +8,7 @@ import { RenderBus } from './RenderBus'
 import { RenderableRegistration, Renderer } from './renderers/Renderer'
 import { ReactRenderer, ReactRendererOptions } from './renderers/react/ReactRenderer'
 import './types' // necessary to make sure that the fastify types are augmented
-import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
+import { ServerEntrypointManifest, ViteClientManifest } from './types'
 
 export interface FastifyRendererOptions {
   renderer?: ReactRendererOptions
@@ -19,7 +19,7 @@ export interface FastifyRendererOptions {
   devMode?: boolean
   outDir?: string
   assetsHost?: string
-  hooks?: (FastifyRendererHook | (() => FastifyRendererHook))[]
+  hooks?: string[] //(FastifyRendererHook | (() => FastifyRendererHook))[]
 }
 
 export type ImperativeRenderable = symbol
@@ -32,7 +32,7 @@ export class FastifyRendererPlugin {
   clientOutDir: string
   serverOutDir: string
   assetsHost: string
-  hooks: (FastifyRendererHook | (() => FastifyRendererHook))[]
+  hooks: string[] //(FastifyRendererHook | (() => FastifyRendererHook))[]
   clientManifest?: ViteClientManifest
   serverEntrypointManifest?: ServerEntrypointManifest
   renderables: RenderableRegistration[] = []

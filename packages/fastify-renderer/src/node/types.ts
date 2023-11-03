@@ -10,6 +10,7 @@ import type {
   RequestGenericInterface,
 } from 'fastify'
 import type { IncomingMessage, Server, ServerResponse } from 'http'
+import type { ReactElement } from 'react'
 import type { ViteDevServer } from 'vite'
 import type { ImperativeRenderable } from './Plugin'
 
@@ -23,9 +24,7 @@ export interface FastifyRendererHook {
   name?: string
   tails?: () => string
   heads?: () => string
-  transform?: {
-    absolutePath: string
-  }
+  transform?: (app: ReactElement) => ReactElement
   postRenderHeads?: () => string
 }
 
@@ -91,6 +90,6 @@ export interface WorkerRenderInput extends RenderInput {
 }
 
 export interface StreamWorkerEvent {
-  type: 'close' | 'data' | 'end' | 'error' | 'pause' | 'readable' | 'resume'
-  content?: any
+  content: string | null
+  stack: 'tail' | 'content' | 'head'
 }

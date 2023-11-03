@@ -7,22 +7,28 @@ const port = parentPort
 
 port.on('message', (args: WorkerRenderInput) => {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const stream = streamingRender({ ...args, module: require(args.modulePath).default })
+  const { content, head, tail } = streamingRender({ ...args, module: require(args.modulePath).default })
 
-  const send = ({ content, type }: StreamWorkerEvent) => {
-    port.postMessage({ type, content } satisfies StreamWorkerEvent)
+  const stackStream = (stack: 'tail' | 'content' | 'head', stream: NodeJS.ReadableStream) => {
+    const send = ({ stack, content }: StreamWorkerEvent) => {
+      port.postMessage({ stack, content } satisfies StreamWorkerEvent)
+    }
+    stream.on('data', (content) => {
+      send({ stack, content })
+    })
+    // stream.on('close', () => {
+    //   send({ stack, type: 'close' })
+    // })
+    // stream.on('error', (content) => {
+    //   send({ stack, type: 'error', content })
+    // })
+
+    // stream.on('end', () => {
+    //   send({ stack, type: 'end' })
+    // })
   }
-  stream.on('data', (content) => {
-    send({ type: 'data', content })
-  })
-  stream.on('close', () => {
-    send({ type: 'close' })
-  })
-  stream.on('error', (content) => {
-    send({ type: 'error', content })
-  })
 
-  stream.on('end', () => {
-    send({ type: 'end' })
-  })
+  stackStream('head', head)
+  stackStream('content', content)
+  stackStream('tail', tail)
 })

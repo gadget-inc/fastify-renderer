@@ -6695,10 +6695,10 @@ resolve@^2.0.0-next.4:
     path-parse "^1.0.7"
     supports-preserve-symlinks-flag "^1.0.0"
 
-resource-pooler@^0.1.0:
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/resource-pooler/-/resource-pooler-0.1.0.tgz#1a80a374a64be9bb0df2426049b414bdd87e98c4"
-  integrity sha512-Yl1EAYP2xMx/gev4nGC7xXjcR0z5kf+P3hIoUApYOtQVRIHwTBzXX1TmS2f3kjL2XKww7fJm8EXAtyAiVuJs1A==
+resource-pooler@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/resource-pooler/-/resource-pooler-0.2.0.tgz#e4a58857b2212ef1e0e86c4ab6d44dc20bed6ac2"
+  integrity sha512-PKcUUmf5xXE5BnSB0BbVCNu9EmsKVrNlYvEEkEWPB+Q6jvuukf7DI+EHyFZQBCBov9B0hqvEYfYbampYbavX7w==
 
 restore-cursor@^3.1.0:
   version "3.1.0"

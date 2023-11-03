@@ -3,18 +3,18 @@ import os from 'os'
 import path from 'path'
 import querystring from 'querystring'
 import { createPool, ResourcePooler } from 'resource-pooler'
-import { PassThrough } from 'stream'
 import { URL } from 'url'
 import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { normalizePath } from 'vite/dist/node'
 import { Worker } from 'worker_threads'
+import { TemplateData } from '../../DocumentTemplate'
 import { FastifyRendererPlugin } from '../../Plugin'
 import { RenderBus } from '../../RenderBus'
 import { wrap } from '../../tracing'
-import type { FastifyRendererHook, StreamWorkerEvent, WorkerRenderInput } from '../../types'
-import { mapFilepathToEntrypointName, unthunk } from '../../utils'
-import { Render, RenderableRegistration, Renderer, scriptTag } from '../Renderer'
-import { staticRender, streamingRender } from './ssr'
+import type { StreamWorkerEvent, WorkerRenderInput } from '../../types'
+import { mapFilepathToEntrypointName } from '../../utils'
+import { Render, RenderableRegistration, Renderer } from '../Renderer'
+import { streamingRender } from './ssr'
 const CLIENT_ENTRYPOINT_PREFIX = '/@fstr!entrypoint:'
 const SERVER_ENTRYPOINT_PREFIX = '/@fstr!server-entrypoint:'
 export interface ReactRendererOptions {
@@ -31,7 +31,7 @@ export class ReactRenderer implements Renderer {
   tmpdir!: string
   clientModulePath: string
   workerPool: ResourcePooler<Worker, Worker> | null = null
-  transformHooks: string[] = []
+  hookPaths: string[] = []
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
     this.clientModulePath = require.resolve('../../../client/react')
@@ -51,10 +51,7 @@ export class ReactRenderer implements Renderer {
     this.renderables = renderables
     this.devServer = devServer
 
-    this.transformHooks = this.plugin.hooks
-      .map(unthunk)
-      .map((hook) => hook.transform?.absolutePath)
-      .flatMap((hook) => (hook ? [hook] : []))
+    this.hookPaths = this.plugin.hooks
 
     // in production mode, we eagerly require all the endpoints during server boot, so that the first request to the endpoint isn't slow
     // if the service running fastify-renderer is being gracefully restarted, this will block the fastify server from listening until all the code is required, keeping the old server in service a bit longer while this require is done, which is good for users
@@ -66,7 +63,7 @@ export class ReactRenderer implements Renderer {
       const mode = this.options.mode
 
       const modulePaths = await this.getPreloadPaths()
-      const paths = [...modulePaths, ...this.transformHooks]
+      const paths = [...modulePaths, ...this.hookPaths]
 
       this.workerPool = await createPool(
         {
@@ -102,108 +99,75 @@ export class ReactRenderer implements Renderer {
   async render<Props>(render: Render<Props>): Promise<void> {
     return this.wrappedRender(render)
   }
-  private workerStreamRender<Props>(render: Render<Props>): NodeJS.ReadableStream {
+  private workerStreamRender<Props>(render: Render<Props>) {
     const requirePath = this.entrypointRequirePathForServer(render)
 
     const destination = this.stripBasePath(render.request.url, render.base)
     if (!this.workerPool) throw new Error('WorkerPool not setup')
-    const passthrough = new PassThrough()
 
+    const bus = new RenderBus()
+    let streamCount = 3
     // Do not `await` or else it will not return
     // until the whole stream is completed
     void this.workerPool.use(
       (worker) =>
         new Promise<void>((resolve) => {
+          worker.on('message', ({ stack, content }: StreamWorkerEvent) => {
+            console.log('Got message', stack, content)
+            bus.push(stack, content)
+            if (content === null) streamCount--
+            if (streamCount === 0) {
+              resolve()
+            }
+          })
+          worker.on('error', (error) => {
+            console.error(error)
+          })
           worker.postMessage({
             modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
             renderBase: render.base,
             bootProps: render.props,
             destination,
-            hooks: this.transformHooks,
+            hooks: this.hookPaths,
           } satisfies WorkerRenderInput)
-          worker.on('message', ({ type, content }: StreamWorkerEvent) => {
-            passthrough.emit(type, content)
-            passthrough.on('close', () => {
-              resolve()
-            })
-          })
-          worker.on('error', (error) => passthrough.destroy(error))
         })
     )
 
-    return passthrough
+    return { head: bus.stack('head'), content: bus.stack('content'), tail: bus.stack('tail') }
   }
   private async getPreloadPaths() {
     return this.renderables.map((renderable) =>
       path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(this.entrypointRequirePathForServer(renderable)))
     )
   }
-  private async workerRender<Props>(render: Render<Props>) {
-    const requirePath = this.entrypointRequirePathForServer(render)
-
-    const destination = this.stripBasePath(render.request.url, render.base)
-
-    if (!this.workerPool) throw new Error('WorkerPool is not setup')
-
-    return this.workerPool.use((worker) => {
-      worker.postMessage({
-        modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
-        renderBase: render.base,
-        bootProps: render.props,
-        destination,
-        hooks: this.transformHooks,
-      } satisfies WorkerRenderInput)
-      return new Promise<string>((resolve, reject) => {
-        worker
-          .once('message', (content) => {
-            resolve(content as string)
-          })
-          .once('error', (error) => reject(error))
-      })
-    })
-  }
   /** Renders a given request and sends the resulting HTML document out with the `reply`. */
   private wrappedRender = wrap('fastify-renderer.render', async <Props,>(render: Render<Props>): Promise<void> => {
-    const bus = this.startRenderBus(render)
-    const hooks = this.plugin.hooks.map(unthunk)
+    // const bus = this.startRenderBus(render)
+    // const hooks = this.plugin.hooks.map(unthunk)
 
     try {
       const requirePath = this.entrypointRequirePathForServer(render)
 
       const destination = this.stripBasePath(render.request.url, render.base)
+      console.log('Rendering mode', this.options.mode, this.plugin.devMode ? 'dev' : 'prod')
+      const devRender = async () =>
+        streamingRender({
+          module: (await this.devServer!.ssrLoadModule(requirePath)).default,
+          renderBase: render.base,
+          bootProps: render.props,
+          destination,
+          hooks: this.hookPaths,
+        })
 
-      switch (this.options.mode) {
-        case 'streaming': {
-          const devRender = async () =>
-            streamingRender({
-              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-              renderBase: render.base,
-              bootProps: render.props,
-              destination,
-              hooks: this.transformHooks,
-            })
+      const prodRender = () => this.workerStreamRender(render)
+      const streams = await (this.plugin.devMode ? devRender() : prodRender())
 
-          const prodRender = () => this.workerStreamRender(render)
-          const stream = await (this.plugin.devMode ? devRender() : prodRender())
-
-          await render.reply.send(this.renderStreamingTemplate(stream, bus, render, hooks))
-          break
-        }
-        case 'sync': {
-          const devRender = async () =>
-            staticRender({
-              module: (await this.devServer!.ssrLoadModule(requirePath)).default,
-              renderBase: render.base,
-              bootProps: render.props,
-              destination,
-              hooks: this.transformHooks,
-            })
-
-          const prodRender = () => this.workerRender(render)
-          const content = await (this.plugin.devMode ? devRender() : prodRender())
-          await render.reply.send(this.renderSynchronousTemplate(content, bus, render, hooks))
-        }
-      }
+      await render.reply.send(
+        this.renderStreamingTemplate(
+          { ...streams, reply: render.reply, props: render.props, request: render.request },
+          render
+        )
+      )
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
@@ -274,107 +238,50 @@ export class ReactRenderer implements Renderer {
     }
   }
 
-  private startRenderBus(render: Render<any>) {
-    const bus = new RenderBus(render)
+  // private startRenderBus(render: Render<any>) {
+  //   const bus = new RenderBus()
 
-    // push the script for the react-refresh runtime that vite's plugin normally would
-    if (this.plugin.devMode) {
-      bus.push('tail', this.reactRefreshScriptTag(render))
-    }
+  //   // push the script for the react-refresh runtime that vite's plugin normally would
+  //   if (this.plugin.devMode) {
+  //     bus.push('tail', this.reactRefreshScriptTag())
+  //   }
 
-    // push the props for the entrypoint to use when hydrating client side
-    bus.push('tail', scriptTag(render, `window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
+  //   // push the props for the entrypoint to use when hydrating client side
+  //   bus.push('tail', scriptTag(`window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
 
-    // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
-    if (this.plugin.devMode) {
-      bus.push(
-        'tail',
-        scriptTag(render, ``, {
-          src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
-        })
-      )
-    } else {
-      const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
-      const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
-    }
+  //   // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
+  //   if (this.plugin.devMode) {
+  //     bus.push(
+  //       'tail',
+  //       scriptTag(``, {
+  //         src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
+  //       })
+  //     )
+  //   } else {
+  //     const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
+  //     const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
+  //     this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
+  //   }
 
-    return bus
-  }
+  //   return bus
+  // }
 
-  private renderStreamingTemplate<Props>(
-    contentStream: NodeJS.ReadableStream,
-    bus: RenderBus,
-    render: Render<Props>,
-    hooks: FastifyRendererHook[]
-  ) {
-    this.runHeadHooks(bus, hooks)
+  private renderStreamingTemplate<Props>(template: TemplateData<any>, render: Render<Props>) {
+    // this.runHeadHooks(bus, hooks)
     // There are not postRenderHead hooks for streaming templates
     // so let's end the head stack
-    bus.push('head', null)
+    // bus.push('head', null)
 
-    contentStream.on('end', () => {
-      this.runTailHooks(bus, hooks)
-    })
+    // contentStream.on('end', () => {
+    //   this.runTailHooks(bus, hooks)
+    // })
 
-    return render.document({
-      content: contentStream,
-      head: bus.stack('head'),
-      tail: bus.stack('tail'),
-      props: render.props,
-      request: render.request,
-      reply: render.reply,
-    })
+    return render.document(template)
   }
 
-  private renderSynchronousTemplate<Props>(
-    content: string,
-    bus: RenderBus,
-    render: Render<Props>,
-    hooks: FastifyRendererHook[]
-  ) {
-    this.runHeadHooks(bus, hooks)
-    this.runPostRenderHeadHooks(bus, hooks)
-    this.runTailHooks(bus, hooks)
-
-    return render.document({
-      content,
-      head: bus.stack('head'),
-      tail: bus.stack('tail'),
-      props: render.props,
-      request: render.request,
-      reply: render.reply,
-    })
-  }
-
-  private runPostRenderHeadHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
-    // Run any heads hooks that might want to push something after the content
-    for (const hook of hooks) {
-      if (hook.postRenderHeads) {
-        bus.push('head', hook.postRenderHeads())
-      }
-    }
-    bus.push('head', null)
-  }
-
-  private runHeadHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
-    // Run any heads hooks that might want to push something before the content
-    for (const hook of hooks) {
-      if (hook.heads) {
-        bus.push('head', hook.heads())
-      }
-    }
-  }
-
-  private runTailHooks(bus: RenderBus, hooks: FastifyRendererHook[]) {
-    // when we're done rendering the content, run any hooks that might want to push more stuff after the content
-    for (const hook of hooks) {
-      if (hook.tails) {
-        bus.push('tail', hook.tails())
-      }
-    }
-    bus.push('tail', null)
-  }
+  // private renderSynchronousTemplate<Props>(template: TemplateData<any>, render: Render<Props>) {
+  //   return render.document(template)
+  // }
 
   /** Given a module ID, load it for use within this node process on the server */
   private async loadModule(id: string) {
@@ -576,15 +483,14 @@ export const routes = [
     }
   }
 
-  private reactRefreshScriptTag(render: Render) {
-    return scriptTag(
-      render,
-      `
-      import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
-      RefreshRuntime.injectIntoGlobalHook(window)
-      window.$RefreshReg$ = () => {}
-      window.$RefreshSig$ = () => (type) => type
-      window.__vite_plugin_react_preamble_installed__ = true`
-    )
-  }
+  // private reactRefreshScriptTag() {
+  //   return scriptTag(
+  //     `
+  //     import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
+  //     RefreshRuntime.injectIntoGlobalHook(window)
+  //     window.$RefreshReg$ = () => {}
+  //     window.$RefreshSig$ = () => (type) => type
+  //     window.__vite_plugin_react_preamble_installed__ = true`
+  //   )
+  // }
 }
