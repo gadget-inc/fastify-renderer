@@ -271,7 +271,13 @@ export class ReactRenderer implements Renderer {
     } else {
       const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
       const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      this.plugin.pushImportTagsFromManifest(bus, manifestEntryName)
+      this.plugin.pushImportTagsFromManifest(
+        bus,
+        manifestEntryName,
+        true,
+        (render.reply as any).cspNonce?.style as string | undefined,
+        (render.reply as any).cspNonce?.script as string | undefined
+      )
     }
 
     return bus

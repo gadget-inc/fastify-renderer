@@ -11,7 +11,7 @@
     "release": "pnpm -F=fastify-renderer publish",
     "preinstall": "npx only-allow pnpm",
     "prerelease": "pnpm -F=fastify-renderer run gitpkg publish",
-    "test": "jest --forceExit -w=1",
+    "test": "jest --forceExit --runInBand",
     "test:debug": "cross-env FR_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest --forceExit"
   },
   "repository": {

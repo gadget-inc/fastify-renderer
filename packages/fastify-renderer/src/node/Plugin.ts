@@ -76,7 +76,13 @@ export class FastifyRendererPlugin {
   /**
    * Implements the backend integration logic for vite -- pulls out the chain of imported modules from the vite manifest and generates <script/> or <link/> tags to source the assets in the browser.
    **/
-  pushImportTagsFromManifest = (bus: RenderBus, entryName: string, root = true) => {
+  pushImportTagsFromManifest(
+    bus: RenderBus,
+    entryName: string,
+    root = true,
+    styleNonce?: string,
+    scriptNonce?: string
+  ) {
     let manifestEntry = this.clientManifest![entryName]
     if (!manifestEntry) {
       // TODO: Refactor this away
@@ -93,12 +99,12 @@ export class FastifyRendererPlugin {
 
     if (manifestEntry.imports) {
       for (const submodule of manifestEntry.imports) {
-        this.pushImportTagsFromManifest(bus, submodule, false)
+        this.pushImportTagsFromManifest(bus, submodule, false, styleNonce, scriptNonce)
       }
     }
     if (manifestEntry.css) {
       for (const css of manifestEntry.css) {
-        bus.linkStylesheet(this.clientAssetPath(css))
+        bus.linkStylesheet(this.clientAssetPath(css), styleNonce)
       }
     }
 
@@ -106,12 +112,12 @@ export class FastifyRendererPlugin {
 
     if (file.endsWith('.js')) {
       if (root) {
-        bus.loadScript(file)
+        bus.loadScript(file, scriptNonce)
       } else {
         bus.preloadModule(file)
       }
     } else if (file.endsWith('.css')) {
-      bus.linkStylesheet(file)
+      bus.linkStylesheet(file, styleNonce)
     }
   }
 

@@ -42,13 +42,13 @@ export class RenderBus {
     this.push('head', `<link rel="modulepreload" crossorigin href="${path}">`)
   }
 
-  linkStylesheet(path: string) {
-    if (this.included.has(path)) return
-    this.included.add(path)
-    this.push('head', stylesheetLinkTag(path))
+  linkStylesheet(href: string, nonce?: string) {
+    if (this.included.has(href)) return
+    this.included.add(href)
+    this.push('head', stylesheetLinkTag({ href, nonce }))
   }
 
-  loadScript(src: string) {
-    this.push('tail', scriptTag(``, { src }))
+  loadScript(src: string, nonce?: string) {
+    this.push('tail', scriptTag(``, { src, nonce }))
   }
 }
