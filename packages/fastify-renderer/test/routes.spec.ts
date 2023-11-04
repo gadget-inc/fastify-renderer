@@ -36,11 +36,8 @@ describe('FastifyRenderer', () => {
     server.get(
       '/early-hook-reply',
       {
-        // TODO: Investigate linter error
-        // https://typescript-eslint.io/rules/no-misused-promises/#checksvoidreturn
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        preValidation: async (_request, reply) => {
-          await reply.code(201).send('hello')
+        preValidation: (_request, reply) => {
+          void reply.code(201).send('hello')
         },
         render: testComponent,
       },
