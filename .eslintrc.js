@@ -2,7 +2,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     tsconfigRootDir: __dirname,
-    project: ['./packages/fastify-renderer/tsconfig.eslint.json', './packages/test-apps/tsconfig.json'],
+    project: ['./packages/fastify-renderer/tsconfig.eslint.json', './packages/test-apps/simple-react/tsconfig.json'],
   },
   settings: {
     react: {

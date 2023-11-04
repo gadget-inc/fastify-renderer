@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test'
-import { newTestPage, reactReady, rootURL } from '../../helpers'
 import { test, describe } from '@jest/globals'
+import { newTestPage, reactReady, rootURL } from '../helpers'
 
 describe('boot props', () => {
   test('should make the boot props available to the layout', async () => {

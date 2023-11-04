@@ -8,21 +8,27 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [18.x, 20.x]
         os: [ubuntu-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-test-env
       - name: Build JS
         run: pnpm build
       - name: Run Tests
         run: pnpm run test
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-test-env
       - name: Run Lint
         run: pnpm run lint
 
   automerge:
-    needs: build
+    needs: [build, lint]
     runs-on: ubuntu-latest
     steps:
       - uses: fastify/github-action-merge-dependabot@v1

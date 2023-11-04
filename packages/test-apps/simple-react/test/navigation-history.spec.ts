@@ -1,6 +1,7 @@
 import { Page } from 'playwright-chromium'
-import { newTestPage, reactReady, rootURL } from '../../helpers'
 import { describe, test, beforeEach, expect } from '@jest/globals'
+import { newTestPage, reactReady, rootURL } from '../helpers'
+
 describe('navigation details', () => {
   let page: Page
 

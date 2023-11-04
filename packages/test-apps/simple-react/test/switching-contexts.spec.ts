@@ -1,6 +1,6 @@
 import { Page } from 'playwright-chromium'
-import { newTestPage, reactReady, rootURL } from '../../helpers'
 import { describe, test, beforeEach } from '@jest/globals'
+import { newTestPage, reactReady, rootURL } from '../helpers'
 
 describe('navigation details', () => {
   let page: Page
@@ -9,6 +9,7 @@ describe('navigation details', () => {
     page = await newTestPage()
     await page.goto(`${rootURL}`)
     await reactReady(page)
+    await page.waitForLoadState('networkidle')
   })
 
   test('navigating between pages of the same context doesnt trigger a server side render request', async () => {
