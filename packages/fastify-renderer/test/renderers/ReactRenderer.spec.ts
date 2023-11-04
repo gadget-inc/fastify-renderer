@@ -1,9 +1,8 @@
-import path from 'path'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRegistration } from '../../src/node/renderers/Renderer'
 import { newReactRenderer } from '../helpers'
-
-const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
+import { describe, test, expect } from '@jest/globals'
+// const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
 
 describe('ReactRenderer', () => {
   test('should create an instance and initialize the client module path', async () => {

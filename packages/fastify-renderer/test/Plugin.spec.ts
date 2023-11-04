@@ -5,7 +5,6 @@ import { FastifyRendererOptions } from '../src/node/Plugin'
 import { RenderableRegistration } from '../src/node/renderers/Renderer'
 import { newFastifyRendererPlugin, newRenderBus } from './helpers'
 import { expect, test, describe } from '@jest/globals'
-import { RenderBus } from '../src/node/RenderBus'
 
 // Mocking fs isn't reliable. Use /tmp instead
 // jest.mock('fs', () => ({
@@ -53,11 +52,11 @@ describe('FastifyRendererPlugin', () => {
 
   describe('clientAssetPath()', () => {
     test('should return the client asset path that will be accessible from the browser', async () => {
-      fs.mkdirSync("/tmp/out/dir/client/.vite/", {recursive: true})
-      fs.mkdirSync("/tmp/out/dir/server/.vite/", {recursive: true})
-      fs.writeFileSync("/tmp/out/dir/client/.vite/manifest.json", '{ "test": "value" }')
-      fs.writeFileSync("/tmp/out/dir/server/.vite/manifest.json", '{ "test": "value" }')
-      fs.writeFileSync("/tmp/out/dir/server/virtual-manifest.json", '{ "test": "value" }')
+      fs.mkdirSync('/tmp/out/dir/client/.vite/', { recursive: true })
+      fs.mkdirSync('/tmp/out/dir/server/.vite/', { recursive: true })
+      fs.writeFileSync('/tmp/out/dir/client/.vite/manifest.json', '{ "test": "value" }')
+      fs.writeFileSync('/tmp/out/dir/server/.vite/manifest.json', '{ "test": "value" }')
+      fs.writeFileSync('/tmp/out/dir/server/virtual-manifest.json', '{ "test": "value" }')
       const options: FastifyRendererOptions = {
         outDir: '/tmp/out/dir',
         renderer: { type: 'react', mode: 'sync' },
@@ -88,14 +87,14 @@ describe('FastifyRendererPlugin', () => {
 
     // TODO: Generate the manifest file to test this
     test('should push all import tags from the manifest to the render bus', async () => {
-      const options: FastifyRendererOptions = {
-        outDir: '/tmp/out/dir',
-        renderer: { type: 'react', mode: 'sync' },
-        devMode: false,
-        assetsHost: 'https://custom.asset.host',
-      }
-      const plugin = newFastifyRendererPlugin(options)
-      const bus = new RenderBus()
+      // const options: FastifyRendererOptions = {
+      //   outDir: '/tmp/out/dir',
+      //   renderer: { type: 'react', mode: 'sync' },
+      //   devMode: false,
+      //   assetsHost: 'https://custom.asset.host',
+      // }
+      // const plugin = newFastifyRendererPlugin(options)
+      // const bus = new RenderBus()
       // expect(plugin.pushImportTagsFromManifest(bus, 'test')).toBe(true)
     })
 
