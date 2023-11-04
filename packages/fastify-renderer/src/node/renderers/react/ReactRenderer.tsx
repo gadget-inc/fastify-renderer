@@ -250,15 +250,18 @@ export class ReactRenderer implements Renderer {
   }
 
   private startRenderBus(render: Render<any>) {
+    const styleNonce = (render.reply as any).cspNonce?.style as string | undefined
+    const scriptNonce = (render.reply as any).cspNonce?.script as string | undefined
+
     const bus = new RenderBus()
 
     // push the script for the react-refresh runtime that vite's plugin normally would
     if (this.plugin.devMode) {
-      bus.push('tail', this.reactRefreshScriptTag())
+      bus.push('tail', this.reactRefreshScriptTag(scriptNonce))
     }
 
     // push the props for the entrypoint to use when hydrating client side
-    bus.push('tail', scriptTag(`window.__FSTR_PROPS=${JSON.stringify(render.props)};`))
+    bus.push('tail', scriptTag(`window.__FSTR_PROPS=${JSON.stringify(render.props)};`, { nonce: scriptNonce }))
 
     // if we're in development, we just source the entrypoint directly from vite and let the browser do its thing importing all the referenced stuff
     if (this.plugin.devMode) {
@@ -266,18 +269,13 @@ export class ReactRenderer implements Renderer {
         'tail',
         scriptTag(``, {
           src: path.join(this.plugin.assetsHost, this.entrypointScriptTagSrcForClient(render)),
+          nonce: scriptNonce,
         })
       )
     } else {
       const entrypointName = this.buildVirtualClientEntrypointModuleID(render)
       const manifestEntryName = normalizePath(path.relative(this.viteConfig.root, entrypointName))
-      this.plugin.pushImportTagsFromManifest(
-        bus,
-        manifestEntryName,
-        true,
-        (render.reply as any).cspNonce?.style as string | undefined,
-        (render.reply as any).cspNonce?.script as string | undefined
-      )
+      this.plugin.pushImportTagsFromManifest(bus, manifestEntryName, true, styleNonce, scriptNonce)
     }
 
     return bus
@@ -483,14 +481,15 @@ export const routes = [
     }
   }
 
-  private reactRefreshScriptTag() {
+  private reactRefreshScriptTag(nonce?: string) {
     return scriptTag(
       `
       import RefreshRuntime from "${path.join(this.viteConfig.base, '@react-refresh')}"
       RefreshRuntime.injectIntoGlobalHook(window)
       window.$RefreshReg$ = () => {}
       window.$RefreshSig$ = () => (type) => type
-      window.__vite_plugin_react_preamble_installed__ = true`
+      window.__vite_plugin_react_preamble_installed__ = true`,
+      { nonce }
     )
   }
 }

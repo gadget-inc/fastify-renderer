@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio'
 import path from 'path'
-
+import { expect, test, describe, beforeAll } from '@jest/globals'
 import FastifyRenderer from '../src/node'
 import { newFastify } from './helpers'
 

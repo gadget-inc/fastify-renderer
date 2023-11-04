@@ -1,7 +1,7 @@
 import path from 'path'
 import { FastifyRendererOptions } from '../node/Plugin'
 import FastifyRenderer from '../src/node'
-import { unthunk } from '../src/node/utils'
+import { expect, test, describe, beforeAll } from '@jest/globals'
 import { newFastify } from './helpers'
 
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
