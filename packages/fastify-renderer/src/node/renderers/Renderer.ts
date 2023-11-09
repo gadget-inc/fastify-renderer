@@ -9,6 +9,12 @@ export interface RenderOptions {
   base: string
 }
 
+/** The options configuring a renderable route */
+export interface RenderableRouteOptions {
+  /** If the component rendered by the route should have its props refetched each time it is rendered */
+  refetch?: boolean
+}
+
 export type PartialRenderOptions =
   | { layout: string; document: Template; base: string }
   | { layout: string; base: string }
@@ -24,6 +30,7 @@ export interface RenderableRegistration extends RenderOptions {
   renderable: string
   /** If this renderable was registered for imperative rendering */
   isImperative?: true
+  options?: RenderableRouteOptions
 }
 
 /** A unit of renderable work */
