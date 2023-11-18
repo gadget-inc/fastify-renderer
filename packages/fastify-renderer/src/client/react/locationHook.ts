@@ -19,7 +19,7 @@ export const events = [eventPopstate, eventPushState, eventReplaceState]
 export const useTransitionLocation = ({ base = '' } = {}) => {
   const [path, update] = useState(() => currentPathname(base)) // @see https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
   const prevLocation = useRef(path + location.search + location.hash)
-  const [startTransition, isPending] = useTransition()
+  const [isPending, startTransition] = useTransition()
   const router = useRouter()
   useEffect(() => {
     if (!router.navigationHistory)
