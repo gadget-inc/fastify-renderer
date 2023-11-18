@@ -8,7 +8,8 @@ try {
     transpileOnly: true,
   })
   require(tsWorkerPath)
-} catch {
+} catch (e) {
+  console.warn('Falling back to js', e)
   const jsWorkerPath = require.resolve('./StaticWorker.js')
   require(jsWorkerPath)
 }

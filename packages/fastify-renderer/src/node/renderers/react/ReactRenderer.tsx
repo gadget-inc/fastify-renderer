@@ -112,9 +112,15 @@ export class ReactRenderer implements Renderer {
             }
           }
           worker.on('message', messageHandler)
-          // worker.on('error', (error) => {
-          //   console.error(error)
-          // })
+          worker.on('error', (error) => {
+            console.error('An error occured in worker', error)
+            // Close streams
+            bus.push('head', null)
+            bus.push('body', null)
+            bus.push('tail', null)
+
+            resolve()
+          })
           worker.postMessage({
             modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
             renderBase: render.base,
