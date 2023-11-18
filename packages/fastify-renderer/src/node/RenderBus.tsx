@@ -10,32 +10,35 @@ export interface Stack {
 
 /** Holds groups of content during a render that eventually get pushed into the template. */
 export class RenderBus {
-  streams: Record<string, PassThrough> = {}
+  streams: Map<string, PassThrough> = new Map()
   included = new Set<string>()
 
   private createStack(key: string) {
-    const stream = (this.streams[key] = new PassThrough())
+    const stream = new PassThrough()
+    this.streams.set(key, stream)
 
     return stream
   }
 
   push(key: string, content: string | null, throwIfEnded = true) {
-    if (!this.streams[key]) this.createStack(key)
-    if (this.streams[key].writableEnded) {
+    let stream = this.streams.get(key)
+    if (!stream) stream = this.createStack(key)
+    if (stream.closed) {
       if (throwIfEnded) throw new Error(`Stack with key=${key} has ended, no more content can be added`)
       return
     }
 
     if (content === null) {
-      this.streams[key].end()
+      stream.end()
     } else {
-      this.streams[key].write(content)
+      stream.write(content)
     }
   }
 
   stack(key: string) {
-    if (!this.streams[key]) this.createStack(key)
-    return this.streams[key]
+    let stream = this.streams.get(key)
+    if (!stream) stream = this.createStack(key)
+    return stream
   }
 
   preloadModule(path: string) {
@@ -52,5 +55,15 @@ export class RenderBus {
 
   loadScript(src: string, nonce?: string) {
     this.push('tail', scriptTag(``, { src, nonce }))
+  }
+
+  endAll() {
+    // End all streams (error handling helper)
+    for (const stream of this.streams.values()) {
+      if (!stream.closed) {
+        stream.end()
+        stream.destroy()
+      }
+    }
   }
 }

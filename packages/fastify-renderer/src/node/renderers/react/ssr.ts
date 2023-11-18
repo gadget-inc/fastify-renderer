@@ -41,77 +41,86 @@ if (parentPort) {
 
 export function staticRender({ mode, bus, bootProps, destination, renderBase, module, hooks }: RenderArgs) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
-  const thunkHooks = hooks.map((hook) => require(hook)!.default).map(unthunk) as FastifyRendererHook[]
+  try {
+    const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
+    const thunkHooks = hooks.map((hook) => require(hook)!.default).map(unthunk) as FastifyRendererHook[]
 
-  for (const { heads } of thunkHooks) {
-    if (heads) {
-      bus.push('head', heads())
-    }
-  }
-  let app: ReactElement = React.createElement(
-    RenderBusContext.Provider,
-    null,
-    React.createElement(
-      Router,
-      {
-        base: renderBase,
-        hook: staticLocationHook(destination),
-      },
+    let app: ReactElement = React.createElement(
+      RenderBusContext.Provider,
+      null,
       React.createElement(
-        Layout,
+        Router,
         {
-          isNavigating: false,
-          navigationDestination: destination,
-          bootProps: bootProps,
+          base: renderBase,
+          hook: staticLocationHook(destination),
         },
-        React.createElement(Entrypoint, bootProps)
+        React.createElement(
+          Layout,
+          {
+            isNavigating: false,
+            navigationDestination: destination,
+            bootProps: bootProps,
+          },
+          React.createElement(Entrypoint, bootProps)
+        )
       )
     )
-  )
 
-  for (const { name, transform } of thunkHooks) {
-    if (transform) {
-      try {
+    for (const { heads } of thunkHooks) {
+      if (heads) {
+        bus.push('head', heads())
+      }
+    }
+    for (const { transform } of thunkHooks) {
+      if (transform) {
         app = transform(app)
-      } catch (error) {
-        console.error('Error in hook', name, error)
       }
     }
-  }
 
-  for (const { name, tails } of thunkHooks) {
-    if (tails) {
-      try {
+    for (const { tails } of thunkHooks) {
+      if (tails) {
         bus.push('tail', tails())
-      } catch (error) {
-        console.error('Error in hook', name, error)
       }
     }
-  }
-  bus.push('tail', null)
+    bus.push('tail', null)
 
-  if (mode === 'streaming') {
-    ;(ReactDOMServer as typeof _ReactDOMServer).renderToPipeableStream(app).pipe(bus.stack('content'))
-  } else {
-    try {
+    if (mode === 'streaming') {
+      const renderingPipe = (ReactDOMServer as typeof _ReactDOMServer).renderToPipeableStream(app, {
+        onError(error, errorInfo) {
+          console.error('Caught error streaming', error, errorInfo)
+          if (error instanceof Error) {
+            bus.push('error', error.message)
+          }
+          bus.endAll()
+        },
+        onAllReady() {
+          // onAllReady still fires if there were errors
+          bus.push('error', null, false)
+        },
+      })
+      // Send to content
+      renderingPipe.pipe(bus.stack('content'))
+    } else {
       const content = (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
+      // no errors
+      bus.push('error', null)
       bus.push('content', content)
-    } catch (error) {
-      console.error('Error rendering component', error)
-    }
-    bus.push('content', null)
 
-    for (const { name, postRenderHeads } of thunkHooks) {
-      if (postRenderHeads) {
-        try {
+      bus.push('content', null)
+
+      for (const { postRenderHeads } of thunkHooks) {
+        if (postRenderHeads) {
           bus.push('head', postRenderHeads())
-        } catch (error) {
-          console.error('Error in hook', name, error)
         }
       }
     }
-  }
 
-  bus.push('head', null)
+    bus.push('head', null)
+  } catch (error) {
+    console.error('Caught error while rendering', error)
+    if (error instanceof Error) {
+      bus.push('error', error.message)
+    }
+    bus.endAll()
+  }
 }

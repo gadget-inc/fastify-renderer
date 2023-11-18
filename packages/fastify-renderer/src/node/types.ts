@@ -92,5 +92,5 @@ export interface WorkerRenderInput extends RenderInput {
 
 export interface StreamWorkerEvent {
   content: string | null
-  stack: 'tail' | 'content' | 'head'
+  stack: 'tail' | 'content' | 'head' | 'error'
 }

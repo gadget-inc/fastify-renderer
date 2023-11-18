@@ -8,7 +8,7 @@ const port = parentPort
 
 port.on('message', (args: WorkerRenderInput) => {
   const bus = new RenderBus()
-  const stackStream = (stack: 'tail' | 'content' | 'head') => {
+  const stackStream = (stack: 'tail' | 'content' | 'head' | 'error') => {
     const stream = bus.stack(stack)
     const send = ({ stack, content }: StreamWorkerEvent) => {
       port.postMessage({ stack, content } satisfies StreamWorkerEvent)
@@ -18,14 +18,12 @@ port.on('message', (args: WorkerRenderInput) => {
     })
 
     stream.on('end', () => {
+      console.log('Stream ended for', stack)
       send({ stack, content: null })
     })
-    // stream.on('error', () => {
-    //   console.log('Ending stream with error')
-    //   send({ stack, content: null })
-    // })
   }
 
+  stackStream('error')
   stackStream('head')
   stackStream('content')
   stackStream('tail')

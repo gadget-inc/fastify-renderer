@@ -93,34 +93,32 @@ export class ReactRenderer implements Renderer {
     const destination = this.stripBasePath(render.request.url, render.base)
     if (!this.workerPool) throw new Error('WorkerPool not setup')
 
-    const expectedStreamEnds = new Set(['head', 'tail', 'content'] as const)
+    const expectedStreamEnds = new Set(['head', 'tail', 'content', 'error'] as const)
 
     // Do not `await` or else it will not return
     // until the whole stream is completed
     return this.workerPool.use(
       (worker) =>
         new Promise<void>((resolve, reject) => {
-          const errorHandler = (error: Error) => {
-            // Close streams
-            bus.push('head', null, false)
-            bus.push('content', null, false)
-            bus.push('tail', null, false)
-            reject(error)
+          const cleanup = () => {
+            expectedStreamEnds.clear()
+            worker.off('message', messageHandler)
           }
+
           const messageHandler = ({ stack, content }: StreamWorkerEvent) => {
-            // console.log('Got message', stack, content)
+            if (stack === 'error' && content) {
+              reject(new Error(content))
+            }
             bus.push(stack, content)
             if (content === null) {
               expectedStreamEnds.delete(stack)
               if (expectedStreamEnds.size === 0) {
-                worker.off('message', messageHandler)
-                worker.off('error', errorHandler)
+                cleanup()
                 resolve()
               }
             }
           }
           worker.on('message', messageHandler)
-          worker.on('error', errorHandler)
           worker.postMessage({
             modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
             renderBase: render.base,
