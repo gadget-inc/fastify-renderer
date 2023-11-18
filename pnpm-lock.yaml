@@ -5,10 +5,8 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  react: 0.0.0-experimental-4ead6b530
-  react-dom: 0.0.0-experimental-4ead6b530
-  '@types/react': 17.0.4
-  '@types/react-dom': 17.0.4
+  '@types/react': ^18.2.0
+  '@types/react-dom': ^18.2.0
 
 importers:
 
@@ -90,6 +88,12 @@ importers:
       path-to-regexp:
         specifier: ^6.2.1
         version: 6.2.1
+      react:
+        specifier: ^18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
       resource-pooler:
         specifier: ^0.2.0
         version: 0.2.0
@@ -104,7 +108,7 @@ importers:
         version: 2.9.15
       wouter:
         specifier: ^2.7.5
-        version: 2.7.5(react@0.0.0-experimental-4ead6b530)
+        version: 2.7.5(react@18.2.0)
     devDependencies:
       '@jest/globals':
         specifier: ^29.7.0
@@ -125,11 +129,11 @@ importers:
         specifier: ^18.11.9
         version: 18.18.8
       '@types/react':
-        specifier: 17.0.4
-        version: 17.0.4
+        specifier: ^18.2.0
+        version: 18.2.37
       '@types/react-dom':
-        specifier: 17.0.4
-        version: 17.0.4
+        specifier: ^18.2.0
+        version: 18.2.15
       '@types/sanitize-filename':
         specifier: ^1.6.3
         version: 1.6.3
@@ -157,12 +161,6 @@ importers:
       pino-pretty:
         specifier: ^4.8.0
         version: 4.8.0
-      react:
-        specifier: 0.0.0-experimental-4ead6b530
-        version: 0.0.0-experimental-4ead6b530
-      react-dom:
-        specifier: 0.0.0-experimental-4ead6b530
-        version: 0.0.0-experimental-4ead6b530(react@0.0.0-experimental-4ead6b530)
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -182,14 +180,14 @@ importers:
         specifier: ^6.2.1
         version: 6.2.1
       react:
-        specifier: 0.0.0-experimental-4ead6b530
-        version: 0.0.0-experimental-4ead6b530
+        specifier: ^18.2.0
+        version: 18.2.0
       react-dom:
-        specifier: 0.0.0-experimental-4ead6b530
-        version: 0.0.0-experimental-4ead6b530(react@0.0.0-experimental-4ead6b530)
+        specifier: ^18.2.0
+        version: 18.2.0(react@18.2.0)
       wouter:
         specifier: ^2.7.5
-        version: 2.7.5(react@0.0.0-experimental-4ead6b530)
+        version: 2.7.5(react@18.2.0)
     devDependencies:
       '@playwright/test':
         specifier: ^1.39.0
@@ -207,11 +205,11 @@ importers:
         specifier: ^18.11.9
         version: 18.18.8
       '@types/react':
-        specifier: 17.0.4
-        version: 17.0.4
+        specifier: ^18.2.0
+        version: 18.2.37
       '@types/react-dom':
-        specifier: 17.0.4
-        version: 17.0.4
+        specifier: ^18.2.0
+        version: 18.2.15
       html-validator:
         specifier: ^5.1.18
         version: 5.1.18
@@ -1340,14 +1338,14 @@ packages:
     resolution: {integrity: sha512-RK/kBbYOQQHLYj9Z95eh7S6t7gq4Ojt/NT8HTk8bWVhA5DaF+5SMnxHKkP4gPNN3wAZkKP+VjAf0ebtYzf+fxg==}
     dev: true
 
-  /@types/react-dom@17.0.4:
-    resolution: {integrity: sha512-Wb6rlnPJfqbhpkvYN39y1NM/pOGGPzzIRquu0RdUMvTwgXNvASFO7pdtrtvyxGTQNb9wzBaQxXAWDdEqegZw2A==}
+  /@types/react-dom@18.2.15:
+    resolution: {integrity: sha512-HWMdW+7r7MR5+PZqJF6YFNSCtjz1T0dsvo/f1BV6HkV+6erD/nA7wd9NM00KVG83zf2nJ7uATPO9ttdIPvi3gg==}
     dependencies:
-      '@types/react': 17.0.4
+      '@types/react': 18.2.37
     dev: true
 
-  /@types/react@17.0.4:
-    resolution: {integrity: sha512-onz2BqScSFMoTRdJUZUDD/7xrusM8hBA2Fktk2qgaTYPCgPvWnDEgkrOs8hhPUf2jfcIXkJ5yK6VfYormJS3Jw==}
+  /@types/react@18.2.37:
+    resolution: {integrity: sha512-RGAYMi2bhRgEXT3f4B92WTohopH6bIXw05FuGlmJEnv/omEn190+QYEIYxIAuIBdKgboYYdVved2p1AxZVQnaw==}
     dependencies:
       '@types/prop-types': 15.7.6
       '@types/scheduler': 0.16.3
@@ -5358,6 +5356,7 @@ packages:
   /object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
+    dev: true
 
   /object-inspect@1.12.3:
     resolution: {integrity: sha512-geUvdk7c+eizMNUDkRpW1wJwgfOiOeHbxBR/hLXK1aT6zmVSO0jsQcs7fj6MGw89jC/cjGfLcNOrtMYtGqm81g==}
@@ -5875,15 +5874,15 @@ packages:
       unpipe: 1.0.0
     dev: false
 
-  /react-dom@0.0.0-experimental-4ead6b530(react@0.0.0-experimental-4ead6b530):
-    resolution: {integrity: sha512-a03ptS8lhhEENNgne6zQMXQWX/Z6WMEBGJQY0laOC0NgJywidePYpgkiE72fUAaj/r7t9a6XsdVyqx4UsEZijg==}
+  /react-dom@18.2.0(react@18.2.0):
+    resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
-      react: 0.0.0-experimental-4ead6b530
+      react: ^18.2.0
     dependencies:
       loose-envify: 1.4.0
-      object-assign: 4.1.1
-      react: 0.0.0-experimental-4ead6b530
-      scheduler: 0.0.0-experimental-4ead6b530
+      react: 18.2.0
+      scheduler: 0.23.0
+    dev: false
 
   /react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -5898,12 +5897,12 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: false
 
-  /react@0.0.0-experimental-4ead6b530:
-    resolution: {integrity: sha512-tpbYm6FEuC1L6tCVXIKYAhgGAkS8DShzKpmXosowZvLqeByeLQQe77Ef6bi5HdEkFm2v0lZffLWckSM8R4TToA==}
+  /react@18.2.0:
+    resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
     engines: {node: '>=0.10.0'}
     dependencies:
       loose-envify: 1.4.0
-      object-assign: 4.1.1
+    dev: false
 
   /read-pkg@3.0.0:
     resolution: {integrity: sha512-BLq/cCO9two+lBgiTYNqD6GdtK8s4NpaWrl6/rCO9w0TUS8oJl7cmToOZfRYllKTISY6nt1U7jQ53brmKqY6BA==}
@@ -6164,11 +6163,11 @@ packages:
     dependencies:
       truncate-utf8-bytes: 1.0.2
 
-  /scheduler@0.0.0-experimental-4ead6b530:
-    resolution: {integrity: sha512-AzUR6EiDuY32oAnfELgVFPasfovJw4+NtRy7RIam0IUOSgNZKcazqcHzsoW1zDw3AzIBlD1VlRvl5SPJRSlTPg==}
+  /scheduler@0.23.0:
+    resolution: {integrity: sha512-CtuThmgHNg7zIZWAXi3AsyIzA3n4xx7aNyjwC2VJldO2LMVDhFK+63xGqq6CsJH4rTAt6/M+N4GhZiDYPx9eUw==}
     dependencies:
       loose-envify: 1.4.0
-      object-assign: 4.1.1
+    dev: false
 
   /secure-json-parse@2.7.0:
     resolution: {integrity: sha512-6aU+Rwsezw7VR8/nyvKTx8QpWH9FrcYiXXlqC4z5d5XQBDRqtbfsRjnwGyqbi3gddNtWHuEk9OANUotL26qKUw==}
@@ -7069,12 +7068,12 @@ packages:
       isexe: 2.0.0
     dev: true
 
-  /wouter@2.7.5(react@0.0.0-experimental-4ead6b530):
+  /wouter@2.7.5(react@18.2.0):
     resolution: {integrity: sha512-TOI9gD1wa7a8wW+lh3rjg0C+MjYGKMV3eC+++6D+7n1z36ZJIBPWe2G9Hs1jYNPsV7oKiPTI3UFC5TGhZjQfrQ==}
     peerDependencies:
-      react: 0.0.0-experimental-4ead6b530
+      react: '>=16.8.0'
     dependencies:
-      react: 0.0.0-experimental-4ead6b530
+      react: 18.2.0
     dev: false
 
   /wrap-ansi@6.2.0:

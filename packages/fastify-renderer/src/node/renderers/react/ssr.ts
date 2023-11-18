@@ -92,7 +92,7 @@ export function staticRender({ mode, bus, bootProps, destination, renderBase, mo
   bus.push('tail', null)
 
   if (mode === 'streaming') {
-    ;(ReactDOMServer as typeof _ReactDOMServer).renderToNodeStream(app).pipe(bus.stack('content'))
+    ;(ReactDOMServer as typeof _ReactDOMServer).renderToPipeableStream(app).pipe(bus.stack('content'))
   } else {
     try {
       const content = (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
