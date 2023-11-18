@@ -20,6 +20,10 @@ port.on('message', (args: WorkerRenderInput) => {
     stream.on('end', () => {
       send({ stack, content: null })
     })
+    // stream.on('error', () => {
+    //   console.log('Ending stream with error')
+    //   send({ stack, content: null })
+    // })
   }
 
   stackStream('head')

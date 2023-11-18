@@ -70,29 +70,45 @@ export function staticRender({ mode, bus, bootProps, destination, renderBase, mo
     )
   )
 
-  for (const { transform } of thunkHooks) {
+  for (const { name, transform } of thunkHooks) {
     if (transform) {
-      app = transform(app)
+      try {
+        app = transform(app)
+      } catch (error) {
+        console.error('Error in hook', name, error)
+      }
     }
   }
 
-  for (const { tails } of thunkHooks) {
+  for (const { name, tails } of thunkHooks) {
     if (tails) {
-      bus.push('tail', tails())
+      try {
+        bus.push('tail', tails())
+      } catch (error) {
+        console.error('Error in hook', name, error)
+      }
     }
   }
   bus.push('tail', null)
 
   if (mode === 'streaming') {
-    ;(ReactDOMServer as typeof _ReactDOMServer).renderToStaticNodeStream(app).pipe(bus.stack('content'))
+    ;(ReactDOMServer as typeof _ReactDOMServer).renderToNodeStream(app).pipe(bus.stack('content'))
   } else {
-    const content = (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
-    bus.push('content', content)
+    try {
+      const content = (ReactDOMServer as typeof _ReactDOMServer).renderToString(app)
+      bus.push('content', content)
+    } catch (error) {
+      console.error('Error rendering component', error)
+    }
     bus.push('content', null)
 
-    for (const { postRenderHeads } of thunkHooks) {
+    for (const { name, postRenderHeads } of thunkHooks) {
       if (postRenderHeads) {
-        bus.push('head', postRenderHeads())
+        try {
+          bus.push('head', postRenderHeads())
+        } catch (error) {
+          console.error('Error in hook', name, error)
+        }
       }
     }
   }

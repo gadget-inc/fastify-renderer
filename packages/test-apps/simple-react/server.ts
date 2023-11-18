@@ -28,7 +28,7 @@ export const server = async () => {
         include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp'],
       },
     },
-    devMode: false,
+    devMode: true,
   })
 
   const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple'))
@@ -67,6 +67,10 @@ export const server = async () => {
   })
 
   server.get('/navigation-history-test', { render: require.resolve('./NavigationHistoryTest') }, async (_request) => {
+    return {}
+  })
+
+  server.get('/error', { render: require.resolve('./Error') }, async (_request) => {
     return {}
   })
 

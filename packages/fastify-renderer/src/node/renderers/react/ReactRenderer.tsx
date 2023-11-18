@@ -97,9 +97,16 @@ export class ReactRenderer implements Renderer {
 
     // Do not `await` or else it will not return
     // until the whole stream is completed
-    void this.workerPool.use(
+    return this.workerPool.use(
       (worker) =>
-        new Promise<void>((resolve) => {
+        new Promise<void>((resolve, reject) => {
+          const errorHandler = (error: Error) => {
+            // Close streams
+            bus.push('head', null, false)
+            bus.push('content', null, false)
+            bus.push('tail', null, false)
+            reject(error)
+          }
           const messageHandler = ({ stack, content }: StreamWorkerEvent) => {
             // console.log('Got message', stack, content)
             bus.push(stack, content)
@@ -107,20 +114,13 @@ export class ReactRenderer implements Renderer {
               expectedStreamEnds.delete(stack)
               if (expectedStreamEnds.size === 0) {
                 worker.off('message', messageHandler)
+                worker.off('error', errorHandler)
                 resolve()
               }
             }
           }
           worker.on('message', messageHandler)
-          worker.on('error', (error) => {
-            console.error('An error occured in worker', error)
-            // Close streams
-            bus.push('head', null)
-            bus.push('body', null)
-            bus.push('tail', null)
-
-            resolve()
-          })
+          worker.on('error', errorHandler)
           worker.postMessage({
             modulePath: path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(requirePath)),
             renderBase: render.base,
@@ -161,7 +161,7 @@ export class ReactRenderer implements Renderer {
       // the method writes directly to the bus
       const devRender = () => {
         const requirePath = this.entrypointRequirePathForServer(render)
-        void this.devServer!.ssrLoadModule(requirePath).then((module) =>
+        return this.devServer!.ssrLoadModule(requirePath).then((module) =>
           staticRender({
             module: module.default,
             renderBase: render.base,
@@ -178,11 +178,12 @@ export class ReactRenderer implements Renderer {
       // over postMessage in a way that re-constructs the stream
       const prodRender = () => this.workerStreamRender(bus, render)
 
-      if (this.plugin.devMode) {
-        devRender()
-      } else {
-        prodRender()
-      }
+      // Do not await or stream is killed
+      const startRender = this.plugin.devMode ? devRender : prodRender
+
+      void startRender().catch((e) => {
+        console.error('An error occured while rendering', e)
+      })
     } catch (error: unknown) {
       this.devServer?.ssrFixStacktrace(error as Error)
       // let fastify's error handling system figure out what to do with this after fixing the stack trace
