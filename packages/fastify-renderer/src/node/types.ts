@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-empty-interface */
-import {
+import type {
   ContextConfigDefault,
   FastifyInstance,
   FastifyReply,
@@ -10,10 +9,10 @@ import {
   RawServerDefault,
   RequestGenericInterface,
 } from 'fastify'
-import { IncomingMessage, Server, ServerResponse } from 'http'
-import { ReactElement } from 'react'
-import { ViteDevServer } from 'vite'
-import { ImperativeRenderable } from './Plugin'
+import type { IncomingMessage, Server, ServerResponse } from 'http'
+import type { ReactElement } from 'react'
+import type { ViteDevServer } from 'vite'
+import type { ImperativeRenderable } from './Plugin'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -23,10 +22,10 @@ export type ServerRenderer<Props> = (
 
 export interface FastifyRendererHook {
   name?: string
-  tails?: () => string
-  heads?: () => string
-  transform?: (app: ReactElement) => ReactElement
-  postRenderHeads?: () => string
+  tails?: (props?: any) => string
+  heads?: (props?: any) => string
+  transform?: (app: ReactElement, props?: any) => ReactElement
+  postRenderHeads?: (props?: any) => string
 }
 
 export interface ViteClientManifest {
@@ -77,4 +76,21 @@ declare module 'fastify' {
       handler: ServerRenderer<Props>
     ): FastifyInstance<RawServer, RawRequest, RawReply>
   }
+}
+
+export interface RenderInput {
+  renderBase: string
+  destination: string
+  bootProps: any
+  hooks: string[]
+  mode: 'sync' | 'streaming'
+}
+
+export interface WorkerRenderInput extends RenderInput {
+  modulePath: string
+}
+
+export interface StreamWorkerEvent {
+  content: string | null
+  stack: 'tail' | 'content' | 'head' | 'error'
 }

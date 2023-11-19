@@ -1,13 +1,12 @@
-import path from 'path'
+import { FastifyRendererOptions } from '../node/Plugin'
 import FastifyRenderer from '../src/node'
-import { unthunk } from '../src/node/utils'
 import { newFastify } from './helpers'
+import { describe, test, expect, beforeAll, vi } from 'vitest'
 
-const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
-const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
-let thunkId = 0
+const testComponent = require.resolve('./fixtures/test-module.tsx')
+const testLayoutComponent = require.resolve('./fixtures/test-layout.tsx')
 
-const options = {
+const options: FastifyRendererOptions = {
   vite: { root: __dirname, logLevel: (process.env.LOG_LEVEL ?? 'info') as any },
   devMode: true,
   renderer: {
@@ -15,37 +14,14 @@ const options = {
     type: 'react' as const,
   },
   hooks: [
-    {
-      heads: () => {
-        return 'head'
-      },
-      transform: (app) => {
-        return app
-      },
-      postRenderHeads: () => {
-        return 'postRenderHead'
-      },
-    },
-    () => {
-      const id = thunkId++
-
-      return {
-        heads: () => {
-          return `<style>#${id} {}</style>`
-        },
-        transform: (app) => {
-          return app
-        },
-        postRenderHeads: () => {
-          return ''
-        },
-      }
-    },
+    require.resolve('./hooks/simpleHeadHooks.ts'),
+    require.resolve('./hooks/thunkCounterHook.ts'),
+    require.resolve('./hooks/simpleTransformHook.ts'),
   ],
 }
 
 describe('FastifyRenderer', () => {
-  let server
+  let server: Awaited<ReturnType<typeof newFastify>>
   beforeAll(async () => {
     server = await newFastify()
     await server.register(FastifyRenderer, options)
@@ -54,13 +30,15 @@ describe('FastifyRenderer', () => {
       layout: testLayoutComponent,
     })
 
+    server.get('/error', { render: testComponent }, async (_request, _reply) => ({ fail: true }))
+
     server.get('/plain', async (_request, reply) => reply.send('Hello'))
     server.get('/render-test', { render: testComponent }, async (_request, _reply) => ({ a: 1, b: 2 }))
     server.get(
       '/early-hook-reply',
       {
-        preValidation: async (_request, reply) => {
-          await reply.code(201).send('hello')
+        preValidation: (_request, reply) => {
+          void reply.code(201).send('hello')
         },
         render: testComponent,
       },
@@ -71,12 +49,30 @@ describe('FastifyRenderer', () => {
       return { a: 1, b: 2 }
     })
     await server.ready()
+    type NodeOSType = typeof import('node:os')
+    vi.mock('node:os', async () => ({
+      ...(await vi.importActual<NodeOSType>('node:os')),
+      cpus: () => [{}],
+    }))
   })
 
-  beforeEach(() => {
-    thunkId = 0
-  })
+  // This test must run first
+  test('should unthunk hooks on every render', async () => {
+    const firstResponse = await server.inject({
+      method: 'GET',
+      url: '/render-test',
+      headers: { Accept: 'text/html' },
+    })
 
+    const secondResponse = await server.inject({
+      method: 'GET',
+      url: '/render-test',
+      headers: { Accept: 'text/html' },
+    })
+
+    expect(firstResponse.body).toMatch('<style>#0 {}</style>')
+    expect(secondResponse.body).toMatch('<style>#1 {}</style>')
+  })
   test('should return the route props if content-type is application/json', async () => {
     const response = await server.inject({
       method: 'GET',
@@ -116,45 +112,30 @@ describe('FastifyRenderer', () => {
     expect(response.body).toEqual('hello')
   })
 
-  test('should call hooks in correct order', async () => {
-    const callOrder: string[] = []
-    const hook = unthunk(options.hooks[0])
-    jest.spyOn(hook, 'heads').mockImplementation(() => {
-      callOrder.push('heads')
-      return 'head'
-    })
-    jest.spyOn(hook, 'transform').mockImplementation((app) => {
-      callOrder.push('transforms')
-      return app
-    })
-    jest.spyOn(hook, 'postRenderHeads').mockImplementation(() => {
-      callOrder.push('postRenders')
-      return 'postRender'
-    })
-
-    await server.inject({
+  test('should run transform hooks', async () => {
+    const response = await server.inject({
       method: 'GET',
       url: '/render-test',
       headers: { Accept: 'text/html' },
     })
 
-    expect(callOrder).toEqual(['transforms', 'heads', 'postRenders'])
+    expect(response.body).toContain('Transform Hook')
   })
 
-  test('should unthunk hooks on every render', async () => {
-    const firstResponse = await server.inject({
-      method: 'GET',
-      url: '/render-test',
-      headers: { Accept: 'text/html' },
-    })
+  test('broken components should not break server', async () => {
+    for (let index = 0; index < 10; index++) {
+      const response = await server.inject({
+        method: 'GET',
+        url: '/error',
+      })
 
-    const secondResponse = await server.inject({
-      method: 'GET',
-      url: '/render-test',
-      headers: { Accept: 'text/html' },
-    })
+      expect(response.statusCode).toBe(200)
+      const response2 = await server.inject({
+        method: 'GET',
+        url: '/render-test',
+      })
 
-    expect(firstResponse.body).toMatch('<style>#0 {}</style>')
-    expect(secondResponse.body).toMatch('<style>#1 {}</style>')
+      expect(response2.statusCode).toBe(200)
+    }
   })
 })

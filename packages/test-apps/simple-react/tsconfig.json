@@ -1,18 +1,22 @@
 {
   "extends": "../../../tsconfig.json",
-  "include": ["."],
-  "exclude": ["**/node_modules", "**/dist/**"],
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/dist/**"
+  ],
   "compilerOptions": {
     "target": "ES2019",
     "module": "commonjs",
-    "lib": ["ES2020", "dom"],
+    "lib": [
+      "ES2020",
+      "dom"
+    ],
     "sourceMap": true,
     "types": [
-      "jest",
-      "node",
-      "jest-playwright-preset",
-      "expect-playwright",
-      "../../fastify-renderer/src/node/stream-template.d.ts"
+      "node"
     ]
   }
 }
