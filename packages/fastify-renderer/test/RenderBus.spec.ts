@@ -17,7 +17,7 @@ describe('RenderBus', () => {
     expect(stream.read().toString()).toEqual(testContent)
   })
 
-  // This test works by
+  // This test works but it doesn't throw synchronously
   test.skip('should throw an error if stack hasEnded', async () => {
     const renderBus = newRenderBus()
     const stream = renderBus.stack(testKey)
