@@ -22,10 +22,10 @@ export type ServerRenderer<Props> = (
 
 export interface FastifyRendererHook {
   name?: string
-  tails?: () => string
-  heads?: () => string
-  transform?: (app: ReactElement) => ReactElement
-  postRenderHeads?: () => string
+  tails?: (props?: any) => string
+  heads?: (props?: any) => string
+  transform?: (app: ReactElement, props?: any) => ReactElement
+  postRenderHeads?: (props?: any) => string
 }
 
 export interface ViteClientManifest {

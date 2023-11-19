@@ -27,4 +27,11 @@ describe('simple-react', () => {
     await reactReady(page)
     expect(await page.content()).to.contain('Failed on server but I live on!')
   })
+
+  test('Body completes even if hook error', async () => {
+    await page.goto(rootURL + '/hook-error')
+    expect(await page.content()).to.contain('</body>')
+    await reactReady(page)
+    expect(await page.content()).to.contain('This page was rendered at')
+  })
 })

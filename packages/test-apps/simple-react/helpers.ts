@@ -33,7 +33,6 @@ beforeAll(async ({ filepath }) => {
       throw Error(`Missing server entrypoint file at: ${serverEntrypoint}`)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { server: fastifyServer } = await import(serverEntrypoint)
     server = await fastifyServer()
     await server.listen(port)

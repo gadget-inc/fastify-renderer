@@ -37,7 +37,7 @@ export const server = async () => {
       },
     },
     devMode: true,
-    hooks: [],
+    hooks: [require.resolve('../../fastify-renderer/test/hooks/errorHeadHook.ts')],
   })
 
   const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple.tsx'))
@@ -65,6 +65,10 @@ export const server = async () => {
 
   server.get('/', { render: require.resolve('./Home.tsx') }, async () => {
     return { time: Date.now() }
+  })
+
+  server.get('/hook-error', { render: require.resolve('./Home.tsx') }, async () => {
+    return { time: Date.now(), failheads: true }
   })
 
   server.get('/about', { render: require.resolve('./About.tsx') }, async (request) => {

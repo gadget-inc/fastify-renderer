@@ -42,7 +42,6 @@ if (parentPort && !isVitest) {
 }
 
 export async function staticRender({ mode, bus, bootProps, destination, renderBase, module, hooks }: RenderArgs) {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   try {
     const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
     const loadedHooks = await Promise.all(hooks.map((hook) => import(hook)))
@@ -71,18 +70,18 @@ export async function staticRender({ mode, bus, bootProps, destination, renderBa
 
     for (const { heads } of thunkHooks) {
       if (heads) {
-        bus.push('head', heads())
+        bus.push('head', heads(bootProps))
       }
     }
     for (const { transform } of thunkHooks) {
       if (transform) {
-        app = transform(app)
+        app = transform(app, bootProps)
       }
     }
 
     for (const { tails } of thunkHooks) {
       if (tails) {
-        bus.push('tail', tails())
+        bus.push('tail', tails(bootProps))
       }
     }
     bus.push('tail', null)
@@ -113,7 +112,7 @@ export async function staticRender({ mode, bus, bootProps, destination, renderBa
 
       for (const { postRenderHeads } of thunkHooks) {
         if (postRenderHeads) {
-          bus.push('head', postRenderHeads())
+          bus.push('head', postRenderHeads(bootProps))
         }
       }
     }
