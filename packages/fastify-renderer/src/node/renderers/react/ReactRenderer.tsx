@@ -1,5 +1,5 @@
 import reactRefresh from '@vitejs/plugin-react-refresh'
-import os from 'os'
+import os from 'node:os'
 import path from 'path'
 import querystring from 'querystring'
 import { createPool, ResourcePooler } from 'resource-pooler'
@@ -107,9 +107,10 @@ export class ReactRenderer implements Renderer {
 
           const messageHandler = ({ stack, content }: StreamWorkerEvent) => {
             if (stack === 'error' && content) {
+              // Reject to inform caller that the response failed
               reject(new Error(content))
             }
-            bus.push(stack, content)
+            bus.push(stack, content, false)
             if (content === null) {
               expectedStreamEnds.delete(stack)
               if (expectedStreamEnds.size === 0) {
@@ -334,9 +335,7 @@ export class ReactRenderer implements Renderer {
           import Layout from ${JSON.stringify(layout)}
           import Entrypoint from ${JSON.stringify(entrypoint)}
 
-          ReactDOM.createRoot(document.getElementById('fstrapp'), {
-            hydrate: true
-          }).render(<Root
+          ReactDOM.hydrateRoot(document.getElementById('fstrapp'), <Root
             Layout={Layout}
             Entrypoint={Entrypoint}
             basePath={${JSON.stringify(base)}}
