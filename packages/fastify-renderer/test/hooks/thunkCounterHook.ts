@@ -1,5 +1,7 @@
+import { defineRenderHook } from '../../src/node/defineRenderHook'
+
 let thunkId = 0
-export default () => {
+export default defineRenderHook(() => {
   const id = thunkId++
 
   return {
@@ -10,4 +12,4 @@ export default () => {
       return ''
     },
   }
-}
+})

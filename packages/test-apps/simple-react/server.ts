@@ -36,7 +36,7 @@ export const server = async () => {
         ],
       },
     },
-    devMode: false,
+    devMode: true,
     hooks: [require.resolve('../../fastify-renderer/test/hooks/errorHeadHook.ts')],
   })
 
