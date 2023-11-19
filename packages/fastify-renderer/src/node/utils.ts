@@ -24,7 +24,7 @@ const cwd = process.cwd()
 export const mapFilepathToEntrypointName = (filepath: string, base = '') => {
   const prefix = longestCommonPrefix(cwd, filepath)
   filepath = filepath.slice(prefix.length)
-  return base.replace(/\//g, '~') + filepath.replace(/\//g, '~')
+  return base.replace(/\//g, '~') + filepath.replace(/\//g, '~') + '.mjs'
 }
 
 export const escapeRegex = (string: string) => {

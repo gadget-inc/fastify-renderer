@@ -305,7 +305,8 @@ export class ReactRenderer implements Renderer {
       return await this.devServer!.ssrLoadModule(id)
     } else {
       const builtPath = path.join(this.plugin.serverOutDir, mapFilepathToEntrypointName(id))
-      return require(builtPath)
+      // Error: require() of ES Module /Users/slava.knyazev/fastify-renderer/packages/test-apps/simple-react/dist/server/~ImperativeApple.tsx.mjs not supported.
+      return import(builtPath) //This throws an error
     }
   }
 
