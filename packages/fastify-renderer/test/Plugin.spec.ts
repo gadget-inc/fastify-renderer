@@ -1,22 +1,14 @@
-import fs from 'fs'
 import path from 'path'
 import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
 import { RenderableRegistration } from '../src/node/renderers/Renderer'
 import { newFastifyRendererPlugin, newRenderBus } from './helpers'
-import { expect, test, describe } from '@jest/globals'
-
-// Mocking fs isn't reliable. Use /tmp instead
-// jest.mock('fs', () => ({
-//   ...jest.requireActual<typeof import('fs')>('fs'), // import and retain the original functionalities
-//   readFileSync: jest.fn().mockImplementation(() => '{ "test": "value" }'),
-// }))
-// jest.mock('../src/node/renderers/react/ReactRenderer')
-
+import { vi, describe, beforeEach, test, expect } from 'vitest'
+import fs from 'node:fs'
 describe('FastifyRendererPlugin', () => {
-  // beforeEach(() => {
-  //   jest.clearAllMocks()
-  // })
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
 
   test('should create a new instance with default options', async () => {
     const plugin = newFastifyRendererPlugin({})
@@ -28,7 +20,7 @@ describe('FastifyRendererPlugin', () => {
     expect(plugin.clientOutDir).toEqual(path.join(process.cwd(), 'dist', 'client', plugin.viteBase))
     expect(plugin.serverOutDir).toEqual(path.join(process.cwd(), 'dist', 'server'))
     // expect(fs.readFileSync).toHaveBeenCalledTimes(0)
-    // expect(ReactRenderer).toBeCalledWith(plugin, { type: 'react', mode: 'streaming' })
+    //expect(ReactRenderer).toBeCalledWith(plugin, { type: 'react', mode: 'streaming' })
   })
 
   test('should create a new instance with the provided options', async () => {

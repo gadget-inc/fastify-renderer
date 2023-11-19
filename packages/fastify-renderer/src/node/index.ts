@@ -3,7 +3,7 @@ import { FastifyInstance, FastifyReply } from 'fastify'
 import '@fastify/accepts'
 import fp from 'fastify-plugin'
 import fastifyStatic from '@fastify/static'
-import { promises as fs } from 'fs'
+import { promises as fs } from 'node:fs'
 import 'middie'
 import path from 'path'
 import {
@@ -71,7 +71,7 @@ const FastifyRenderer = fp<FastifyRendererOptions>(
 
     fastify.setRenderConfig({
       base: incomingOptions.base || '',
-      layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
+      layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout.tsx'),
       document: incomingOptions.document || DefaultDocumentTemplate,
     })
 

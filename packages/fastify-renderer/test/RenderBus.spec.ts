@@ -1,7 +1,6 @@
 import { Readable } from 'stream'
 import { newRenderBus } from './helpers'
-import { expect, test, describe } from '@jest/globals'
-
+import { describe, test, expect } from 'vitest'
 describe('RenderBus', () => {
   const testKey = 'test-key'
   const testContent = 'test-content'

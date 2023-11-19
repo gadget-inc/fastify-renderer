@@ -12,8 +12,9 @@
     "fastify": "^3.29.0",
     "fastify-renderer": "*",
     "path-to-regexp": "^6.2.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "*",
+    "react-dom": "*",
+    "stream-template": "^0.0.10",
     "wouter": "^2.7.5"
   },
   "devDependencies": {

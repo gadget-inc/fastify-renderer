@@ -1,7 +1,7 @@
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRegistration } from '../../src/node/renderers/Renderer'
 import { newReactRenderer } from '../helpers'
-import { describe, test, expect } from '@jest/globals'
+import { describe, test, expect } from 'vitest'
 // const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
 
 describe('ReactRenderer', () => {

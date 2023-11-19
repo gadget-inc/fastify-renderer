@@ -1,8 +1,8 @@
 import path from 'path'
 import { FastifyRendererOptions } from '../node/Plugin'
 import FastifyRenderer from '../src/node'
-import { expect, test, describe, beforeAll } from '@jest/globals'
 import { newFastify } from './helpers'
+import { describe, test, expect, beforeAll } from 'vitest'
 
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
@@ -15,9 +15,9 @@ const options: FastifyRendererOptions = {
     type: 'react' as const,
   },
   hooks: [
-    require.resolve('./hooks/simpleHeadHooks'),
-    require.resolve('./hooks/thunkCounterHook'),
-    require.resolve('./hooks/simpleTransformHook'),
+    require.resolve('./hooks/simpleHeadHooks.ts'),
+    require.resolve('./hooks/thunkCounterHook.ts'),
+    require.resolve('./hooks/simpleTransformHook.ts'),
   ],
 }
 

@@ -1,6 +1,7 @@
 import { Page } from 'playwright-chromium'
 import { describe, test, beforeEach, expect } from '@jest/globals'
 import { newTestPage, reactReady, rootURL } from '../helpers'
+import { describe, test, beforeEach, expect } from 'vitest'
 
 describe('navigation details', () => {
   let page: Page
@@ -16,6 +17,7 @@ describe('navigation details', () => {
 
     const testCalls: any[] = await page.evaluate('window.test')
 
+    // @ts-expect-error client code
     await page.waitForFunction(() => window.test.length === 2)
 
     expect(testCalls).toBeDefined()
@@ -35,6 +37,7 @@ describe('navigation details', () => {
 
     await page.click('#section-link')
 
+    // @ts-expect-error client code
     await page.waitForFunction(() => window.test.length === 3)
 
     const testCalls: any[] = await page.evaluate('window.test')
@@ -52,6 +55,7 @@ describe('navigation details', () => {
     await page.goto(`${rootURL}/navigation-test?foo=bar#section`)
     await reactReady(page)
 
+    // @ts-expect-error client code
     await page.waitForFunction(() => window.test.length === 3)
 
     const testCalls: any[] = await page.evaluate('window.test')

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
-import fs from 'fs'
+import fs from 'node:fs'
 import 'middie'
 import path from 'path'
 import { InlineConfig } from 'vite'
@@ -39,7 +39,7 @@ export class FastifyRendererPlugin {
   registeredComponents: Record<ImperativeRenderable, RenderableRegistration> = {}
 
   constructor(incomingOptions: FastifyRendererOptions) {
-    this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
+    this.devMode = incomingOptions.devMode ?? (process.env.NODE_ENV != 'production' || process.env.TEST == 'true')
 
     this.vite = incomingOptions.vite || {}
     this.vite.base ??= '/.vite/'

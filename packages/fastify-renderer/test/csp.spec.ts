@@ -3,7 +3,7 @@ import path from 'path'
 import { expect, test, describe, beforeAll } from '@jest/globals'
 import FastifyRenderer from '../src/node'
 import { newFastify } from './helpers'
-
+import { describe, beforeAll, test, expect } from 'vitest'
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-style-importer.tsx'))
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
 
