@@ -62,7 +62,6 @@ export class RenderBus {
     for (const stream of this.streams.values()) {
       if (!stream.writableFinished) {
         stream.end()
-        stream.destroy()
       }
     }
   }

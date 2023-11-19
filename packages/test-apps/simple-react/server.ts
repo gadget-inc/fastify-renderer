@@ -36,7 +36,8 @@ export const server = async () => {
         ],
       },
     },
-    devMode: true,
+    devMode: false,
+    hooks: [require.resolve('../../fastify-renderer/test/hooks/errorHeadHook.ts')],
   })
 
   const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple.tsx'))

@@ -94,13 +94,13 @@ export async function staticRender({ mode, bus, bootProps, destination, renderBa
           if (error instanceof Error) {
             bus.push('error', error.message)
           }
-          bus.endAll()
         },
         onAllReady() {
           // onAllReady still fires if there were errors
           bus.push('error', null, false)
         },
       })
+
       // Send to content
       renderingPipe.pipe(bus.stack('content'))
     } else {
