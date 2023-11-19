@@ -46,7 +46,7 @@ export class ReactRenderer implements Renderer {
   clientModulePath: string
 
   constructor(readonly plugin: FastifyRendererPlugin, readonly options: ReactRendererOptions) {
-    this.clientModulePath = require.resolve('../../../client/react')
+    this.clientModulePath = require.resolve('../../../client/react/index.ts')
   }
 
   vitePlugins() {

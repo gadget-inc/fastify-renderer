@@ -1,7 +1,8 @@
 import { FastifyInstance } from 'fastify'
 import fs from 'fs-extra'
 import { resolve } from 'path'
-import { ConsoleMessage, Page } from 'playwright-chromium'
+import { ConsoleMessage, Page, chromium } from 'playwright-chromium'
+import { beforeAll, afterAll, afterEach } from 'vitest'
 
 export function slash(p: string): string {
   return p.replace(/\\/g, '/')
@@ -16,11 +17,11 @@ let pages: Page[] = []
 let server: FastifyInstance
 let err: Error
 
-export const port = 3000 + parseInt(process.env.JEST_WORKER_ID!) - 1
+export const port = 3001
 export const rootURL = `http://localhost:${port}`
 
-beforeAll(async () => {
-  const testPath = expect.getState().testPath!
+beforeAll(async ({ filepath }) => {
+  const testPath = filepath!
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
   const testName = slash(testPath).match(/test-apps\/([\w-]+)\//)?.[1]
 
@@ -33,7 +34,7 @@ beforeAll(async () => {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { server: fastifyServer } = require(serverEntrypoint)
+    const { server: fastifyServer } = await import(serverEntrypoint)
     server = await fastifyServer()
     await server.listen({ port })
   }
@@ -59,6 +60,7 @@ afterEach(async () => {
 
 /** Create a new playwright page for testing against */
 export const newTestPage = async (): Promise<Page> => {
+  const browser = await chromium.launch({ headless: true })
   const page: Page = await browser.newPage()
   page.on('console', onConsole)
   pages.push(page)

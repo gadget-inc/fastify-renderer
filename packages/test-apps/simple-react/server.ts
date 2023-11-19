@@ -27,13 +27,13 @@ export const server = async () => {
         },
       },
       optimizeDeps: {
-        include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp'],
+        include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp', 'stream-template'],
       },
     },
   })
 
-  const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple'))
-  const ImperativeOrange = server.registerRenderable(require.resolve('./ImperativeOrange'))
+  const ImperativeApple = server.registerRenderable(require.resolve('./ImperativeApple.tsx'))
+  const ImperativeOrange = server.registerRenderable(require.resolve('./ImperativeOrange.tsx'))
 
   server.get('/imperative/:fruit', async (request: FastifyRequest<{ Params: { fruit: string } }>, reply) => {
     if (request.params.fruit == 'apple') {
@@ -51,38 +51,42 @@ export const server = async () => {
     }
   })
 
-  server.get('/*', { render: require.resolve('./NotFound') }, async (request) => {
+  server.get('/*', { render: require.resolve('./NotFound.tsx') }, async (request) => {
     return { params: request.params }
   })
 
-  server.get('/', { render: require.resolve('./Home') }, async () => {
+  server.get('/', { render: require.resolve('./Home.tsx') }, async () => {
     return { time: Date.now() }
   })
 
-  server.get('/about', { render: require.resolve('./About') }, async (request) => {
+  server.get('/about', { render: require.resolve('./About.tsx') }, async (request) => {
     return { hostname: os.hostname(), requestIP: request.ip }
   })
 
-  server.get('/navigation-test', { render: require.resolve('./NavigationTest') }, async (_request) => {
+  server.get('/navigation-test', { render: require.resolve('./NavigationTest.tsx') }, async (_request) => {
     return {}
   })
 
-  server.get('/navigation-history-test', { render: require.resolve('./NavigationHistoryTest') }, async (_request) => {
-    return {}
-  })
+  server.get(
+    '/navigation-history-test',
+    { render: require.resolve('./NavigationHistoryTest.tsx') },
+    async (_request) => {
+      return {}
+    }
+  )
 
   await server.register(async (instance) => {
     instance.setRenderConfig({ document: CustomDocumentTemplate })
 
-    instance.get('/custom-template', { render: require.resolve('./CustomTemplateTest') }, async (_request) => {
+    instance.get('/custom-template', { render: require.resolve('./CustomTemplateTest.tsx') }, async (_request) => {
       return {}
     })
   })
 
   await server.register(async (instance) => {
-    instance.setRenderConfig({ base: '/red', layout: require.resolve('./RedLayout') })
+    instance.setRenderConfig({ base: '/red', layout: require.resolve('./RedLayout.tsx') })
 
-    instance.get('/red/about', { render: require.resolve('./About') }, async (request) => {
+    instance.get('/red/about', { render: require.resolve('./About.tsx') }, async (request) => {
       return { hostname: os.hostname(), requestIP: request.ip }
     })
   })
@@ -90,18 +94,18 @@ export const server = async () => {
   await server.register(async (instance) => {
     instance.setRenderConfig({ base: '/subpath' })
 
-    instance.get('/subpath/this', { render: require.resolve('./subapp/This') }, async (_request) => {
+    instance.get('/subpath/this', { render: require.resolve('./subapp/This.tsx') }, async (_request) => {
       return {}
     })
-    instance.get('/subpath/that', { render: require.resolve('./subapp/That') }, async (_request) => {
+    instance.get('/subpath/that', { render: require.resolve('./subapp/That.tsx') }, async (_request) => {
       return {}
     })
   })
 
   await server.register(async (instance) => {
-    instance.setRenderConfig({ base: '/bootprops', layout: require.resolve('./BootPropsLayout') })
+    instance.setRenderConfig({ base: '/bootprops', layout: require.resolve('./BootPropsLayout.tsx') })
 
-    instance.get('/bootprops/test', { render: require.resolve('./About') }, async (request) => {
+    instance.get('/bootprops/test', { render: require.resolve('./About.tsx') }, async (request) => {
       return { hostname: os.hostname(), requestIP: request.ip, someValue: 'this is a boot prop' }
     })
   })
