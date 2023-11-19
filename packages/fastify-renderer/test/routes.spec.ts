@@ -2,6 +2,7 @@ import path from 'path'
 import FastifyRenderer from '../src/node'
 import { unthunk } from '../src/node/utils'
 import { newFastify } from './helpers'
+import { describe, test, expect, beforeEach, beforeAll, vi } from 'vitest'
 
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
@@ -119,15 +120,15 @@ describe('FastifyRenderer', () => {
   test('should call hooks in correct order', async () => {
     const callOrder: string[] = []
     const hook = unthunk(options.hooks[0])
-    jest.spyOn(hook, 'heads').mockImplementation(() => {
+    vi.spyOn(hook, 'heads').mockImplementation(() => {
       callOrder.push('heads')
       return 'head'
     })
-    jest.spyOn(hook, 'transform').mockImplementation((app) => {
+    vi.spyOn(hook, 'transform').mockImplementation((app) => {
       callOrder.push('transforms')
       return app
     })
-    jest.spyOn(hook, 'postRenderHeads').mockImplementation(() => {
+    vi.spyOn(hook, 'postRenderHeads').mockImplementation(() => {
       callOrder.push('postRenders')
       return 'postRender'
     })

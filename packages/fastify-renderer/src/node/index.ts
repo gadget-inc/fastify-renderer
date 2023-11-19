@@ -4,7 +4,7 @@ import '@fastify/middie'
 import fastifyStatic from '@fastify/static'
 import { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify'
 import fp from 'fastify-plugin'
-import { promises as fs } from 'fs'
+import { promises as fs } from 'node:fs'
 import path from 'path'
 import { resolveConfig, build as viteBuild, createServer, ResolvedConfig, ViteDevServer } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
@@ -53,7 +53,7 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
 
   fastify.setRenderConfig({
     base: incomingOptions.base || '',
-    layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout'),
+    layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout.tsx'),
     document: incomingOptions.document || DefaultDocumentTemplate,
   })
 
