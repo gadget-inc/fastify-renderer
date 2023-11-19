@@ -42,7 +42,7 @@ export class FastifyRendererPlugin {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
 
     this.vite = incomingOptions.vite || {}
-    this.vite.base ??= '/.vite/'
+    this.vite.base ??= '/.vite/.vite/'
     this.viteBase = this.vite.base
     this.assetsHost = incomingOptions.assetsHost || ''
     this.hooks = incomingOptions.hooks || []
