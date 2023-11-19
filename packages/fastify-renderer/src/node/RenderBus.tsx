@@ -23,7 +23,7 @@ export class RenderBus {
   push(key: string, content: string | null, throwIfEnded = true) {
     let stream = this.streams.get(key)
     if (!stream) stream = this.createStack(key)
-    if (stream.closed) {
+    if (stream.writableFinished) {
       if (throwIfEnded) throw new Error(`Stack with key=${key} has ended, no more content can be added`)
       return
     }
@@ -60,7 +60,7 @@ export class RenderBus {
   endAll() {
     // End all streams (error handling helper)
     for (const stream of this.streams.values()) {
-      if (!stream.closed) {
+      if (!stream.writableFinished) {
         stream.end()
         stream.destroy()
       }

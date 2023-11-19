@@ -25,7 +25,15 @@ export const server = async () => {
         },
       },
       optimizeDeps: {
-        include: ['react', 'react-dom', 'react-dom/server', 'wouter', 'path-to-regexp', 'stream-template'],
+        include: [
+          'react',
+          'react-dom',
+          'react-dom/client',
+          'react-dom/server',
+          'wouter',
+          'path-to-regexp',
+          'stream-template',
+        ],
       },
     },
     devMode: true,
@@ -74,7 +82,7 @@ export const server = async () => {
     }
   )
 
-  server.get('/error', { render: require.resolve('./Error') }, async (_request) => {
+  server.get('/error', { render: require.resolve('./Error.tsx') }, async (_request) => {
     return {}
   })
 

@@ -27,23 +27,26 @@ interface RenderArgs extends RenderInput {
   mode: 'sync' | 'streaming'
 }
 
+// Detect Vitest
+const isVitest = Array.isArray(workerData)
 // Presence of `parentPort` suggests
 // that this code is running in a Worker
-if (parentPort) {
+if (parentPort && !isVitest) {
   // Preload each path from `workerData`
   if (!workerData) throw new Error('No Worker Data')
   const { paths } = workerData
 
   for (const path of paths) {
-    require(path as string)
+    import(path as string)
   }
 }
 
-export function staticRender({ mode, bus, bootProps, destination, renderBase, module, hooks }: RenderArgs) {
+export async function staticRender({ mode, bus, bootProps, destination, renderBase, module, hooks }: RenderArgs) {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   try {
     const { React, ReactDOMServer, Router, RenderBusContext, Layout, Entrypoint } = module
-    const thunkHooks = hooks.map((hook) => require(hook)!.default).map(unthunk) as FastifyRendererHook[]
+    const loadedHooks = await Promise.all(hooks.map((hook) => import(hook)))
+    const thunkHooks = loadedHooks.map((hook) => unthunk(hook.default)) as FastifyRendererHook[]
 
     let app: ReactElement = React.createElement(
       RenderBusContext.Provider,
