@@ -112,7 +112,7 @@ describe('FastifyRenderer', () => {
   //   expect(callOrder).toEqual(['heads', 'postRenders'])
   // })
 
-  test.skip('should unthunk hooks on every render', async () => {
+  test('should unthunk hooks on every render', async () => {
     const firstResponse = await server.inject({
       method: 'GET',
       url: '/render-test',
