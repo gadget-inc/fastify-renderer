@@ -21,7 +21,7 @@
           packages =
             rec {
               bash = pkgs.bash;
-              nodejs = pkgs.nodejs-18_x;
+              nodejs = pkgs.nodejs_20;
               pnpm = pkgs.nodePackages.pnpm;
             };
 
