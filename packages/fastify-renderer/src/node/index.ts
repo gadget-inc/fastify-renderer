@@ -53,7 +53,7 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
 
   fastify.setRenderConfig({
     base: incomingOptions.base || '',
-    layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout.tsx'),
+    layout: incomingOptions.layout || require.resolve('fastify-renderer/client/react/DefaultLayout'),
     document: incomingOptions.document || DefaultDocumentTemplate,
   })
 

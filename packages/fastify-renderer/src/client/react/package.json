@@ -1,4 +1,8 @@
 {
   "sideEffects": false,
-  "module": "./index.js"
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./DefaultLayout": "./DefaultLayout.js"
+  }
 }

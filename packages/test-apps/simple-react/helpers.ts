@@ -17,7 +17,7 @@ let pages: Page[] = []
 let server: FastifyInstance
 let err: Error
 
-export const port = 3001
+export const port = 3001 + parseInt(process.env.VITEST_WORKER_ID!) - 1
 export const rootURL = `http://localhost:${port}`
 
 beforeAll(async ({ filepath }) => {

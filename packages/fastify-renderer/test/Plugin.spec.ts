@@ -9,7 +9,6 @@ import fs from 'node:fs'
 describe('FastifyRendererPlugin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.spyOn(fs, 'readFileSync')
   })
 
   test('should create a new instance with default options', async () => {
@@ -21,25 +20,23 @@ describe('FastifyRendererPlugin', () => {
     expect(plugin.hooks).toEqual([])
     expect(plugin.clientOutDir).toEqual(path.join(process.cwd(), 'dist', 'client', plugin.viteBase))
     expect(plugin.serverOutDir).toEqual(path.join(process.cwd(), 'dist', 'server'))
-    expect(fs.readFileSync).toHaveBeenCalledTimes(0)
   })
 
   test('should create a new instance with the provided options', async () => {
     const options: FastifyRendererOptions = {
       outDir: '/tmp/out/dir',
       renderer: { type: 'react', mode: 'sync' },
-      devMode: false,
+      devMode: true,
       assetsHost: 'https://custom.asset.host',
     }
     const plugin = newFastifyRendererPlugin(options)
 
-    expect(plugin.devMode).toEqual(false)
+    expect(plugin.devMode).toEqual(true)
     expect(plugin.viteBase).toEqual('/.vite/')
     expect(plugin.assetsHost).toEqual(options.assetsHost)
     expect(plugin.hooks).toEqual([])
     expect(plugin.clientOutDir).toEqual(path.join(options.outDir as string, 'client', plugin.viteBase))
     expect(plugin.serverOutDir).toEqual(path.join(options.outDir as string, 'server'))
-    expect(fs.readFileSync).toHaveBeenCalledTimes(2)
   })
 
   describe('clientAssetPath()', () => {

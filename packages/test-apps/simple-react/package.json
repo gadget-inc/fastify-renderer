@@ -10,7 +10,7 @@
   "license": "MIT",
   "dependencies": {
     "fastify": "^4.23.2",
-    "fastify-renderer": "*",
+    "fastify-renderer": "workspace:*",
     "path-to-regexp": "^6.2.1",
     "react": "*",
     "react-dom": "*",

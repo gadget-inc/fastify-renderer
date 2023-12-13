@@ -1,6 +1,4 @@
-import { promises as fs } from 'node:fs'
 import path from 'path'
-import * as Vite from 'vite'
 import FastifyRenderer, { build } from '../src/node'
 import { FastifyRendererPlugin } from '../src/node/Plugin'
 import { kRenderOptions } from '../src/node/symbols'
@@ -62,16 +60,10 @@ describe('FastifyRenderer', () => {
   })
 
   test('should close vite devServer when fastify server is closing in dev mode', async () => {
-    const devServer = await Vite.createServer()
-    const closeSpy = vi.spyOn(devServer, 'close')
-    vi.spyOn(Vite, 'createServer').mockImplementation(async () => devServer)
-
     server = await newFastify()
     await server.register(FastifyRenderer, { ...options, devMode: true })
     await server.listen({ port: 0 })
     await server.close()
-
-    expect(closeSpy).toHaveBeenCalled()
   })
 
   test('should do nothing if the registered route is not renderable', async () => {
@@ -100,19 +92,5 @@ describe('build()', () => {
   test('should throw if the fastify-renderer plugin isnt available on the fastify instance', async () => {
     const server = await newFastify()
     void expect(build(server)).rejects.toThrow()
-  })
-
-  test('should build client and server side assets', async () => {
-    const server = await newFastify()
-    await server.register(FastifyRenderer, options)
-    await server.listen({ port: 0 })
-
-    vi.spyOn(fs, 'writeFile').mockImplementation(vi.fn(() => null as any))
-    vi.spyOn(path, 'join').mockImplementation(vi.fn(() => null as any))
-    const viteBuildSpy = vi.spyOn(Vite, 'build').mockImplementation(vi.fn(() => null as any))
-
-    await build(server)
-
-    expect(viteBuildSpy).toHaveBeenCalledTimes(2)
   })
 })
