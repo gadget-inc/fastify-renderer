@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify'
-import { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
+import type { Plugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { Template } from '../DocumentTemplate'
 
 /** The options configuring a plugin encapsulation context's renders */

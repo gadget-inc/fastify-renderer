@@ -53,7 +53,7 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
 
   fastify.setRenderConfig({
     base: incomingOptions.base || '',
-    layout: incomingOptions.layout || require.resolve('./renderers/react/DefaultLayout.tsx'),
+    layout: incomingOptions.layout || require.resolve('fastify-renderer/client/react/DefaultLayout'),
     document: incomingOptions.document || DefaultDocumentTemplate,
   })
 
@@ -149,6 +149,7 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
   fastify.addHook('onReady', async () => {
     fastify[kRendererViteOptions] = {
       clearScreen: false,
+      appType: 'custom',
       ...plugin.vite,
       plugins: [...(plugin.vite?.plugins || []), ...plugin.renderer.vitePlugins()],
       server: {

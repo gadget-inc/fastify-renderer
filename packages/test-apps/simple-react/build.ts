@@ -1,4 +1,4 @@
-import { build } from '../../fastify-renderer/src/node'
+import { build } from 'fastify-renderer'
 import { server } from './server'
 
 void server().then(async (server) => {

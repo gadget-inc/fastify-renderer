@@ -9,7 +9,7 @@ const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures
 describe('ReactRenderer', () => {
   test('should create an instance and initialize the client module path', async () => {
     const renderer = newReactRenderer()
-    expect(renderer.clientModulePath).not.toBeUndefined()
+    expect(await renderer.clientModulePath()).not.toBeUndefined()
   })
 
   describe('vitePlugins()', () => {

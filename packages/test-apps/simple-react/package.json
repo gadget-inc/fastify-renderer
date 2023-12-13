@@ -10,12 +10,12 @@
   "license": "MIT",
   "dependencies": {
     "fastify": "^4.23.2",
-    "fastify-renderer": "*",
+    "fastify-renderer": "workspace:*",
     "path-to-regexp": "^6.2.1",
     "react": "*",
     "react-dom": "*",
     "stream-template": "^0.0.10",
-    "wouter": "^2.7.5"
+    "wouter": "^2.11.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.39.0",

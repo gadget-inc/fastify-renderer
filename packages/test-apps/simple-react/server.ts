@@ -1,6 +1,6 @@
 import type { FastifyRequest } from 'fastify'
 import os from 'os'
-import renderer from '../../fastify-renderer/src/node'
+import renderer from '../../fastify-renderer'
 import { newFastify } from '../../fastify-renderer/test/helpers'
 import { CustomDocumentTemplate } from './CustomDocumentTemplate'
 

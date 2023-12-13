@@ -10,8 +10,8 @@
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "pnpm -F=fastify-renderer publish",
     "preinstall": "npx only-allow pnpm",
-    "prerelease": "pnpm -F=fastify-renderer run gitpkg publish",
-    "test": "vitest --no-threads"
+    "prerelease": "pnpm -F=fastify-renderer exec gitpkg publish",
+    "test": "vitest --pool=forks --run"
   },
   "repository": {
     "type": "git",
@@ -44,7 +44,7 @@
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
     "fs-extra": "^11.1.0",
-    "vitest": "^0.34.6",
+    "vitest": "^1.0.4",
     "playwright-chromium": "^1.39.0",
     "prettier": "^2.8.8",
     "prettier-plugin-organize-imports": "^3.2.3",
