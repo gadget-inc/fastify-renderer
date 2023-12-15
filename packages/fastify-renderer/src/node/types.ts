@@ -1,9 +1,13 @@
 /* eslint-disable @typescript-eslint/no-empty-interface */
 import {
   ContextConfigDefault,
+  FastifyBaseLogger,
   FastifyInstance,
   FastifyReply,
   FastifyRequest,
+  FastifySchema,
+  FastifyTypeProvider,
+  FastifyTypeProviderDefault,
   RawReplyDefaultExpression,
   RawRequestDefaultExpression,
   RawServerBase,
@@ -12,8 +16,10 @@ import {
 } from 'fastify'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
-import { ViteDevServer } from 'vite'
-import { ImperativeRenderable } from './Plugin'
+import { InlineConfig, SSROptions, ViteDevServer } from 'vite'
+import { FastifyRendererPlugin, ImperativeRenderable } from './Plugin'
+import { RenderOptions, PartialRenderOptions } from './renderers/Renderer'
+import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'
 
 export type ServerRenderer<Props> = (
   this: FastifyInstance<Server, IncomingMessage, ServerResponse>,
@@ -49,6 +55,10 @@ export interface ServerEntrypointManifest {
 declare module 'fastify' {
   // // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface FastifyInstance {
+    [kRendererPlugin]: FastifyRendererPlugin
+    [kRendererViteOptions]: InlineConfig & { ssr?: SSROptions }
+    [kRenderOptions]: RenderOptions
+    setRenderConfig(options: PartialRenderOptions): void
     registerRenderable: (renderable: string) => ImperativeRenderable
   }
 
@@ -67,14 +77,28 @@ declare module 'fastify' {
     RawServer extends RawServerBase = RawServerDefault,
     RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>,
     RawReply extends RawReplyDefaultExpression<RawServer> = RawReplyDefaultExpression<RawServer>,
-    Props = any
+    TypeProvider extends FastifyTypeProvider = FastifyTypeProviderDefault
   > {
-    <RequestGeneric extends RequestGenericInterface = RequestGenericInterface, ContextConfig = ContextConfigDefault>(
+    <
+      RequestGeneric extends RequestGenericInterface = RequestGenericInterface,
+      ContextConfig = ContextConfigDefault,
+      SchemaCompiler extends FastifySchema = FastifySchema,
+      Logger extends FastifyBaseLogger = FastifyBaseLogger
+    >(
       path: string,
-      opts: RouteShorthandOptions<RawServer, RawRequest, RawReply, RequestGeneric, ContextConfig> & {
+      opts: RouteShorthandOptions<
+        RawServer,
+        RawRequest,
+        RawReply,
+        RequestGeneric,
+        ContextConfig,
+        SchemaCompiler,
+        TypeProvider,
+        Logger
+      > & {
         render: string
       }, // this creates an overload that only applies these different types if the handler is for rendering
-      handler: ServerRenderer<Props>
-    ): FastifyInstance<RawServer, RawRequest, RawReply>
+      handler: ServerRenderer<unknown>
+    ): FastifyInstance<RawServer, RawRequest, RawReply, Logger, TypeProvider>
   }
 }

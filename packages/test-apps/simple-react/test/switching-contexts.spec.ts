@@ -15,7 +15,9 @@ describe('navigation details', () => {
     page.on('request', (request) => {
       if (request.url().includes('/.vite/')) return
       if (request.headers().accept !== 'application/json') {
-        throw new Error(`Expecting request to only fetch props, request made: ${request.method()} ${request.url()} $`)
+        throw new Error(
+          `Expecting request to only fetch JSON props, but HTML request made: ${request.method()} ${request.url()} $`
+        )
       }
     })
 
@@ -27,7 +29,9 @@ describe('navigation details', () => {
       if (request.url().includes('/.vite/')) return
 
       if (request.headers().accept === 'application/json') {
-        throw new Error(`Expecting request to trigger SSR, request made: ${request.method()} ${request.url()}`)
+        throw new Error(
+          `Expecting request to trigger SSR, but props request made: ${request.method()} ${request.url()}`
+        )
       }
     })
 
