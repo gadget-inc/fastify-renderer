@@ -1,6 +1,6 @@
-import { expect } from '@playwright/test'
 import { Page } from 'playwright-chromium'
-import { newTestPage, reactReady, rootURL } from '../helpers'
+import { newTestPage, rootURL } from '../helpers'
+import { describe, test, expect, beforeEach, vi } from 'vitest'
 
 describe('boot props', () => {
   let page: Page
@@ -11,7 +11,7 @@ describe('boot props', () => {
 
   test('should make the boot props available to the layout', async () => {
     await page.goto(`${rootURL}/bootprops/test`)
-    await reactReady(page)
-    await expect(page).toMatchText('#bootprops', 'this is a boot prop')
+
+    await vi.waitFor(async () => expect(await page.textContent('#bootprops')).toContain('this is a boot prop'))
   })
 })

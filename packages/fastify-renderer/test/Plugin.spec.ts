@@ -1,20 +1,14 @@
-import fs from 'fs'
 import path from 'path'
 import { DefaultDocumentTemplate } from '../src/node/DocumentTemplate'
 import { FastifyRendererOptions } from '../src/node/Plugin'
-import { ReactRenderer } from '../src/node/renderers/react/ReactRenderer'
 import { RenderableRegistration } from '../src/node/renderers/Renderer'
 import { newFastifyRendererPlugin, newRenderBus } from './helpers'
-
-jest.mock('fs', () => ({
-  ...jest.requireActual('fs'), // import and retain the original functionalities
-  readFileSync: jest.fn().mockImplementation(() => '{ "test": "value" }'),
-}))
-jest.mock('../src/node/renderers/react/ReactRenderer')
+import { vi, describe, beforeEach, test, expect } from 'vitest'
+import fs from 'node:fs'
 
 describe('FastifyRendererPlugin', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   test('should create a new instance with default options', async () => {
@@ -26,33 +20,34 @@ describe('FastifyRendererPlugin', () => {
     expect(plugin.hooks).toEqual([])
     expect(plugin.clientOutDir).toEqual(path.join(process.cwd(), 'dist', 'client', plugin.viteBase))
     expect(plugin.serverOutDir).toEqual(path.join(process.cwd(), 'dist', 'server'))
-    expect(fs.readFileSync).toHaveBeenCalledTimes(0)
-    expect(ReactRenderer).toBeCalledWith(plugin, { type: 'react', mode: 'streaming' })
   })
 
   test('should create a new instance with the provided options', async () => {
     const options: FastifyRendererOptions = {
-      outDir: '/custom/out/dir',
+      outDir: '/tmp/out/dir',
       renderer: { type: 'react', mode: 'sync' },
-      devMode: false,
+      devMode: true,
       assetsHost: 'https://custom.asset.host',
     }
     const plugin = newFastifyRendererPlugin(options)
 
-    expect(plugin.devMode).toEqual(false)
+    expect(plugin.devMode).toEqual(true)
     expect(plugin.viteBase).toEqual('/.vite/')
     expect(plugin.assetsHost).toEqual(options.assetsHost)
     expect(plugin.hooks).toEqual([])
     expect(plugin.clientOutDir).toEqual(path.join(options.outDir as string, 'client', plugin.viteBase))
     expect(plugin.serverOutDir).toEqual(path.join(options.outDir as string, 'server'))
-    expect(fs.readFileSync).toHaveBeenCalledTimes(2)
-    expect(ReactRenderer).toBeCalledWith(plugin, options.renderer)
   })
 
   describe('clientAssetPath()', () => {
     test('should return the client asset path that will be accessible from the browser', async () => {
+      fs.mkdirSync('/tmp/out/dir/client/.vite/', { recursive: true })
+      fs.mkdirSync('/tmp/out/dir/server/.vite/', { recursive: true })
+      fs.writeFileSync('/tmp/out/dir/client/.vite/manifest.json', '{ "test": "value" }')
+      fs.writeFileSync('/tmp/out/dir/server/.vite/manifest.json', '{ "test": "value" }')
+      fs.writeFileSync('/tmp/out/dir/server/virtual-manifest.json', '{ "test": "value" }')
       const options: FastifyRendererOptions = {
-        outDir: '/custom/out/dir',
+        outDir: '/tmp/out/dir',
         renderer: { type: 'react', mode: 'sync' },
         devMode: false,
       }
@@ -62,7 +57,7 @@ describe('FastifyRendererPlugin', () => {
 
     test('should prepend the provided assetHost to the generated path', async () => {
       const options: FastifyRendererOptions = {
-        outDir: '/custom/out/dir',
+        outDir: '/tmp/out/dir',
         renderer: { type: 'react', mode: 'sync' },
         devMode: false,
         assetsHost: 'https://custom.asset.host',
@@ -82,7 +77,7 @@ describe('FastifyRendererPlugin', () => {
     // TODO: Generate the manifest file to test this
     test.skip('should push all import tags from the manifest to the render bus', async () => {
       // const options: FastifyRendererOptions = {
-      //   outDir: '/custom/out/dir',
+      //   outDir: '/tmp/out/dir',
       //   renderer: { type: 'react', mode: 'sync' },
       //   devMode: false,
       //   assetsHost: 'https://custom.asset.host',

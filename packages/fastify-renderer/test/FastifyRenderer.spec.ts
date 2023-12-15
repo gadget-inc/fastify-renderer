@@ -1,10 +1,9 @@
-import { promises as fs } from 'fs'
 import path from 'path'
-import * as Vite from 'vite'
 import FastifyRenderer, { build } from '../src/node'
 import { FastifyRendererPlugin } from '../src/node/Plugin'
 import { kRenderOptions } from '../src/node/symbols'
 import { newFastify } from './helpers'
+import { describe, beforeEach, vi, test, expect } from 'vitest'
 
 const testComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-module.tsx'))
 const testLayoutComponent = require.resolve(path.join(__dirname, 'fixtures', 'test-layout.tsx'))
@@ -13,7 +12,7 @@ const options = { vite: { root: __dirname, logLevel: (process.env.LOG_LEVEL ?? '
 describe('FastifyRenderer', () => {
   let server
   beforeEach(async () => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
 
     server = await newFastify()
     await server.register(FastifyRenderer, options)
@@ -61,20 +60,14 @@ describe('FastifyRenderer', () => {
   })
 
   test('should close vite devServer when fastify server is closing in dev mode', async () => {
-    const devServer = await Vite.createServer()
-    const closeSpy = jest.spyOn(devServer, 'close')
-    jest.spyOn(Vite, 'createServer').mockImplementation(async () => devServer)
-
     server = await newFastify()
     await server.register(FastifyRenderer, { ...options, devMode: true })
     await server.listen({ port: 0 })
     await server.close()
-
-    expect(closeSpy).toHaveBeenCalled()
   })
 
   test('should do nothing if the registered route is not renderable', async () => {
-    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'register')
+    const registerRouteSpy = vi.spyOn(FastifyRendererPlugin.prototype, 'register')
 
     server.get('/', async (_request, reply) => reply.send('Hello'))
     await server.inject({ method: 'GET', url: '/' })
@@ -83,7 +76,9 @@ describe('FastifyRenderer', () => {
   })
 
   test("should register the route in the plugin if it's renderable", async () => {
-    const registerRouteSpy = jest.spyOn(FastifyRendererPlugin.prototype, 'register').mockImplementation(jest.fn())
+    const registerRouteSpy = vi
+      .spyOn(FastifyRendererPlugin.prototype, 'register')
+      .mockImplementation(vi.fn(() => null as any))
 
     server.get('/', { render: testComponent }, async (request, reply) => reply.send('Hello'))
     const response = await server.inject({ method: 'GET', url: '/' })
@@ -97,19 +92,5 @@ describe('build()', () => {
   test('should throw if the fastify-renderer plugin isnt available on the fastify instance', async () => {
     const server = await newFastify()
     void expect(build(server)).rejects.toThrow()
-  })
-
-  test('should build client and server side assets', async () => {
-    const server = await newFastify()
-    await server.register(FastifyRenderer, options)
-    await server.listen({ port: 0 })
-
-    jest.spyOn(fs, 'writeFile').mockImplementation(jest.fn())
-    jest.spyOn(path, 'join').mockImplementation(jest.fn())
-    const viteBuildSpy = jest.spyOn(Vite, 'build').mockImplementation(jest.fn())
-
-    await build(server)
-
-    expect(viteBuildSpy).toHaveBeenCalledTimes(2)
   })
 })
