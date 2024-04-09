@@ -14,7 +14,7 @@
     "react": "*",
     "react-dom": "*",
     "wouter": "^2.7.5",
-    "path-to-regexp": "^6.2.1"
+    "path-to-regexp": "^6.2.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.39.0",
