@@ -18,11 +18,11 @@ import { mapFilepathToEntrypointName } from './utils'
 
 const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incomingOptions) => {
   const plugin = new FastifyRendererPlugin(incomingOptions)
-  let vite: ViteDevServer
+  let devServer: ViteDevServer | undefined = undefined
 
   fastify.decorate('vite', {
     getter() {
-      return vite
+      return devServer
     },
   })
 
@@ -118,7 +118,6 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
     }
   })
 
-  let devServer: ViteDevServer | undefined = undefined
   let viteMountInstance: FastifyInstance = fastify
   await fs.mkdir(plugin.clientOutDir, { recursive: true })
 

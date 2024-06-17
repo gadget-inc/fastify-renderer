@@ -60,6 +60,7 @@ declare module 'fastify' {
     [kRenderOptions]: RenderOptions
     setRenderConfig(options: PartialRenderOptions): void
     registerRenderable: (renderable: string) => ImperativeRenderable
+    vite: ViteDevServer | undefined
   }
 
   interface RouteShorthandOptions<RawServer extends RawServerBase = RawServerDefault> {
