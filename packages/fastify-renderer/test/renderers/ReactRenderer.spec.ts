@@ -3,13 +3,13 @@ import React from 'react'
 import { DefaultDocumentTemplate } from '../../src/node/DocumentTemplate'
 import { RenderableRegistration } from '../../src/node/renderers/Renderer'
 import { getMockRender, newReactRenderer, newRenderBus } from '../helpers'
-
+import { describe, test, expect } from 'vitest'
 const testLayoutComponent = require.resolve(path.join(__dirname, '..', 'fixtures', 'test-layout.tsx'))
 
 describe('ReactRenderer', () => {
   test('should create an instance and initialize the client module path', async () => {
     const renderer = newReactRenderer()
-    expect(renderer.clientModulePath).not.toBeUndefined()
+    expect(await renderer.clientModulePath()).not.toBeUndefined()
   })
 
   describe('vitePlugins()', () => {
