@@ -11,11 +11,11 @@
   "dependencies": {
     "fastify": "^4.23.2",
     "fastify-renderer": "workspace:*",
-    "path-to-regexp": "^6.2.1",
+    "path-to-regexp": "^8.2.0",
     "react": "*",
     "react-dom": "*",
     "stream-template": "^0.0.10",
-    "wouter": "^2.11.0"
+    "wouter": "^3.3.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.39.0",

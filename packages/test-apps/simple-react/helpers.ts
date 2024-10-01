@@ -10,6 +10,7 @@ export function slash(p: string): string {
 
 const logs: string[] = ((global as any).browserLogs = [])
 const onConsole = (msg: ConsoleMessage) => {
+  console.log('browser log', msg.text())
   logs.push(msg.text())
 }
 let pages: Page[] = []
@@ -60,7 +61,10 @@ afterEach(async () => {
 
 /** Create a new playwright page for testing against */
 export const newTestPage = async (): Promise<Page> => {
-  const browser = await chromium.launch({ headless: true })
+  const browser = await chromium.launch({
+    // headless: false, // Run in headful mode
+    // slowMo: 100, // Optional: Slow down Playwright oper
+  })
   const page: Page = await browser.newPage()
   page.on('console', onConsole)
   pages.push(page)

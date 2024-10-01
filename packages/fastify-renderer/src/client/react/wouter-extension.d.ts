@@ -3,6 +3,7 @@ import 'wouter'
 declare module 'wouter' {
   export interface RouterObject {
     navigationHistory?: NavigationHistory
+    navigationDestination?: string
   }
 
   export interface NavigationHistory {

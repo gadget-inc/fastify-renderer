@@ -1,4 +1,5 @@
-import { unstable_useTransition as useTransition, useCallback, useEffect, useRef, useState } from 'react'
+import React, { useContext } from 'react'
+import { unstable_useTransition as useTransition, useCallback, useEffect, useRef, useState, createContext } from 'react'
 import { NavigationHistory, useLocation, useRouter } from 'wouter'
 
 /**
@@ -9,17 +10,37 @@ const eventPushState = 'pushState'
 const eventReplaceState = 'replaceState'
 export const events = [eventPopstate, eventPushState, eventReplaceState]
 
+const NavigationStateContext = createContext<{
+  isNavigating: boolean
+  startTransition: (callback: () => void) => void
+}>({
+  isNavigating: false,
+  startTransition: (callback: () => void) => callback(),
+})
+
+/**
+ * Internal context for the whole app capturing if we're currently navigating or not
+ */
+export const TransitionProvider = ({ children }: { children: React.ReactNode }) => {
+  const [startTransition, isPending] = useTransition()
+
+  return (
+    <NavigationStateContext.Provider value={{ isNavigating: isPending, startTransition }}>
+      {children}
+    </NavigationStateContext.Provider>
+  )
+}
+
 /**
  * This is a customized `useLocation` hook for `wouter`, adapted to use React's new Concurrent mode with `useTransition` for fastify-renderer.
  * @see https://github.com/molefrog/wouter#customizing-the-location-hook
  *
- * Extended to return an array of 4 elements:
- * @return [currentLocation, setLocation, isNavigating, navigationDestination]
+ * Extended to stick the `isNavigating` and `navigationDestination` properties on the router object
  */
 export const useTransitionLocation = ({ base = '' } = {}) => {
   const [path, update] = useState(() => currentPathname(base)) // @see https://reactjs.org/docs/hooks-reference.html#lazy-initial-state
   const prevLocation = useRef(path + location.search + location.hash)
-  const [startTransition, isPending] = useTransition()
+  const { startTransition } = useContext(NavigationStateContext)
   const router = useRouter()
   useEffect(() => {
     if (!router.navigationHistory)
@@ -41,6 +62,8 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
 
       if (prevLocation.current !== destination) {
         prevLocation.current = destination
+        router.navigationDestination = destination
+
         if (shouldScrollToHash(router.navigationHistory)) {
           startTransition(() => {
             update(destination)
@@ -69,13 +92,11 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
   // the function reference should stay the same between re-renders, so that
   // it can be passed down as an element prop without any performance concerns.
   const navigate = useCallback(
-    (to, { replace = false } = {}) => {
-      if (to[0] === '~') {
-        window.location.href = to.slice(1)
+    (path, { replace = false } = {}) => {
+      if (path.startsWith('~') || !path.startsWith(base)) {
+        window.location.href = path.slice(1)
         return
       }
-
-      const path = base + to
 
       if (!router.navigationHistory) router.navigationHistory = {}
       if (router.navigationHistory?.current) {
@@ -97,7 +118,7 @@ export const useTransitionLocation = ({ base = '' } = {}) => {
     [base]
   )
 
-  return [path, navigate, isPending, prevLocation.current]
+  return [path, navigate]
 }
 
 // While History API does have `popstate` event, the only
@@ -122,11 +143,15 @@ if (typeof history !== 'undefined') {
 
 /**
  * React hook to access the navigation details of the current context. Useful for capturing the details of an ongoing navigation in the existing page while React is rendering the new page.
+ *
  * @returns [isNavigating: boolean, navigationDestination: string]
  */
 export const useNavigationDetails = (): [boolean, string] => {
-  const [_, __, isNavigating, navigationDestination] = useLocation() as unknown as [any, any, boolean, string] // we hack in more return values from our custom location hook to get at the transition current state and the destination
-  return [isNavigating, navigationDestination]
+  const router = useRouter()
+  const [location] = useLocation()
+  const { isNavigating } = useContext(NavigationStateContext)
+
+  return [isNavigating, router.navigationDestination || location]
 }
 
 const currentPathname = (base, path = location.pathname + location.search + location.hash) =>

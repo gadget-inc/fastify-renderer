@@ -101,6 +101,7 @@ export class ReactRenderer implements Renderer {
           {
             base: render.base,
             hook: staticLocationHook(destination),
+            ssrPath: destination,
           },
           React.createElement(
             Layout,
@@ -424,7 +425,7 @@ export class ReactRenderer implements Renderer {
     // b=2, a=1 if greater than 0
 
     // Convert find-my-way route paths to path-to-regexp syntax
-    const pathToRegexpify = (path: string) => path.replace('*', ':splat*')
+    const pathToRegexpify = (path: string) => path.replace('*', '*splat')
 
     return {
       name: 'fastify-renderer:react-route-table',
