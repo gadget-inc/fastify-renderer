@@ -10,7 +10,7 @@ export function slash(p: string): string {
 
 const logs: string[] = ((global as any).browserLogs = [])
 const onConsole = (msg: ConsoleMessage) => {
-  console.log('browser log', msg.text())
+  // console.log('browser log', msg.text())
   logs.push(msg.text())
 }
 let pages: Page[] = []
