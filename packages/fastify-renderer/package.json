@@ -4,16 +4,16 @@
   "description": "Simple, high performance client side app renderer for Fastify.",
   "exports": {
     ".": {
-      "default": "./node/index.js",
-      "import": "./node/index.js"
+      "import": "./node/index.js",
+      "default": "./node/index.js"
     },
     "./client/react": {
-      "default": "./client/react/index.js",
-      "import": "./client/react/index.js"
+      "import": "./client/react/index.js",
+      "default": "./client/react/index.js"
     },
     "./client/react/DefaultLayout": {
-      "default": "./client/react/DefaultLayout.js",
-      "import": "./client/react/DefaultLayout.js"
+      "import": "./client/react/DefaultLayout.js",
+      "default": "./client/react/DefaultLayout.js"
     },
     "./package": "./package.json",
     "./package.json": "./package.json"
