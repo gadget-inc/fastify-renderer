@@ -201,8 +201,8 @@ importers:
         version: 3.3.5(react@0.0.0-experimental-4ead6b530)
     devDependencies:
       '@playwright/test':
-        specifier: ^1.39.0
-        version: 1.39.0
+        specifier: ^1.47.2
+        version: 1.47.2
       '@swc/core':
         specifier: ^1.3.95
         version: 1.3.95
@@ -600,10 +600,9 @@ packages:
     resolution: {integrity: sha512-OWlrQAnWn9577PhVgqjUvMr1pg57Bc4jv0iL4w0PRuOSRvq67rvHW9Ie/dZVMvCzhSCB+UxhcY/PmCmFj33Q+g==}
     engines: {node: '>=8.0.0'}
 
-  '@playwright/test@1.39.0':
-    resolution: {integrity: sha512-3u1iFqgzl7zr004bGPYiN/5EZpRUSFddQBra8Rqll5N0/vfpqlP9I9EXqAoGacuAbX6c9Ulg/Cjqglp5VkK6UQ==}
-    engines: {node: '>=16'}
-    deprecated: Please update to the latest version of Playwright to test up-to-date browsers.
+  '@playwright/test@1.47.2':
+    resolution: {integrity: sha512-jTXRsoSPONAs8Za9QEQdyjFn+0ZQFjCiIztAIF6bi1HqhBzG9Ma7g1WotyiGqFSBRZjIEqMdT8RUlbk1QVhzCQ==}
+    engines: {node: '>=18'}
     hasBin: true
 
   '@rollup/pluginutils@4.1.1':
@@ -2454,9 +2453,14 @@ packages:
     engines: {node: '>=16'}
     hasBin: true
 
-  playwright@1.39.0:
-    resolution: {integrity: sha512-naE5QT11uC/Oiq0BwZ50gDmy8c8WLPRTEWuSSFVG2egBka/1qMoSqYQcROMT9zLwJ86oPofcTH2jBY/5wWOgIw==}
-    engines: {node: '>=16'}
+  playwright-core@1.47.2:
+    resolution: {integrity: sha512-3JvMfF+9LJfe16l7AbSmU555PaTl2tPyQsVInqm3id16pdDfvZ8TTZ/pyzmkbDrZTQefyzU7AIHlZqQnxpqHVQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.47.2:
+    resolution: {integrity: sha512-nx1cLMmQWqmA3UsnjaaokyoUpdVaaDhJhMoxX2qj3McpjnsqFHs516QAKYhqHAgOP+oCFTEOCOAaD1RgD/RQfA==}
+    engines: {node: '>=18'}
     hasBin: true
 
   postcss@8.4.38:
@@ -3527,9 +3531,9 @@ snapshots:
 
   '@opentelemetry/api@1.6.0': {}
 
-  '@playwright/test@1.39.0':
+  '@playwright/test@1.47.2':
     dependencies:
-      playwright: 1.39.0
+      playwright: 1.47.2
 
   '@rollup/pluginutils@4.1.1':
     dependencies:
@@ -5601,9 +5605,11 @@ snapshots:
 
   playwright-core@1.39.0: {}
 
-  playwright@1.39.0:
+  playwright-core@1.47.2: {}
+
+  playwright@1.47.2:
     dependencies:
-      playwright-core: 1.39.0
+      playwright-core: 1.47.2
     optionalDependencies:
       fsevents: 2.3.2
 
