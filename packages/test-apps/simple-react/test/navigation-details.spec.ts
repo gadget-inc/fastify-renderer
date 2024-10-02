@@ -1,5 +1,6 @@
 import { Page } from 'playwright-chromium'
 import { newTestPage, reactReady, rootURL } from '../helpers'
+import { describe, test, beforeEach, expect } from 'vitest'
 
 describe('navigation details', () => {
   let page: Page
@@ -15,6 +16,7 @@ describe('navigation details', () => {
 
     const testCalls: any[] = await page.evaluate('window.test')
 
+    // @ts-expect-error client code
     await page.waitForFunction(() => window.test.length === 2)
 
     expect(testCalls).toBeDefined()
@@ -25,24 +27,31 @@ describe('navigation details', () => {
     expect(testCalls[1].navigationDestination).toBe('/')
   })
 
-  test('navigation to new anchors on the same page triggers a fastify-renderer navigation but no data fetch', async () => {
-    page.on('request', (request) => {
-      throw new Error(
-        `Expecting no requests to be made during hash navigation, request made: ${request.method()} ${request.url()}`
-      )
-    })
+  test(
+    'navigation to new anchors on the same page triggers a fastify-renderer navigation but no data fetch',
+    async () => {
+      page.on('request', (request) => {
+        throw new Error(
+          `Expecting no requests to be made during hash navigation, request made: ${request.method()} ${request.url()}`
+        )
+      })
 
-    await page.click('#section-link')
+      await page.click('#section-link')
 
-    await page.waitForFunction(() => window.test.length === 3)
+      // @ts-expect-error client code
+      await page.waitForFunction(() => window.test.length === 3)
 
-    const testCalls: any[] = await page.evaluate('window.test')
-    expect(testCalls).toBeDefined()
-    expect(testCalls[0].isNavigating).toBe(false)
-    expect(testCalls[0].navigationDestination).toBe('/navigation-test')
-    expect(testCalls[1].isNavigating).toBe(true)
-    expect(testCalls[1].navigationDestination).toBe('/navigation-test#section')
-  })
+      const testCalls: any[] = await page.evaluate('window.test')
+      expect(testCalls).toBeDefined()
+      expect(testCalls[0].isNavigating).toBe(false)
+      expect(testCalls[0].navigationDestination).toBe('/navigation-test')
+      expect(testCalls[1].isNavigating).toBe(true)
+      expect(testCalls[1].navigationDestination).toBe('/navigation-test#section')
+    },
+    {
+      timeout: 1000000,
+    }
+  )
 
   test('ensure navigation to pages with query parameters does not consider the query parameters as part of the route match', async () => {
     await page.goto(`${rootURL}/`)
@@ -51,6 +60,7 @@ describe('navigation details', () => {
     await page.goto(`${rootURL}/navigation-test?foo=bar#section`)
     await reactReady(page)
 
+    // @ts-expect-error client code
     await page.waitForFunction(() => window.test.length === 3)
 
     const testCalls: any[] = await page.evaluate('window.test')

@@ -21,8 +21,8 @@
           packages =
             rec {
               bash = pkgs.bash;
-              nodejs = pkgs.nodejs-18_x;
-              pnpm = pkgs.nodePackages.pnpm;
+              nodejs = pkgs.nodejs_22;
+              corepack = pkgs.corepack_22;
             };
 
           devShell = pkgs.mkShell {

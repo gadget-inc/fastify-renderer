@@ -7,7 +7,7 @@ import { FastifyRendererOptions, FastifyRendererPlugin } from '../src/node/Plugi
 import { RenderBus } from '../src/node/RenderBus'
 import { ReactRenderer, ReactRendererOptions } from '../src/node/renderers/react/ReactRenderer'
 import { Render } from '../src/node/renderers/Renderer'
-
+import fs from 'node:fs'
 const logLevel = process.env.LOG_LEVEL || 'error'
 
 export const newFastify = async (options?: FastifyServerOptions) => {
@@ -30,6 +30,8 @@ export const newRenderBus = () => {
 }
 
 export const newFastifyRendererPlugin = (options: FastifyRendererOptions = {}) => {
+  fs.mkdirSync('/tmp/out/dir/client/.vite/', { recursive: true })
+  fs.mkdirSync('/tmp/out/dir/server/.vite/', { recursive: true })
   return new FastifyRendererPlugin(options)
 }
 

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { Route, Router, Switch, useLocation, useRouter } from 'wouter'
 import { usePromise } from './fetcher'
-import { shouldScrollToHash, useNavigationDetails, useTransitionLocation } from './locationHook'
-import { matcher } from './matcher'
+import { shouldScrollToHash, useNavigationDetails, useTransitionLocation, TransitionProvider } from './locationHook'
+import { parser } from './parser'
 
 export interface LayoutProps {
   isNavigating: boolean
@@ -82,8 +82,10 @@ export function Root<BootProps extends Record<string, any>>(props: {
   ]
 
   return (
-    <Router base={props.basePath} hook={useTransitionLocation as any} matcher={matcher}>
-      <RouteTable routes={routes} Layout={props.Layout} bootProps={props.bootProps} />
-    </Router>
+    <TransitionProvider>
+      <Router base={props.basePath} hook={useTransitionLocation as any} parser={parser}>
+        <RouteTable routes={routes} Layout={props.Layout} bootProps={props.bootProps} />
+      </Router>
+    </TransitionProvider>
   )
 }

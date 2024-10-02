@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [18.x, 20.x, 22.x]
         os: [ubuntu-latest]
 
     steps:
@@ -24,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-test-env
+      - name: Build JS
+        run: pnpm build
       - name: Run Lint
         run: pnpm run lint
 

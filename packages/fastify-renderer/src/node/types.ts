@@ -16,7 +16,7 @@ import {
 } from 'fastify'
 import { IncomingMessage, Server, ServerResponse } from 'http'
 import { ReactElement } from 'react'
-import { InlineConfig, SSROptions, ViteDevServer } from 'vite'
+import { InlineConfig, SSROptions, type ViteDevServer } from 'vite'
 import { FastifyRendererPlugin, ImperativeRenderable } from './Plugin'
 import { RenderOptions, PartialRenderOptions } from './renderers/Renderer'
 import { kRendererPlugin, kRendererViteOptions, kRenderOptions } from './symbols'

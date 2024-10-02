@@ -1,8 +1,9 @@
 import 'wouter'
 
 declare module 'wouter' {
-  export interface RouterProps {
+  export interface RouterObject {
     navigationHistory?: NavigationHistory
+    navigationDestination?: string
   }
 
   export interface NavigationHistory {
