@@ -21,10 +21,9 @@ let err: Error
 export const port = 3001 + parseInt(process.env.VITEST_WORKER_ID!) - 1
 export const rootURL = `http://localhost:${port}`
 
-beforeAll(async ({ filepath }) => {
-  const testPath = filepath!
+beforeAll(async (suite) => {
   // eslint-disable-next-line @typescript-eslint/prefer-regexp-exec
-  const testName = slash(testPath).match(/test-apps\/([\w-]+)\//)?.[1]
+  const testName = slash(suite.file.filepath).match(/test-apps\/([\w-]+)\//)?.[1]
 
   // if this is a test placed under test-apps/xxx/test/
   // start a fastify server in that directory.
