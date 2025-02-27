@@ -1,5 +1,7 @@
 import { Key, pathToRegexp } from 'path-to-regexp'
-import { MatcherFn } from 'wouter'
+import type { Match, Path } from 'wouter'
+
+export type MatcherFn = (pattern: Path, path: Path) => Match
 
 /*
  * This function specifies how strings like /app/:users/:items* are transformed into regular expressions to pass into path-to-regexp.

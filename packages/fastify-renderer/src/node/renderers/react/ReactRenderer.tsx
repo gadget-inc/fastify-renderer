@@ -20,22 +20,6 @@ export interface ReactRendererOptions {
   mode: 'sync' | 'streaming'
 }
 
-const staticLocationHook = (path = '/', { record = false } = {}) => {
-  // eslint-disable-next-line prefer-const
-  let hook
-  const navigate = (to, { replace }: { replace?: boolean } = {}) => {
-    if (record) {
-      if (replace) {
-        hook.history.pop()
-      }
-      hook.history.push(to)
-    }
-  }
-  hook = () => [path, navigate]
-  hook.history = [path]
-  return hook
-}
-
 export class ReactRenderer implements Renderer {
   static ROUTE_TABLE_ID = '/@fstr!route-table.js'
 
@@ -99,7 +83,7 @@ export class ReactRenderer implements Renderer {
           Router,
           {
             base: render.base,
-            hook: staticLocationHook(destination),
+            ssrPath: destination,
           },
           React.createElement(
             Layout,
