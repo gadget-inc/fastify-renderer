@@ -1,34 +1,31 @@
-import { Key, pathToRegexp } from 'path-to-regexp'
+import { match, MatchFunction } from 'path-to-regexp'
 import { MatcherFn } from 'wouter'
 
+type ParamData = Record<string, string | string[]>
+
 /*
- * This function specifies how strings like /app/:users/:items* are transformed into regular expressions to pass into path-to-regexp.
+ * This function creates a matcher function for a given path pattern.
  *
  * @param {string} path — a path like "/:foo/:bar"
- * @return {{ keys: [], regexp: RegExp }}
+ * @return {MatchFunction<ParamData>} — a function that matches paths and extracts params
  */
-const convertPathToRegexp = (path: string) => {
-  const keys: Key[] = []
-  const regexp = pathToRegexp(path, keys)
-  return { keys, regexp }
+const createMatcher = (path: string): MatchFunction<ParamData> => {
+  return match(path, { decode: decodeURIComponent })
 }
 
-const cache: Record<string, ReturnType<typeof convertPathToRegexp>> = {}
+const cache: Record<string, MatchFunction<ParamData>> = {}
 
-// obtains a cached regexp version of the pattern
-const getRegexp = (pattern: string) => cache[pattern] || (cache[pattern] = convertPathToRegexp(pattern))
+// obtains a cached matcher function for the pattern
+const getMatcher = (pattern: string) => cache[pattern] || (cache[pattern] = createMatcher(pattern))
 
 export const matcher: MatcherFn = (pattern, path) => {
-  const { regexp, keys } = getRegexp(pattern || '')
-  const out = regexp.exec(path.split('#')[0].split('?')[0])
+  const matchFn = getMatcher(String(pattern || ''))
+  const pathStr = String(path)
+  const cleanPath = pathStr.split('#')[0].split('?')[0]
+  const result = matchFn(cleanPath)
 
-  if (!out) return [false, null]
+  if (!result) return [false, null]
 
-  // formats an object with matched params
-  const params = keys.reduce((params, key, i) => {
-    params[key.name] = out[i + 1]
-    return params
-  }, {})
-
-  return [true, params]
+  // return matched params
+  return [true, result.params as Record<string, string>]
 }
