@@ -155,7 +155,7 @@ importers:
         specifier: ^4.24.2
         version: 4.25.0
       gitpkg:
-        specifier: ^1.0.0-beta.2
+        specifier: 1.0.0-beta.4
         version: 1.0.0-beta.4
       jest:
         specifier: ^29.7.0
@@ -2525,7 +2525,7 @@ packages:
       normalize-path: 3.0.0
       readdirp: 3.6.0
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /chownr@1.1.4:
@@ -4145,6 +4145,7 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
+    dev: true
     optional: true
 
   /fsevents@2.3.3:
@@ -4152,7 +4153,6 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
     requiresBuild: true
-    dev: false
     optional: true
 
   /function-bind@1.1.1:
@@ -5119,7 +5119,7 @@ packages:
       micromatch: 4.0.4
       walker: 1.0.8
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: true
 
   /jest-leak-detector@29.7.0:
@@ -6649,7 +6649,7 @@ packages:
     engines: {node: '>=10.0.0'}
     hasBin: true
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: false
 
   /rollup@4.52.4:
@@ -7422,7 +7422,7 @@ packages:
       resolve: 1.22.0
       rollup: 2.77.3
     optionalDependencies:
-      fsevents: 2.3.2
+      fsevents: 2.3.3
     dev: false
 
   /vite@5.4.20(@types/node@18.18.7):

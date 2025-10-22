@@ -10,7 +10,7 @@
     "lint:fix": "prettier --loglevel warn --write \"packages/**/*.{ts,tsx}\" && eslint \"packages/**/*.{ts,tsx}\" --quiet --fix",
     "release": "pnpm -F=fastify-renderer publish",
     "preinstall": "npx only-allow pnpm",
-    "prerelease": "pnpm -F=fastify-renderer run gitpkg publish",
+    "prerelease": "pnpm -F=fastify-renderer exec gitpkg publish",
     "test": "jest --forceExit -w=1",
     "test:debug": "cross-env FR_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest --forceExit"
   },
