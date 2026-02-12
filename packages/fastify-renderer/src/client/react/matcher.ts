@@ -3,6 +3,17 @@ import { MatcherFn } from 'wouter'
 
 type ParamData = Record<string, string | string[]>
 
+const normalizePattern = (pattern: string): string => {
+  return (
+    pattern
+      // path-to-regexp <8 legacy wildcard params (e.g. "/:splat*")
+      // path-to-regexp 8 wildcard params (e.g. "/*splat")
+      .replace(/:([A-Za-z0-9_]+)\*/g, '*$1')
+      // find-my-way wildcard routes use unnamed "*" so give them a stable name
+      .replace(/(^|\/)\*(?=\/|$)/g, '$1*splat')
+  )
+}
+
 /*
  * This function creates a matcher function for a given path pattern.
  *
@@ -10,13 +21,16 @@ type ParamData = Record<string, string | string[]>
  * @return {MatchFunction<ParamData>} — a function that matches paths and extracts params
  */
 const createMatcher = (path: string): MatchFunction<ParamData> => {
-  return match(path, { decode: decodeURIComponent })
+  return match(normalizePattern(path), { decode: decodeURIComponent })
 }
 
 const cache: Record<string, MatchFunction<ParamData>> = {}
 
 // obtains a cached matcher function for the pattern
-const getMatcher = (pattern: string) => cache[pattern] || (cache[pattern] = createMatcher(pattern))
+const getMatcher = (pattern: string) => {
+  const normalizedPattern = normalizePattern(pattern)
+  return cache[normalizedPattern] || (cache[normalizedPattern] = createMatcher(normalizedPattern))
+}
 
 export const matcher: MatcherFn = (pattern, path) => {
   const matchFn = getMatcher(String(pattern || ''))
