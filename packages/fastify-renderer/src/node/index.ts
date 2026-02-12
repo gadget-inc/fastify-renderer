@@ -6,7 +6,7 @@ import { FastifyInstance, FastifyPluginAsync, FastifyReply } from 'fastify'
 import fp from 'fastify-plugin'
 import { promises as fs } from 'fs'
 import path from 'path'
-import { resolveConfig, build as viteBuild, createServer, ResolvedConfig, ViteDevServer } from 'vite'
+import { resolveConfig, build as viteBuild, createServer, Plugin as VitePlugin, ResolvedConfig, ViteDevServer } from 'vite'
 import { DefaultDocumentTemplate } from './DocumentTemplate'
 import { FastifyRendererOptions, FastifyRendererPlugin, ImperativeRenderable } from './Plugin'
 import { PartialRenderOptions, Render, RenderableRegistration } from './renderers/Renderer'
@@ -15,6 +15,25 @@ import { wrap } from './tracing'
 import './types' // necessary to make sure that the fastify types are augmented
 import { ServerRenderer } from './types'
 import { mapFilepathToEntrypointName } from './utils'
+
+const processEnvDotAccessPattern = /\(\{\}\)\.([A-Za-z_$][\w$]*)/g
+
+const moduleMatchesAnyPattern = (id: string, includePatterns: (string | RegExp)[]) =>
+  includePatterns.some((pattern) => (typeof pattern === 'string' ? id.includes(pattern) : pattern.test(id)))
+
+const preserveProcessEnvForMatchingModules = (includePatterns: (string | RegExp)[]): VitePlugin => ({
+  name: 'fastify-renderer:preserve-process-env',
+  enforce: 'post',
+  transform(code, id) {
+    if (!moduleMatchesAnyPattern(id, includePatterns)) return null
+
+    const transformed = code
+      .replace(processEnvDotAccessPattern, (_match, key: string) => `process.env.${key}`)
+
+    if (transformed === code) return null
+    return { code: transformed, map: null }
+  },
+})
 
 const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incomingOptions) => {
   const plugin = new FastifyRendererPlugin(incomingOptions)
@@ -148,10 +167,26 @@ const plugin: FastifyPluginAsync<FastifyRendererOptions> = async (fastify, incom
 
   // register vite once all the routes have been defined
   fastify.addHook('onReady', async () => {
+    const define = { ...(plugin.vite?.define || {}) }
+    const extraVitePlugins: VitePlugin[] = []
+
+    // Opt out of Vite's default production replacement of `process.env` with `{}` for client bundles.
+    // This keeps `process.env.SOME_VAR` intact when callers explicitly request it.
+    if (plugin.preserveProcessEnv === true && !('process.env' in define)) {
+      define['process.env'] = 'process.env'
+    } else if (
+      plugin.preserveProcessEnv &&
+      plugin.preserveProcessEnv !== true &&
+      plugin.preserveProcessEnv.include.length > 0
+    ) {
+      extraVitePlugins.push(preserveProcessEnvForMatchingModules(plugin.preserveProcessEnv.include))
+    }
+
     fastify[kRendererViteOptions] = {
       clearScreen: false,
       ...plugin.vite,
-      plugins: [...(plugin.vite?.plugins || []), ...plugin.renderer.vitePlugins()],
+      define,
+      plugins: [...(plugin.vite?.plugins || []), ...extraVitePlugins, ...plugin.renderer.vitePlugins()],
       server: {
         middlewareMode: true,
         ...plugin.vite?.server,
