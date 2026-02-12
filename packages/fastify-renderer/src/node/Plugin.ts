@@ -10,9 +10,13 @@ import { RenderableRegistration, Renderer } from './renderers/Renderer'
 import './types' // necessary to make sure that the fastify types are augmented
 import { FastifyRendererHook, ServerEntrypointManifest, ViteClientManifest } from './types'
 
+export type ProcessEnvMatcher = string | RegExp
+export type PreserveProcessEnvOptions = boolean | { include: ProcessEnvMatcher[] }
+
 export interface FastifyRendererOptions {
   renderer?: ReactRendererOptions
   vite?: InlineConfig
+  preserveProcessEnv?: PreserveProcessEnvOptions
   base?: string
   layout?: string
   document?: Template
@@ -27,6 +31,7 @@ export type ImperativeRenderable = symbol
 export class FastifyRendererPlugin {
   renderer: Renderer
   devMode: boolean
+  preserveProcessEnv: PreserveProcessEnvOptions
   vite: InlineConfig
   viteBase: string
   clientOutDir: string
@@ -40,6 +45,7 @@ export class FastifyRendererPlugin {
 
   constructor(incomingOptions: FastifyRendererOptions) {
     this.devMode = incomingOptions.devMode ?? process.env.NODE_ENV != 'production'
+    this.preserveProcessEnv = incomingOptions.preserveProcessEnv ?? false
 
     this.vite = incomingOptions.vite || {}
     this.vite.base ??= '/.vite/'
