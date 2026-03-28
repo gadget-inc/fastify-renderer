@@ -11,7 +11,7 @@
   "dependencies": {
     "fastify": "^4.23.2",
     "fastify-renderer": "workspace:*",
-    "path-to-regexp": "^8.2.0",
+    "path-to-regexp": "^8.4.0",
     "react": "*",
     "react-dom": "*",
     "stream-template": "^0.0.10",
